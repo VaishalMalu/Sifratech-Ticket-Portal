@@ -1,0 +1,186 @@
+<!-- AUTH GATE -->
+<div id="authGate">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <svg viewBox="0 0 44 44" fill="none">
+        <circle cx="22" cy="10" r="3.5" fill="#1A9FCC"/>
+        <circle cx="8" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+        <circle cx="36" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+        <circle cx="13" cy="34" r="2.5" fill="#35C8E8" opacity=".6"/>
+        <circle cx="31" cy="34" r="2.5" fill="#35C8E8" opacity=".6"/>
+        <circle cx="22" cy="26" r="3.5" fill="#1A9FCC"/>
+        <line x1="22" y1="10" x2="8" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="10" x2="36" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="8" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="36" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="26" x2="13" y2="34" stroke="#35C8E8" stroke-width="1.2" opacity=".4"/>
+        <line x1="22" y1="26" x2="31" y2="34" stroke="#35C8E8" stroke-width="1.2" opacity=".4"/>
+        <line x1="8" y1="22" x2="13" y2="34" stroke="#35C8E8" stroke-width="1" opacity=".3"/>
+        <line x1="36" y1="22" x2="31" y2="34" stroke="#35C8E8" stroke-width="1" opacity=".3"/>
+      </svg>
+      <div class="auth-wordmark">
+        <div class="w1">SIFRA<span>TECH</span></div>
+        <div class="w2">A Alt-S Group Company</div>
+      </div>
+    </div>
+    <div class="auth-title">Support Portal — Authorised Access Only</div>
+    <div class="auth-field"><input type="text" id="authUser" placeholder="Username" autocomplete="off"></div>
+    <div class="auth-field"><input type="password" id="authPass" placeholder="Password" onkeydown="if(event.key==='Enter')doAuth()"></div>
+    <button class="auth-btn" onclick="doAuth()">Sign in</button>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-copy">© 2025 Sifratech Technology Pvt Ltd · All rights reserved · Proprietary & Confidential</div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="appShell" style="display:none;">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-left">
+    <div class="sifra-logo">
+      <svg width="30" height="30" viewBox="0 0 44 44" fill="none">
+        <circle cx="22" cy="10" r="3.5" fill="#1A9FCC"/>
+        <circle cx="8" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+        <circle cx="36" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+        <circle cx="13" cy="34" r="2.5" fill="#35C8E8" opacity=".6"/>
+        <circle cx="31" cy="34" r="2.5" fill="#35C8E8" opacity=".6"/>
+        <circle cx="22" cy="26" r="3.5" fill="#1A9FCC"/>
+        <line x1="22" y1="10" x2="8" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="10" x2="36" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="8" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="36" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="26" x2="13" y2="34" stroke="#35C8E8" stroke-width="1.2" opacity=".4"/>
+        <line x1="22" y1="26" x2="31" y2="34" stroke="#35C8E8" stroke-width="1.2" opacity=".4"/>
+      </svg>
+      <div class="sifra-wordmark">
+        <div class="w1">SIFRA<span>TECH</span></div>
+        <div class="w2">A Alt-S Group Company</div>
+      </div>
+    </div>
+    <div class="client-pill">
+      <span class="client-lbl">Client</span>
+      <img class="client-img" id="tbClientImg" src="https://alseermarine.com/wp-content/uploads/2024/03/logo-light-1.png" alt="Client" onerror="this.style.display='none';document.getElementById('tbClientTxt').style.display='block';">
+      <span class="client-txt" id="tbClientTxt" style="display:none;">Al Seer Marine</span>
+    </div>
+  </div>
+  <div class="tb-center">
+    <div class="nav">
+      <button class="active" onclick="showPage('dashboard')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Dashboard</button>
+      <button onclick="showPage('tickets')"><i class="ti ti-ticket" aria-hidden="true"></i> Tickets</button>
+      <button onclick="showPage('team')" id="teamNavBtn"><i class="ti ti-users" aria-hidden="true"></i> Team</button>
+      <button onclick="showPage('settings')" id="settingsNavBtn"><i class="ti ti-settings" aria-hidden="true"></i> Settings</button>
+    </div>
+  </div>
+  <div class="tb-right">
+    <select onchange="switchRole(this.value)" id="roleSel">
+      <option value="am">Account Manager</option>
+      <option value="client1">Al Seer Marine — User 1</option>
+      <option value="client2">Al Seer Marine — User 2</option>
+      <option value="support1">Support — Ravi K.</option>
+      <option value="support2">Support — Priya M.</option>
+    </select>
+    <div class="avatar" id="avatarEl">AM</div>
+    <button class="btn-s" onclick="signOut()" title="Sign out"><i class="ti ti-logout" aria-hidden="true"></i></button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ═══════ DASHBOARD ═══════ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div><div class="page-title">Dashboard</div><div class="page-sub" id="dashSub">Al Seer Marine — Live overview</div></div>
+    <div style="font-size:11px;color:#6B7A8D;font-family:var(--mono);" id="dashTime"></div>
+  </div>
+  <div class="kpi-strip" id="kpiStrip"></div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-head"><span class="chart-title">Tickets by status</span><span class="chart-badge">Donut</span></div>
+      <div class="donut-wrap" id="donutStatus"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><span class="chart-title">Priority breakdown</span><span class="chart-badge">Donut</span></div>
+      <div class="donut-wrap" id="donutPriority"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><span class="chart-title">By module</span><span class="chart-badge">Vertical bars</span></div>
+      <svg id="barModule" class="chart-svg" height="160"></svg>
+    </div>
+  </div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <div class="chart-head"><span class="chart-title">Tickets by type</span><span class="chart-badge">Horizontal bars</span></div>
+      <div class="hbar-wrap" id="hbarType"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><span class="chart-title">SLA compliance</span><span class="chart-badge">% by priority</span></div>
+      <svg id="barSLA" class="chart-svg" height="160"></svg>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl-head"><span class="tbl-title">Ageing tickets (&gt;72 hrs open)</span><span id="ageingCount" style="font-size:11px;color:#6B7A8D;"></span></div>
+    <table class="dt"><thead><tr><th>Ticket #</th><th>Summary</th><th>Priority</th><th>Assigned to</th><th>Age (hrs)</th><th>Status</th></tr></thead>
+    <tbody id="ageingTable"></tbody></table>
+  </div>
+</div>
+
+<!-- ═══════ TICKETS ═══════ -->
+<div class="page" id="page-tickets">
+  <div class="page-header">
+    <div class="page-title">Tickets</div>
+    <button class="btn-p" onclick="openCreateModal()"><i class="ti ti-plus" aria-hidden="true"></i> New Ticket</button>
+  </div>
+  <div class="toolbar">
+    <input type="text" placeholder="Search by ID or summary..." oninput="renderTickets()" id="srch">
+    <select onchange="renderTickets()" id="fStat"><option value="">All statuses</option><option>Open</option><option>In Progress</option><option>Resolved</option><option>Closed</option><option>Reopened</option></select>
+    <select onchange="renderTickets()" id="fPri"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option><option>Top</option><option>Project</option></select>
+    <select onchange="renderTickets()" id="fMod"><option value="">All modules</option><option>Financials</option><option>HRMS</option><option>SCM</option><option>PPM</option><option>Sourcing</option><option>Inventory</option><option>Payroll</option><option>Other</option></select>
+  </div>
+  <div class="tbl-wrap">
+    <table class="dt">
+      <thead><tr><th>Ticket #</th><th>Summary</th><th>Type</th><th>Module</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Age (hrs)</th><th>Raised by</th></tr></thead>
+      <tbody id="ticketTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════ TEAM ═══════ -->
+<div class="page" id="page-team">
+  <div class="page-header"><div class="page-title">Team workload</div></div>
+  <div class="kpi-strip" id="teamKpi" style="grid-template-columns:repeat(3,1fr);max-width:500px;margin-bottom:20px;"></div>
+  <div class="tbl-wrap">
+    <table class="dt">
+      <thead><tr><th>Member</th><th>Role</th><th>Open</th><th>In progress</th><th>Resolved</th><th>Total</th><th>Avg resolution (hrs)</th></tr></thead>
+      <tbody id="teamTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════ SETTINGS ═══════ -->
+<div class="page" id="page-settings">
+  <div class="page-header"><div class="page-title">Settings</div></div>
+  <div class="settings-shell">
+    <div class="s-nav">
+      <div class="s-nav-sec">Administration</div>
+      <div class="s-nav-item active" onclick="sPanel('users')"><i class="ti ti-users" aria-hidden="true"></i> Users</div>
+      <div class="s-nav-item" onclick="sPanel('clients')"><i class="ti ti-building" aria-hidden="true"></i> Clients</div>
+      <div class="s-nav-item" onclick="sPanel('roles')"><i class="ti ti-shield" aria-hidden="true"></i> Roles</div>
+      <div class="s-nav-sec">Configuration</div>
+      <div class="s-nav-item" onclick="sPanel('sla')"><i class="ti ti-clock" aria-hidden="true"></i> SLA targets</div>
+      <div class="s-nav-item" onclick="sPanel('modules')"><i class="ti ti-layout-grid" aria-hidden="true"></i> Modules &amp; types</div>
+      <div class="s-nav-sec">Notifications</div>
+      <div class="s-nav-item" onclick="sPanel('email')"><i class="ti ti-mail" aria-hidden="true"></i> Email settings</div>
+      <div class="s-nav-sec">Branding</div>
+      <div class="s-nav-item" onclick="sPanel('branding')"><i class="ti ti-palette" aria-hidden="true"></i> Portal branding</div>
+      <div class="s-nav-sec">AI</div>
+      <div class="s-nav-item" onclick="sPanel('ai')"><i class="ti ti-sparkles" aria-hidden="true"></i> AI configuration</div>
+    </div>
+    <div class="s-panel" id="sPanel"></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /appShell -->
+<div id="modalArea"></div>
