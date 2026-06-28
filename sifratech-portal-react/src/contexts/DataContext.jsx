@@ -202,8 +202,8 @@ export function DataProvider({ children }) {
   const visibleTickets = React.useMemo(() => {
     if (!currentUser) return [];
     if (currentUser.seeAll) return tickets;
-    if (currentUser.client) return tickets.filter(t => t.client === currentUser.client || t.raisedBy === currentUser.label);
     if (currentUser.isSupport) return tickets.filter(t => t.assignedTo === currentUser.label || t.raisedBy === currentUser.label);
+    if (currentUser.client) return tickets.filter(t => t.client === currentUser.client || t.raisedBy === currentUser.label);
     return tickets.filter(t => t.raisedBy === currentUser.label); // Default fallback: only see your own tickets
   }, [tickets, currentUser]);
 
@@ -280,6 +280,29 @@ export function DataProvider({ children }) {
         comments: `[${currentUser ? currentUser.label : 'System'}] Status updated to ${newStatus}`
       }]);
       if (histError) console.error("Error inserting ticket_status_history:", histError);
+      
+      // Send Email Notification if Resolved or Closed
+      if (newStatus === 'Resolved' || newStatus === 'Closed') {
+         if (t && t.raisedBy) {
+            const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
+            const toEmail = customerUser?.email || (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+
+            if (toEmail) {
+               fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                     toEmail: toEmail,
+                     ticketNumber: t.number || t.id,
+                     title: t.summary,
+                     resolutionNotes: t.resolution || 'Ticket has been marked as ' + newStatus + '.',
+                     portalUrl: `${window.location.origin}/tickets?id=${id}`
+                  })
+               }).catch(err => console.error(`Failed to send ${newStatus} email:`, err));
+            }
+         }
+      }
+      
       fetchTickets();
     } else {
       // Revert on error
