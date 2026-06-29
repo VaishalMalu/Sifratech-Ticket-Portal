@@ -9,13 +9,14 @@ export default function AuthGate() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username || !password) {
       setError('Please enter username and password.');
       return;
     }
     
-    if (login(username, password)) {
+    const success = await login(username, password);
+    if (success) {
       navigate('/dashboard');
     } else {
       setError('Invalid username or password.');
