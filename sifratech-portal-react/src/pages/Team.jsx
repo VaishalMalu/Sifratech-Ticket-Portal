@@ -23,21 +23,21 @@ export default function Team() {
               const avg = rs.length ? Math.round(rs.reduce((a, t) => a + age(t.createdAt), 0) / rs.length) : 0;
               return (
                 <tr key={m.id}>
-                  <td>
+                  <td data-label="Member">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div className="avatar" style={{ width: '26px', height: '26px', fontSize: '10px', backgroundColor: `hsl(${Math.abs(m.full_name.split('').reduce((a,b)=>a+b.charCodeAt(0),0)) % 360}, 60%, 50%)`, color: '#fff' }}>
+                      <div className="avatar" style={{ width: '26px', height: '26px', fontSize: '10px', backgroundColor: `hsl(${Math.abs(m.full_name.split('').reduce((a,b)=>a+b.charCodeAt(0),0)) % 360}, 60%, 50%)`, color: '#fff', flexShrink: 0 }}>
                         {(m.full_name || 'U').split(' ').map(w => w[0]).slice(0,2).join('')}
                       </div>
-                      <div>
-                        <div style={{ fontWeight: 500, color: '#1A2A3A' }}>{m.full_name}</div>
-                        <div style={{ fontSize: '10px', color: '#6B7A8D' }}>{m.email}</div>
+                      <div className="user-info">
+                        <div className="user-name">{m.full_name}</div>
+                        <div className="user-meta">{m.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ color: '#6B7A8D' }}>{m.roles?.name || 'Support Engineer'}</td>
-                  <td>{op}</td><td>{ip}</td><td>{rs.length}</td>
-                  <td style={{ fontWeight: 600 }}>{mine.length}</td>
-                  <td style={{ fontFamily: 'var(--mono)' }}>{avg}h</td>
+                  <td data-label="Role" style={{ color: '#6B7A8D' }}>{m.roles?.name || 'Support Engineer'}</td>
+                  <td data-label="Open">{op}</td><td data-label="In progress">{ip}</td><td data-label="Resolved">{rs.length}</td>
+                  <td data-label="Total" style={{ fontWeight: 600 }}>{mine.length}</td>
+                  <td data-label="Avg resolution" style={{ fontFamily: 'var(--mono)' }}>{avg}h</td>
                 </tr>
               );
             })}

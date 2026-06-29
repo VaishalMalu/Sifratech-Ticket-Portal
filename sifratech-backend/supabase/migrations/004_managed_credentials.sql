@@ -9,7 +9,14 @@ CREATE TABLE IF NOT EXISTS managed_credentials (
 
 ALTER TABLE managed_credentials ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Credentials viewable by everyone" ON managed_credentials FOR SELECT USING (true);
-CREATE POLICY "Anyone can insert credentials" ON managed_credentials FOR INSERT WITH CHECK (true);
-CREATE POLICY "Anyone can update credentials" ON managed_credentials FOR UPDATE USING (true);
-CREATE POLICY "Anyone can delete credentials" ON managed_credentials FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Credentials viewable by everyone" ON managed_credentials;
+CREATE POLICY "Credentials viewable by everyone" ON managed_credentials FOR SELECT USING (false);
+
+DROP POLICY IF EXISTS "Anyone can insert credentials" ON managed_credentials;
+CREATE POLICY "Anyone can insert credentials" ON managed_credentials FOR INSERT WITH CHECK (false);
+
+DROP POLICY IF EXISTS "Anyone can update credentials" ON managed_credentials;
+CREATE POLICY "Anyone can update credentials" ON managed_credentials FOR UPDATE USING (false);
+
+DROP POLICY IF EXISTS "Anyone can delete credentials" ON managed_credentials;
+CREATE POLICY "Anyone can delete credentials" ON managed_credentials FOR DELETE USING (false);

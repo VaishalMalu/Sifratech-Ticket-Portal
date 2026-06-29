@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { handleOutlookWebhook, processUnreadEmails } = require('./controllers/WebhookController');
 const { subscribeToSupportMailbox } = require('./services/GraphApiService');
+const { authMiddleware } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,7 +17,7 @@ app.use('/api/users', usersRoute);
 
 app.post('/api/webhooks/outlook', handleOutlookWebhook);
 
-app.post('/api/emails/assign', async (req, res) => {
+app.post('/api/emails/assign', authMiddleware, async (req, res) => {
     try {
         const { sendEmail } = require('./services/GraphApiService');
         const { toEmail, ticketNumber, title, priority, customerDetails, module, status, assignedBy, assignmentDate, slaDueDate, portalUrl, ticketUrl } = req.body;
@@ -66,7 +67,7 @@ app.post('/api/emails/assign', async (req, res) => {
     }
 });
 
-app.post('/api/emails/in-progress', async (req, res) => {
+app.post('/api/emails/in-progress', authMiddleware, async (req, res) => {
     try {
         const { sendEmail } = require('./services/GraphApiService');
         const { toEmail, ticketNumber, title, portalUrl } = req.body;
@@ -90,7 +91,7 @@ app.post('/api/emails/in-progress', async (req, res) => {
     }
 });
 
-app.post('/api/emails/resolved', async (req, res) => {
+app.post('/api/emails/resolved', authMiddleware, async (req, res) => {
     try {
         const { sendEmail } = require('./services/GraphApiService');
         const { toEmail, ticketNumber, title, resolutionNotes, portalUrl } = req.body;

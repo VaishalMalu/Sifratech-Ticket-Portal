@@ -25,6 +25,17 @@ export function DataProvider({ children }) {
     branding_config: {},
     ai_config: {}
   });
+  const apiFetch = async (url, options = {}) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+  };
 
   const fetchSettings = async () => {
     try {
@@ -288,7 +299,7 @@ export function DataProvider({ children }) {
             const toEmail = customerUser?.email || (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
 
             if (toEmail) {
-               fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
+               apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -370,7 +381,7 @@ export function DataProvider({ children }) {
         const toEmail = customerUser?.email || (resolvedTicket.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
 
         if (toEmail) {
-          fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
+          apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -417,7 +428,7 @@ export function DataProvider({ children }) {
         // Send Email Notification
         if (users.email) {
           const t = tickets.find(x => x.id === id);
-          fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/assign`, {
+          apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/assign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -460,7 +471,7 @@ export function DataProvider({ children }) {
   
   // Users
   const addUser = async (user) => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/users`, {
+    const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user)
@@ -469,7 +480,7 @@ export function DataProvider({ children }) {
     await fetchSettings();
   };
   const updateUser = async (id, user) => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/users/${id}`, {
+    const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user)
@@ -478,7 +489,7 @@ export function DataProvider({ children }) {
     await fetchSettings();
   };
   const deleteUser = async (id) => {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/users/${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/users/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error(await res.text());
     await fetchSettings();
   };

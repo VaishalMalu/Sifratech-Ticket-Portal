@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { supabase } = require('../config/supabaseClient'); // Note: This uses the service role key
+const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
 
 // GET /api/users
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { data, error } = await supabase.from('users').select(`
             *,
@@ -32,7 +33,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/users
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { email, password, full_name, role_id, team_id } = req.body;
         
@@ -83,7 +84,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/users/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { full_name, role_id, team_id, email, password } = req.body;
@@ -124,7 +125,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/users/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         // Deleting from auth.users will cascade to public.users because of the ON DELETE CASCADE constraint

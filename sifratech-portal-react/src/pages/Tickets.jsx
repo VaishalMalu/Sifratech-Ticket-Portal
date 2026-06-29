@@ -37,15 +37,15 @@ export default function Tickets() {
           <tbody>
             {filteredTickets.length > 0 ? filteredTickets.map(t => (
               <tr key={t.id} onClick={() => openModal('TICKET_DETAIL', { ticketId: t.id })} style={{ cursor: 'pointer' }}>
-                <td style={{ fontWeight: 600, color: '#1A5FA8', fontFamily: 'var(--mono)' }}>{t.number || t.id}</td>
-                <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.summary}</td>
-                <td style={{ color: '#4A5A6A' }}>{t.type}</td>
-                <td style={{ color: '#4A5A6A' }}>{t.module}</td>
-                <td><span className={`badge ${bc(t.priority, 'p')}`}>{t.priority}</span></td>
-                <td><span className={`badge ${bc(t.status, 's')}`}>{t.status}</span></td>
-                <td style={{ color: '#4A5A6A' }}>{t.assignedTo || '—'}</td>
-                <td className={age(t.createdAt) > 24 ? 'ageing-warn' : ''}>{Math.max(0, Math.round(age(t.createdAt) / 24))}</td>
-                <td style={{ color: '#4A5A6A' }}>{t.raisedBy}</td>
+                <td data-label="Ticket #" style={{ fontWeight: 600, color: '#1A5FA8', fontFamily: 'var(--mono)' }}>{t.number || t.id}</td>
+                <td data-label="Summary" style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.summary}</td>
+                <td data-label="Type" style={{ color: '#4A5A6A' }}>{t.type}</td>
+                <td data-label="Module" style={{ color: '#4A5A6A' }}>{t.module}</td>
+                <td data-label="Priority"><span className={`badge ${bc(t.priority, 'p')}`}>{t.priority}</span></td>
+                <td data-label="Status"><span className={`badge ${bc(t.status, 's')}`}>{t.status}</span></td>
+                <td data-label="Assigned to" style={{ color: '#4A5A6A' }}>{t.assignedTo || '—'}</td>
+                <td data-label="Age (Days)" className={age(t.createdAt) > 24 ? 'ageing-warn' : ''}>{Math.max(0, Math.round(age(t.createdAt) / 24))}</td>
+                <td data-label="Raised by" style={{ color: '#4A5A6A' }}>{t.raisedBy}</td>
               </tr>
             )) : (
               <tr><td colSpan="9" style={{ textAlign: 'center', color: '#9AA5B4', padding: '20px' }}>No tickets found.</td></tr>

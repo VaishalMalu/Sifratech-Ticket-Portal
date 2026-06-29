@@ -54,31 +54,31 @@ USING (
 );
 
 DROP POLICY IF EXISTS "Admins and Engineers can insert tickets" ON tickets;
-CREATE POLICY "Admins and Engineers can insert tickets" ON tickets FOR INSERT WITH CHECK (true);
+CREATE POLICY "Admins and Engineers can insert tickets" ON tickets FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 DROP POLICY IF EXISTS "Admins and Engineers can update tickets" ON tickets;
-CREATE POLICY "Admins and Engineers can update tickets" ON tickets FOR UPDATE USING (true);
+CREATE POLICY "Admins and Engineers can update tickets" ON tickets FOR UPDATE USING (auth.role() = 'authenticated');
 
 -- Comments Policies
 DROP POLICY IF EXISTS "Comments viewable by everyone" ON ticket_comments;
 CREATE POLICY "Comments viewable by everyone" ON ticket_comments FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Authenticated users can insert comments" ON ticket_comments;
-CREATE POLICY "Authenticated users can insert comments" ON ticket_comments FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Authenticated users can insert comments" ON ticket_comments FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND user_id::text = auth.uid()::text);
 DROP POLICY IF EXISTS "Users can update their own comments" ON ticket_comments;
 CREATE POLICY "Users can update their own comments" ON ticket_comments FOR UPDATE USING (user_id::text = auth.uid()::text);
 
 -- RLS policies for other tables (simplified for development, restrict in production)
 DROP POLICY IF EXISTS "Users viewable by everyone" ON users;
-CREATE POLICY "Users viewable by everyone" ON users FOR SELECT USING (true);
+CREATE POLICY "Users viewable by everyone" ON users FOR SELECT USING (auth.role() = 'authenticated');
 DROP POLICY IF EXISTS "Teams viewable by everyone" ON teams;
-CREATE POLICY "Teams viewable by everyone" ON teams FOR SELECT USING (true);
+CREATE POLICY "Teams viewable by everyone" ON teams FOR SELECT USING (auth.role() = 'authenticated');
 DROP POLICY IF EXISTS "Roles viewable by everyone" ON roles;
-CREATE POLICY "Roles viewable by everyone" ON roles FOR SELECT USING (true);
+CREATE POLICY "Roles viewable by everyone" ON roles FOR SELECT USING (auth.role() = 'authenticated');
 DROP POLICY IF EXISTS "Oracle modules viewable by everyone" ON oracle_modules;
-CREATE POLICY "Oracle modules viewable by everyone" ON oracle_modules FOR SELECT USING (true);
+CREATE POLICY "Oracle modules viewable by everyone" ON oracle_modules FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Ticket Status History Policies
 DROP POLICY IF EXISTS "Ticket status history viewable by everyone" ON ticket_status_history;
 CREATE POLICY "Ticket status history viewable by everyone" ON ticket_status_history FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Anyone can insert ticket status history" ON ticket_status_history;
-CREATE POLICY "Anyone can insert ticket status history" ON ticket_status_history FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can insert ticket status history" ON ticket_status_history FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
