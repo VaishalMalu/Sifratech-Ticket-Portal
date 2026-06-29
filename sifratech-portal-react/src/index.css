@@ -135,7 +135,7 @@ table.dt tr:last-child td{border-bottom:none;}
 table.dt tbody tr:hover td{background:#EBF4FB;cursor:pointer;}
 
 /* ── BADGES ── */
-.badge{display:inline-block;padding:3px 9px;border-radius:8px;font-size:10px;font-weight:600;letter-spacing:.3px;}
+.badge{display:inline-block;padding:3px 9px;border-radius:8px;font-size:10px;font-weight:600;letter-spacing:.3px;text-align:center;width:max-content;}
 .b-open{background:rgba(36,168,158,.15);color:#3ECDC2;}
 .b-inprogress{background:rgba(224,154,43,.15);color:#E09A2B;}
 .b-resolved{background:rgba(76,175,125,.15);color:#4CAF7D;}
@@ -233,7 +233,7 @@ table.dt tbody tr:hover td{background:#EBF4FB;cursor:pointer;}
 .toggle::after{content:'';width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .2s;}
 .toggle.on::after{left:18px;}
 .tgl-row{display:flex;align-items:center;gap:10px;font-size:13px;color:#3A4A5C;margin-bottom:12px;}
-.sla-row{display:grid;grid-template-columns:90px 100px 1fr;align-items:center;gap:12px;padding:8px 0;border-bottom:0.5px solid var(--border);}
+.sla-row{display:grid;grid-template-columns:110px 100px 1fr;align-items:center;gap:12px;padding:8px 0;border-bottom:0.5px solid var(--border);}
 .sla-row:last-child{border-bottom:none;}
 
 /* ── AGEING CHIP ── */
