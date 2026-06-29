@@ -38,7 +38,7 @@ export default function Tickets() {
             {filteredTickets.length > 0 ? filteredTickets.map(t => (
               <tr key={t.id} onClick={() => openModal('TICKET_DETAIL', { ticketId: t.id })} style={{ cursor: 'pointer' }}>
                 <td data-label="Ticket #" style={{ fontWeight: 600, color: '#1A5FA8', fontFamily: 'var(--mono)' }}>{t.number || t.id}</td>
-                <td data-label="Summary" style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.summary}</td>
+                <td data-label="Summary" className="td-summary">{t.summary}</td>
                 <td data-label="Type" style={{ color: '#4A5A6A' }}>{t.type}</td>
                 <td data-label="Module" style={{ color: '#4A5A6A' }}>{t.module}</td>
                 <td data-label="Priority"><span className={`badge ${bc(t.priority, 'p')}`}>{t.priority}</span></td>

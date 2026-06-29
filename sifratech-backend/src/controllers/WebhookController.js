@@ -72,6 +72,22 @@ const processUnreadEmails = async () => {
                 await markEmailAsRead(email.id);
                 continue;
             }
+
+            // Prevent Duplicates by Title/Email within 24 hours
+            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const { data: duplicateTicket } = await supabase
+                .from('tickets')
+                .select('id')
+                .eq('title', extractedData.title || email.subject)
+                .eq('email_address', email.from.emailAddress.address)
+                .gte('created_at', yesterday)
+                .limit(1);
+
+            if (duplicateTicket && duplicateTicket.length > 0) {
+                console.log(`Duplicate ticket detected for subject "${email.subject}". Skipping...`);
+                await markEmailAsRead(email.id);
+                continue;
+            }
             
             // Merge Data
             const ticketData = {

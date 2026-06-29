@@ -219,6 +219,21 @@ export function DataProvider({ children }) {
   }, [tickets, currentUser]);
 
   const addTicket = async (ticket) => {
+    // Prevent duplicate tickets (same title and user within 24 hours)
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: existing } = await supabase
+      .from('tickets')
+      .select('id')
+      .eq('title', ticket.title)
+      .eq('customer_name', ticket.raisedBy || 'Unknown')
+      .gte('created_at', yesterday)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      toast.error('A recent ticket with this exact summary already exists.');
+      return;
+    }
+
     // Convert assignee full_name to user id
     let assignedUserId = null;
     let initialStatus = 'Open';
