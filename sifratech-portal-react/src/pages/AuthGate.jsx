@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AuthGate() {
@@ -8,6 +8,7 @@ export default function AuthGate() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -17,7 +18,8 @@ export default function AuthGate() {
     
     const success = await login(username, password);
     if (success) {
-      navigate('/dashboard');
+      const from = location.state?.from?.pathname + (location.state?.from?.search || '') || '/dashboard';
+      navigate(from);
     } else {
       setError('Invalid username or password.');
     }

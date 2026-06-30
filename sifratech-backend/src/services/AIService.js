@@ -91,6 +91,62 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
     }
 };
 
+const generateResolutionReply = async (title, description, draftNotes) => {
+    const prompt = `You are a professional IT helpdesk assistant. 
+A support engineer has resolved a ticket and provided some rough notes.
+Please rewrite these notes into a polite, professional, and clear resolution summary to be sent to the customer.
+Do NOT include greetings like "Dear Customer" or sign-offs like "Regards". Just provide the core resolution explanation.
+Keep it concise and focus on what was fixed.
+
+Ticket Title: ${title}
+Ticket Issue: ${description || 'N/A'}
+Engineer's Draft Notes: ${draftNotes || 'The issue has been resolved successfully.'}
+
+Provide ONLY the polished text, nothing else.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error('Error generating AI reply with Gemini:', error.message || error);
+        
+        // Fallback to Groq API
+        if (process.env.GROQ_API_KEY) {
+            console.log('Attempting fallback to Groq Cloud API for reply generation...');
+            try {
+                const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.3-70b-versatile',
+                        messages: [
+                            { role: 'user', content: prompt }
+                        ]
+                    })
+                });
+                
+                if (groqResponse.ok) {
+                    const groqData = await groqResponse.json();
+                    return groqData.choices[0].message.content;
+                } else {
+                    console.error('Groq API error:', await groqResponse.text());
+                }
+            } catch (groqError) {
+                console.error('Error with Groq API fallback:', groqError.message || groqError);
+            }
+        }
+        
+        return draftNotes || 'The issue has been resolved successfully.';
+    }
+};
+
 module.exports = {
-    analyzeTicketData
+    analyzeTicketData,
+    generateResolutionReply
 };

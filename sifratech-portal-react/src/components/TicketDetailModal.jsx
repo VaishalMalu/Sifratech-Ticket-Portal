@@ -104,13 +104,27 @@ export default function TicketDetailModal() {
     } 
   };
   
-  const handleAiReply = () => {
+  const handleAiReply = async () => {
     setAiRepPanel(true);
     setAiRepLoading(true);
-    setTimeout(() => {
-      setAiRepResult(`Hello ${t.raisedBy},\n\nWe have investigated the issue regarding ${t.module}. A fix has been applied. Please confirm if the problem is resolved on your end.\n\nRegards,\nSifratech Support`);
+    try {
+      const response = await fetch('http://localhost:3000/api/ai/suggest-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: t.summary,
+          description: t.longDescription,
+          notes: resNotes
+        })
+      });
+      const data = await response.json();
+      setAiRepResult(data.suggestion || "AI failed to generate a response.");
+    } catch (err) {
+      console.error(err);
+      setAiRepResult("An error occurred while generating AI response.");
+    } finally {
       setAiRepLoading(false);
-    }, 1000);
+    }
   };
 
   const aAge = age(t.createdAt);
@@ -267,10 +281,11 @@ export default function TicketDetailModal() {
                   const { data, error } = await supabase.storage.from('ticket-attachments').upload(`${t.id}/${Date.now()}_${file.name}`, file);
                   if (data) {
                     const { data: { publicUrl } } = supabase.storage.from('ticket-attachments').getPublicUrl(data.path);
-                    setCommentTxt(prev => prev + (prev ? '\\n\\n' : '') + `[Attachment: ${file.name}](${publicUrl})`);
+                    setCommentTxt(prev => prev + (prev ? '\n\n' : '') + `[Attachment: ${file.name}](${publicUrl})`);
                     toast.success('File loaded and ready to post');
                   } else {
-                    toast.error('Failed to upload file');
+                    console.error('File Upload Error:', error);
+                    toast.error('Failed to upload file: ' + (error?.message || 'Unknown Error'));
                   }
                   setUpdating('');
                 }} accept=".png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.zip" disabled={!!updating} />

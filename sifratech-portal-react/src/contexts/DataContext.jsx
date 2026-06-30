@@ -130,9 +130,10 @@ export function DataProvider({ children }) {
         detectedDate: t.created_at, // mapped to created_at
         longDescription: t.description,
         summary: t.title, // alias for title
+        email: t.email_address,
         created: t.created_at,
         dueDate: t.due_date,
-        resolution: t.resolution_notes || '',
+        resolution: t.resolution_code || '',
         resolutionCode: t.resolution_code,
         resolvedBy: t.resolved_by,
         closedBy: t.closed_by,
@@ -353,7 +354,12 @@ export function DataProvider({ children }) {
         comments: `[${currentUser ? currentUser.label : 'System'}] Comment added.`
       }]);
       if (histError) console.error("Error inserting ticket_status_history:", histError);
+      
       fetchTickets();
+      toast.success('Comment posted successfully');
+    } else {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to post comment: ' + (error?.message || 'Database error'));
     }
   };
 
@@ -372,7 +378,7 @@ export function DataProvider({ children }) {
       .from('tickets')
       .update({ 
         status: 'Resolved', 
-        resolution_notes: resolution,
+        resolution_code: resolution,
         resolved_by: currentUser ? currentUser.label : 'System',
         resolved_at: new Date().toISOString()
       })
@@ -390,10 +396,18 @@ export function DataProvider({ children }) {
 
       // Send Email Notification to Customer
       const resolvedTicket = tickets.find(x => x.id === id);
-      if (resolvedTicket && resolvedTicket.raisedBy) {
-        // Find the email of the person who raised the ticket
-        const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', resolvedTicket.raisedBy).maybeSingle();
-        const toEmail = customerUser?.email || (resolvedTicket.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+      if (resolvedTicket) {
+        // Use the ticket's email address first, fallback to user lookup with ilike
+        let toEmail = resolvedTicket.email;
+        
+        if (!toEmail && resolvedTicket.raisedBy) {
+           const { data: customerUser } = await supabase.from('users').select('email').ilike('full_name', `%${resolvedTicket.raisedBy}%`).maybeSingle();
+           toEmail = customerUser?.email;
+        }
+        
+        if (!toEmail && resolvedTicket.client === 'Al Seer Marine') {
+           toEmail = 'support@alseermarine.com';
+        }
 
         if (toEmail) {
           apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
@@ -406,12 +420,22 @@ export function DataProvider({ children }) {
               resolutionNotes: resolution,
               portalUrl: `${window.location.origin}/tickets?id=${id}`
             })
-          }).catch(err => console.error('Failed to send resolved email:', err));
+          }).then(res => {
+            if (res.ok) toast.success(`Resolution email sent to ${toEmail}`);
+            else toast.error('Backend failed to send email.');
+          }).catch(err => {
+            console.error('Failed to send resolved email:', err);
+            toast.error('Failed to connect to backend for email.');
+          });
+        } else {
+          toast.error("Resolution saved, but no email sent: Customer email not found in database.");
         }
       }
 
       fetchTickets();
     } else {
+      console.error('Save Resolution Error:', error);
+      toast.error('Failed to save resolution: ' + (error?.message || 'Database error'));
       fetchTickets();
     }
   };

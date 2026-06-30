@@ -100,23 +100,42 @@ app.post('/api/emails/resolved', authMiddleware, async (req, res) => {
 
         const subject = `Ticket Resolved: ${ticketNumber} - ${title}`;
         const bodyContent = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e8ed; border-radius: 8px; overflow: hidden;">
-                <div style="background-color: #4CAF7D; padding: 20px; text-align: center;">
-                    <h2 style="color: white; margin: 0; font-size: 22px;">Ticket Resolved</h2>
-                </div>
-                <div style="padding: 24px; background-color: #f8fafc; border-bottom: 1px solid #e1e8ed;">
-                    <p style="margin-top: 0; font-size: 16px; color: #334155;">Hello,</p>
-                    <p style="font-size: 15px; color: #334155; line-height: 1.6;">Our support team has marked your ticket (<strong>${ticketNumber}</strong>) as resolved.</p>
-                </div>
-                <div style="padding: 24px; background-color: white;">
-                    <h3 style="margin-top: 0; font-size: 14px; color: #64748b; text-transform: uppercase;">Resolution Notes</h3>
-                    <div style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; font-size: 14px; color: #0f172a; white-space: pre-wrap; line-height: 1.6;">${resolutionNotes}</div>
-                    
-                    <div style="margin-top: 32px; text-align: center;">
-                        <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF7D; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 15px;">View Ticket in Portal</a>
-                    </div>
-                </div>
-            </div>
+<div style="font-family: Arial, sans-serif; max-width: 600px; color: #1A2A3A; line-height: 1.6; border: 1px solid #e1e8ed; padding: 24px; border-radius: 8px;">
+    <p style="margin-top: 0;">Dear Customer,</p>
+    <p>We are pleased to inform you that the issue reported on your ticket has been resolved.<br>
+    Please find the resolution summary below.</p>
+
+    <div style="background-color: #EBF5FB; padding: 20px; border-radius: 6px; margin: 24px 0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr>
+                <td style="padding: 8px 0; width: 120px; font-weight: 600; vertical-align: top;">Ticket Number:</td>
+                <td style="padding: 8px 0; vertical-align: top;">${ticketNumber}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Resolution:</td>
+                <td style="padding: 8px 0; vertical-align: top; white-space: pre-wrap; color: #3A4A5C;">${resolutionNotes}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Resolved On:</td>
+                <td style="padding: 8px 0; vertical-align: top;">${new Date().toLocaleString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} &mdash; ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</td>
+            </tr>
+        </table>
+    </div>
+
+    <p>We kindly ask that you verify the resolution on your end and take one of the following actions by logging into the portal:</p>
+    <ul style="margin-bottom: 24px; color: #3A4A5C;">
+        <li style="margin-bottom: 8px;"><strong>Close the ticket</strong> &mdash; if the issue has been fully resolved to your satisfaction.</li>
+        <li><strong>Reopen the ticket</strong> &mdash; if the issue persists or the resolution is incomplete, so that our team can continue to assist you.</li>
+    </ul>
+
+    <p style="margin-bottom: 0;">Regards,<br>
+    <strong>Sifratech Support Team</strong><br>
+    support@sifratech.com</p>
+    
+    <div style="margin-top: 32px; text-align: center;">
+        <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #1A5FA8; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">View Ticket in Portal</a>
+    </div>
+</div>
         `;
 
         await sendEmail(toEmail, subject, bodyContent);
@@ -129,6 +148,48 @@ app.post('/api/emails/resolved', authMiddleware, async (req, res) => {
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Sifratech Backend is running.' });
+});
+
+app.post('/api/ai/suggest-reply', async (req, res) => {
+    try {
+        const { generateResolutionReply } = require('./services/AIService');
+        const { title, description, notes } = req.body;
+        const suggestion = await generateResolutionReply(title, description, notes);
+        res.status(200).json({ suggestion });
+    } catch (error) {
+        console.error('Error suggesting reply:', error);
+        res.status(500).json({ error: 'Failed to generate AI reply' });
+    }
+});
+
+app.post('/api/comments', authMiddleware, async (req, res) => {
+    try {
+        const { supabase } = require('./config/supabaseClient');
+        const { ticketId, commentText, source } = req.body;
+        
+        if (!ticketId || !commentText) return res.status(400).json({ error: 'ticketId and commentText are required' });
+
+        const { error } = await supabase.from('ticket_comments').insert([{
+            ticket_id: ticketId,
+            comment_text: commentText,
+            source: source || 'Portal'
+        }]);
+
+        if (error) throw error;
+        
+        // Also insert history
+        await supabase.from('ticket_status_history').insert([{
+            ticket_id: ticketId,
+            old_status: 'Any',
+            new_status: 'Any',
+            comments: `[System] Comment added.`
+        }]);
+
+        res.status(201).json({ success: true });
+    } catch (error) {
+        console.error('Error posting comment:', error);
+        res.status(500).json({ error: error.message || 'Failed to post comment' });
+    }
 });
 
 // Start server

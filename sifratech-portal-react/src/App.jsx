@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { ModalProvider } from './contexts/ModalContext';
@@ -17,8 +17,10 @@ import Settings from './pages/Settings';
 // A simple protected route component
 function ProtectedRoute({ children }) {
   const { currentUser } = useAuth();
+  const location = useLocation();
+  
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   return children;
 }
