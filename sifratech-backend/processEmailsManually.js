@@ -28,16 +28,10 @@ async function processManually() {
 
         const bodyContent = email.bodyPreview || (email.body && email.body.content) || '';
         
-        // Privacy Check: Only process template emails
-        if (!isValidTicketTemplate(bodyContent)) {
-            console.log(`Ignoring email "${email.subject}": Not a valid ticket template. (Privacy protection)`);
-            await markEmailAsRead(email.id);
-            continue;
-        }
-
         // 1. Parse Email Template
         console.log('Parsing email template...');
         const extractedData = parseEmailBody(bodyContent);
+        const isTemplate = isValidTicketTemplate(bodyContent);
         console.log('Extracted Data:', extractedData);
 
         // 2. AI Analysis
@@ -45,6 +39,12 @@ async function processManually() {
         try {
             const aiData = await analyzeTicketData(email.subject, email.body.content, extractedData);
             console.log('AI Analysis Result:', aiData);
+
+            if (!isTemplate && aiData.is_valid_ticket === false) {
+                console.log(`Ignoring email "${email.subject}": AI determined it is not a valid support ticket.`);
+                await markEmailAsRead(email.id);
+                continue;
+            }
 
             // Merge Data
             const ticketData = {
@@ -77,7 +77,7 @@ async function processManually() {
                 .from('oracle_modules')
                 .select('id')
                 .ilike('name', ticketData.oracle_module_name)
-                .single();
+                .maybeSingle();
 
             if (moduleData) {
                 ticketData.oracle_module_id = moduleData.id;
