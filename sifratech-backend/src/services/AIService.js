@@ -75,7 +75,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
         // Final Fallback
         const hasExtractedData = extractedData && Object.values(extractedData).some(v => v !== null);
         return {
-            is_valid_ticket: hasExtractedData,
+            is_valid_ticket: true, // Default to true in fallback so we never drop emails when APIs are down
             project: 'R12',
             environment: 'Production',
             incident_type: extractedData.type || 'Email Inquiry',
