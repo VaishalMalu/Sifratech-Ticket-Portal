@@ -87,7 +87,7 @@ export default function TicketDetailModal() {
       
       if (isFirstComment && (t.status === 'Open' || t.status === 'Assigned' || t.status === 'New') && role.label === t.assignedTo) {
         await updateTicketStatus(t.id, 'In Progress');
-        fetch('http://localhost:3000/api/emails/in-progress', {
+        fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/in-progress`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -108,7 +108,7 @@ export default function TicketDetailModal() {
     setAiRepPanel(true);
     setAiRepLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/ai/suggest-reply', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/ai/suggest-reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
