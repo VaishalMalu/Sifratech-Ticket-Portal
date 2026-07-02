@@ -409,6 +409,7 @@ export function DataProvider({ children }) {
         priority: ticket.priority || 'Medium',
         company: ticket.client || 'Unknown',
         customer_name: ticket.raisedBy || 'Unknown',
+        email_address: currentUser ? currentUser.email : null,
         assigned_to: assignedUserId,
         phone_number: ticket.mobileNo,
         source: 'Portal'
