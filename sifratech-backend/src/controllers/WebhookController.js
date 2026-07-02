@@ -1,5 +1,5 @@
-const { fetchUnreadEmails, markEmailAsRead, sendEmailReply } = require('../services/GraphApiService');
-const { parseEmailBody, isReply, isValidTicketTemplate } = require('../services/EmailParserService');
+const { fetchUnreadEmails, markEmailAsRead, sendEmailReply, fetchEmailAttachments } = require('../services/GraphApiService');
+const { parseEmailBody, isReply, isValidTicketTemplate, isAutoResponse } = require('../services/EmailParserService');
 const { analyzeTicketData } = require('../services/AIService');
 const { assignTicket } = require('../services/AssignmentEngine');
 const { calculateDueDate } = require('../services/SlaEngine');
@@ -44,6 +44,13 @@ const processUnreadEmails = async () => {
                 } else {
                     bodyContent = email.body.content;
                 }
+            }
+            
+            // Filter out auto-responses, bounce messages, and empty emails
+            if (!email.subject || !bodyContent || bodyContent.trim() === '' || isAutoResponse(email.subject, email.from?.emailAddress?.address)) {
+                console.log(`Ignoring auto-response, bounce message, or empty email: ${email.subject}`);
+                await markEmailAsRead(email.id);
+                continue;
             }
             
             // 1. Parse Email Template (Best effort extraction)
@@ -136,6 +143,40 @@ const processUnreadEmails = async () => {
             if (error) {
                 console.error('Error creating ticket in DB:', error);
                 continue;
+            }
+
+            // Handle Attachments
+            if (email.hasAttachments) {
+                const attachments = await fetchEmailAttachments(email.id);
+                let attachmentLinks = [];
+                for (const att of attachments) {
+                    if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
+                        try {
+                            const buffer = Buffer.from(att.contentBytes, 'base64');
+                            const path = `${newTicket.id}/${Date.now()}_${att.name}`;
+                            
+                            const { data, error: uploadError } = await supabase.storage
+                                .from('ticket-attachments')
+                                .upload(path, buffer, { contentType: att.contentType });
+                                
+                            if (data) {
+                                const { data: { publicUrl } } = supabase.storage
+                                    .from('ticket-attachments')
+                                    .getPublicUrl(data.path);
+                                attachmentLinks.push(`[Attachment: ${att.name}](${publicUrl})`);
+                            } else {
+                                console.error('Error uploading attachment:', uploadError);
+                            }
+                        } catch (err) {
+                            console.error('Error processing attachment buffer:', err);
+                        }
+                    }
+                }
+
+                if (attachmentLinks.length > 0) {
+                    const newDesc = newTicket.description + '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
+                    await supabase.from('tickets').update({ description: newDesc }).eq('id', newTicket.id);
+                }
             }
 
             // 4. Assign Team/Engineer

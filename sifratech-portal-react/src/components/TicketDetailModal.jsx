@@ -165,14 +165,15 @@ export default function TicketDetailModal() {
             <div className="det-row"><span className="lbl">Detected</span><span>{fmt(t.detectedDate)}</span></div>
             <div className="det-row"><span className="lbl">Expected resolution</span><span>{fmt(t.expectedDate)}</span></div>
             <div className="det-row"><span className="lbl">Raised by</span><span>{t.raisedBy}</span></div>
+            <div className="det-row"><span className="lbl">Email</span><span>{t.email || '—'}</span></div>
             <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
             <div className="det-row"><span className="lbl">Team</span><span>{t.assignedTeam}</span></div>
             <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''}>{Math.max(0, Math.round(aAge / 24))} days</span></div>
           </div>
         </div>
 
-        <div className="det-section"><h3>Description</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C' }}>{t.longDescription}</p></div>
-        {t.resolution && <div className="det-section"><h3>Resolution</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C' }}>{t.resolution}</p></div>}
+        <div className="det-section"><h3>Description</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>{t.longDescription}</p></div>
+        {t.resolution && <div className="det-section"><h3>Resolution</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>{t.resolution}</p></div>}
 
         {canUp && (
           <div className="det-section"><h3>Update status</h3>
@@ -249,7 +250,7 @@ export default function TicketDetailModal() {
             {t.comments.length ? t.comments.map((c, i) => (
               <div key={i} className="comment-entry">
                 <div className="comment-meta">{c.by} · {fmt(c.ts)}</div>
-                <div style={{ color: '#1A2A3A' }}>
+                <div style={{ color: '#1A2A3A', whiteSpace: 'pre-wrap' }}>
                   {c.msg.split(/(\[.*?\]\(.*?\))/g).map((part, idx) => {
                     const m = part.match(/\[(.*?)\]\((.*?)\)/);
                     if (m) {

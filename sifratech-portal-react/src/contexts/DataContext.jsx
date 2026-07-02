@@ -177,7 +177,9 @@ export function DataProvider({ children }) {
         resolution: t.resolution_code || '',
         resolutionCode: t.resolution_code,
         resolvedBy: t.resolved_by,
+        resolvedAt: t.resolved_at,
         closedBy: t.closed_by,
+        closedAt: t.closed_at,
         updatedBy: t.updated_by,
         comments: t.ticket_comments ? t.ticket_comments.map(c => {
           let by = 'System';
@@ -351,9 +353,13 @@ export function DataProvider({ children }) {
       
       // Send Email Notification if Resolved or Closed
       if (newStatus === 'Resolved' || newStatus === 'Closed') {
-         if (t && t.raisedBy) {
-            const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
-            const toEmail = customerUser?.email || (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+         if (t) {
+            let toEmail = t.email;
+            if (!toEmail && t.raisedBy) {
+               const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
+               toEmail = customerUser?.email;
+            }
+            if (!toEmail) toEmail = (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
 
             if (toEmail) {
                apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
@@ -505,7 +511,7 @@ export function DataProvider({ children }) {
         }]);
         if (histError) console.error("Error inserting ticket_status_history:", histError);
 
-        // Send Email Notification
+        // Send Email Notification to Engineer
         if (users.email) {
           const t = tickets.find(x => x.id === id);
           apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/assign`, {
@@ -516,20 +522,64 @@ export function DataProvider({ children }) {
               ticketNumber: t.number || t.id,
               title: t.summary,
               priority: t.priority,
-              customerDetails: t.raisedBy,
+              customerDetails: t.client + ' / ' + t.raisedBy,
               module: t.module,
               status: 'Assigned',
-              assignedBy: currentUser?.label || 'System',
+              assignedBy: currentUser ? currentUser.label : 'System',
               assignmentDate: new Date().toISOString(),
-              slaDueDate: t.expectedDate || new Date(Date.now() + 24*36e5).toISOString(),
-              portalUrl: window.location.origin,
-              ticketUrl: `${window.location.origin}/tickets?id=${t.id}`
+              slaDueDate: t.dueDate || new Date(Date.now() + 24*36e5).toISOString(),
+              portalUrl: `${window.location.origin}/tickets?id=${id}`
             })
-          }).catch(err => console.error('Failed to send assignment email:', err));
+          }).then(res => {
+            if (res.ok) toast.success(`Assignment email sent to ${assignedToName}`);
+            else toast.error('Backend failed to send assignment email.');
+          }).catch(err => {
+            console.error('Failed to send assignment email:', err);
+            toast.error('Failed to connect to backend for email.');
+          });
+
+          // Send Email Notification to Customer
+          let custEmail = t.email;
+          if (!custEmail && t.raisedBy) {
+            supabase.from('users').select('email').ilike('full_name', `%${t.raisedBy}%`).maybeSingle().then(({ data: custUser }) => {
+              custEmail = custUser?.email || (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+              if (custEmail) {
+                apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/customer-assign`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    toEmail: custEmail,
+                    ticketNumber: t.number || t.id,
+                    title: t.summary,
+                    assignedTo: assignedToName,
+                    portalUrl: `${window.location.origin}/tickets?id=${id}`
+                  })
+                }).catch(err => console.error('Failed to send customer assignment email:', err));
+              }
+            });
+          } else if (custEmail) {
+             apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/customer-assign`, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 toEmail: custEmail,
+                 ticketNumber: t.number || t.id,
+                 title: t.summary,
+                 assignedTo: assignedToName,
+                 portalUrl: `${window.location.origin}/tickets?id=${id}`
+               })
+             }).catch(err => console.error('Failed to send customer assignment email:', err));
+          }
         }
+        fetchTickets();
+      } else {
+        console.error('Reassign Ticket Error:', error);
+        toast.error('Failed to reassign: ' + (error?.message || 'Database error'));
+        fetchTickets();
       }
+    } else {
+      toast.error('User not found.');
     }
-    fetchTickets();
   };
 
   const setActiveClient = (clientId) => {

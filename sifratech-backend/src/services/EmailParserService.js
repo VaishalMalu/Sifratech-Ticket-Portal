@@ -38,8 +38,58 @@ const isValidTicketTemplate = (bodyText) => {
     return hasName && hasDescription;
 };
 
+const isAutoResponse = (subject, fromAddress) => {
+    if (!subject) return true;
+    const lowerSubject = subject.toLowerCase();
+    const lowerFrom = (fromAddress || '').toLowerCase();
+    
+    const autoKeywords = [
+        'undeliverable',
+        'delivery status notification',
+        'automatic reply',
+        'out of office',
+        'action required',
+        'returned mail',
+        'auto-reply',
+        'delivery failure',
+        'microsoft teams',
+        'you have been added to a team',
+        'sharepoint',
+        'advertisement',
+        'newsletter',
+        'promotion',
+        'do not reply',
+        'spam',
+        'unsubscribe',
+        'invitation',
+        'meeting forward',
+        'calendar',
+        'accepted:',
+        'declined:',
+        'tentative:',
+        'read:',
+        'delivered:',
+        'quarantine',
+        'mail delivery subsystem',
+        'postmaster'
+    ];
+    
+    if (autoKeywords.some(keyword => lowerSubject.includes(keyword))) {
+        return true;
+    }
+    
+    // Check common automated sender addresses
+    const automatedSenders = ['postmaster@', 'mailer-daemon@', 'noreply@', 'no-reply@'];
+    if (automatedSenders.some(sender => lowerFrom.startsWith(sender))) {
+        return true;
+    }
+    
+    return false;
+};
+
 module.exports = {
     parseEmailBody,
     isReply,
-    isValidTicketTemplate
+    isValidTicketTemplate,
+    isAutoResponse
 };

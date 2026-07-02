@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 import { age, bc } from '../data/mockData';
 
 export default function Dashboard() {
-  const { tickets, sla, getActiveClient } = useData();
+  const { tickets, sla, getActiveClient, incidentTypes } = useData();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -38,9 +38,9 @@ export default function Dashboard() {
   const modules = ['Financials', 'HRMS', 'SCM', 'PPM', 'Sourcing', 'Inventory', 'Payroll', 'Other'];
   const moduleData = modules.map(m => ({ name: m.substring(0, 3), full: m, value: tickets.filter(t => t.module === m).length }));
 
-  const types = ['Bug', 'Data Fix', 'Enhancement', 'New Requirement', 'Reports', 'New Setup Request', 'Training Request', 'Data Extract', 'Responsibility Assignment'];
-  const typeColors = ['#1A9FCC', '#35C8E8', '#E09A2B', '#E05252', '#8B7FD4', '#4CAF7D', '#5BA8A4', '#1A9FCC', '#E09A2B'];
-  const typeData = types.map((t, i) => ({ name: t.substring(0, 15) + (t.length > 15 ? '..' : ''), full: t, value: tickets.filter(x => x.type === t).length, color: typeColors[i] })).filter(d => d.value > 0);
+  const dbTypes = incidentTypes && incidentTypes.length > 0 ? incidentTypes.map(t => t.name) : ['Bug', 'Data Entry Issue', 'Enhancements'];
+  const typeColors = ['#1A9FCC', '#35C8E8', '#E09A2B', '#E05252', '#8B7FD4', '#4CAF7D', '#5BA8A4', '#1A9FCC', '#E09A2B', '#8B7FD4', '#E05252'];
+  const typeData = dbTypes.map((t, i) => ({ name: t.substring(0, 15) + (t.length > 15 ? '..' : ''), full: t, value: tickets.filter(x => x.type === t).length, color: typeColors[i % typeColors.length] })).filter(d => d.value > 0);
 
   const slaData = [
     { name: 'Top', color: '#8B7FD4', compliance: Math.round((tickets.filter(t => t.priority === 'Top' && age(t.createdAt) <= sla['Top']).length / (tickets.filter(t => t.priority === 'Top').length || 1)) * 100) || 0 },

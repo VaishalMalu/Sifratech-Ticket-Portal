@@ -6,7 +6,7 @@ import { uid } from '../data/mockData';
 
 export default function CreateTicketModal() {
   const { closeModal, openModal } = useModal();
-  const { addTicket, sla, team, usersList } = useData();
+  const { addTicket, sla, team, usersList, incidentTypes } = useData();
   const { currentUser } = useAuth();
 
   // Use all users for the dropdown as requested
@@ -118,7 +118,11 @@ export default function CreateTicketModal() {
 
           <div className="fl"><label>Incident type <span className="req">*</span></label>
             <select value={type} onChange={e => setType(e.target.value)}>
-              <option>Bug</option><option>Data Extract</option><option>Data Fix</option><option>Enhancement</option><option>New Requirement</option><option>New Setup Request</option><option>Reports</option><option>Responsibility Assignment</option><option>Training Request</option>
+              {incidentTypes && incidentTypes.length > 0 ? (
+                incidentTypes.map(t => <option key={t.id || t.name} value={t.name}>{t.name}</option>)
+              ) : (
+                <option>Bug</option>
+              )}
             </select>
           </div>
           <div className="fl"><label>Module <span className="req">*</span></label>

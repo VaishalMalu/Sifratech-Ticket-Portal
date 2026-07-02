@@ -1,14 +1,25 @@
 const { GoogleGenAI } = require('@google/genai');
+const { supabase } = require('../config/supabaseClient');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Analyze the ticket email using Gemini AI
 const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
+    let validIncidentTypes = "Bug, Data Extract, Data Fix, Enhancement, New Requirement, New Setup Request, Reports, Responsibility Assignment, Training Request";
+    try {
+        const { data: typesData } = await supabase.from('incident_types').select('name');
+        if (typesData && typesData.length > 0) {
+            validIncidentTypes = typesData.map(t => t.name).join(', ');
+        }
+    } catch (err) {
+        console.error('Failed to fetch incident types for AI prompt:', err);
+    }
+
     const prompt = `
     You are an enterprise helpdesk AI assistant for Sifratech.
     Analyze the following email and extracted data. 
     Determine if the email represents a legitimate IT support request/issue.
-    CRITICAL INSTRUCTION: You MUST return "is_valid_ticket": false if the email is an advertisement, a marketing newsletter, a system alert (e.g., 'free trial', 'subscription update'), a personal email, general office chatter, or anything that is NOT a genuine request for helpdesk support.
+    CRITICAL INSTRUCTION: You MUST strictly audit the email content. Return "is_valid_ticket": false if the email is an advertisement, a marketing newsletter, a system alert (e.g., 'free trial', 'subscription update'), a bounce message like 'undeliverable' or 'delivery status notification', an 'out of office' reply, 'action required' system alerts, 'automatic reply', Microsoft Teams or SharePoint notifications ('you have been added to a team'), a personal email, general office chatter, or anything that is NOT a genuine, human-written request for helpdesk support.
 
     Provide your classification as a JSON object with these keys: 
     "is_valid_ticket" (boolean), "project", "environment", "incident_type", "oracle_module", "priority", "severity", "business_impact", "sentiment", "suggested_resolution", "estimated_resolution_time_hours", "confidence_score".
@@ -20,7 +31,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
     Valid Oracle Modules: Financials, HRMS, SCM, Payroll, Inventory, Projects, Procurement.
     Valid Priorities: Low, Medium, High, Critical.
     Valid Environments: Development, Patching, Testing, Production.
-    Valid Incident Types: Bug, Data Extract, Data Fix, Enhancement, New Requirement, New Setup Request, Reports, Responsibility Assignment, Training Request.
+    Valid Incident Types: ${validIncidentTypes}.
     
     If the project is unknown, default to "R12".
     If the environment is unknown, default to "Production".

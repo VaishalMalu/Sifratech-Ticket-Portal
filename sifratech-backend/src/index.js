@@ -80,6 +80,30 @@ app.post('/api/emails/assign', authMiddleware, async (req, res) => {
     }
 });
 
+app.post('/api/emails/customer-assign', authMiddleware, async (req, res) => {
+    try {
+        const { sendEmail } = require('./services/GraphApiService');
+        const { toEmail, ticketNumber, title, portalUrl, assignedTo } = req.body;
+        
+        if (!toEmail) return res.status(400).json({ error: 'toEmail is required' });
+
+        const subject = `Ticket Assigned: ${ticketNumber} - ${title}`;
+        const bodyContent = `
+            <h2>Your ticket has been assigned.</h2>
+            <p><strong>Ticket Number:</strong> ${ticketNumber}</p>
+            <p><strong>Title:</strong> ${title}</p>
+            <p>Your ticket has been assigned to our support engineer: <strong>${assignedTo}</strong>.</p>
+            <p><a href="${portalUrl}" style="padding: 10px 15px; background-color: #1A5FA8; color: white; text-decoration: none; border-radius: 4px;">View in Portal</a></p>
+        `;
+
+        await sendEmail(toEmail, subject, bodyContent);
+        res.status(200).json({ success: true, message: 'Email sent successfully' });
+    } catch (error) {
+        console.error('Error sending customer assignment email:', error);
+        res.status(500).json({ error: 'Failed to send customer assignment email' });
+    }
+});
+
 app.post('/api/emails/in-progress', authMiddleware, async (req, res) => {
     try {
         const { sendEmail } = require('./services/GraphApiService');

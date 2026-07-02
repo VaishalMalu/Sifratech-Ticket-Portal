@@ -37,6 +37,18 @@ const fetchUnreadEmails = async () => {
     }
 };
 
+// Fetch email attachments
+const fetchEmailAttachments = async (messageId) => {
+    try {
+        const client = getGraphClient();
+        const attachments = await client.api(`users/${process.env.MS_GRAPH_MAILBOX}/messages/${messageId}/attachments`).get();
+        return attachments.value;
+    } catch (error) {
+        console.error(`Error fetching attachments for email ${messageId}:`, error);
+        return [];
+    }
+};
+
 // Mark email as read
 const markEmailAsRead = async (messageId) => {
     try {
@@ -88,6 +100,7 @@ const sendEmail = async (toEmail, subject, bodyContent) => {
 module.exports = {
     subscribeToSupportMailbox,
     fetchUnreadEmails,
+    fetchEmailAttachments,
     markEmailAsRead,
     sendEmailReply,
     sendEmail
