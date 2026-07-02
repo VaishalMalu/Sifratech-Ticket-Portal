@@ -1,12 +1,25 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { handleOutlookWebhook, processUnreadEmails } = require('./controllers/WebhookController');
 const { subscribeToSupportMailbox } = require('./services/GraphApiService');
 const { authMiddleware } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Apply Helmet for security headers
+app.use(helmet());
+
+// Apply Rate Limiting (e.g. 200 requests per 15 mins per IP)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { error: 'Too many requests, please try again later.' }
+});
+app.use('/api/', apiLimiter);
 
 app.use(cors());
 app.use(express.json());
@@ -229,13 +242,32 @@ app.post('/api/comments', authMiddleware, async (req, res) => {
     }
 });
 
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+    console.error('Unhandled API Error:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+});
+
+// Process-level safety nets to prevent server crashes
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Start server
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT}`);
     
     // Attempt to subscribe to the Microsoft Graph Webhook on startup
     if (process.env.GRAPH_CLIENT_ID && process.env.WEBHOOK_URL) {
-        await subscribeToSupportMailbox();
+        try {
+            await subscribeToSupportMailbox();
+        } catch (webhookErr) {
+            console.error('Failed to subscribe to Webhook on startup. The server will continue running. Error:', webhookErr);
+        }
     } else {
         console.warn('Skipping Graph Webhook subscription: Missing WEBHOOK_URL in .env');
         console.log('Starting local polling mode... Checking for new emails every 30 seconds.');

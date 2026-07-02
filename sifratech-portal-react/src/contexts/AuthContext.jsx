@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { ROLES, DEMO_CREDS } from '../data/mockData';
 
@@ -28,6 +28,18 @@ export function AuthProvider({ children }) {
       seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager'
     };
   }, [currentUser]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+         if (!session) {
+            setCurrentUser(null);
+            localStorage.removeItem('sifratech_auth');
+         }
+      }
+    });
+    return () => subscription?.unsubscribe();
+  }, []);
 
   const login = async (username, password) => {
     // 1. Try Live Supabase Authentication first

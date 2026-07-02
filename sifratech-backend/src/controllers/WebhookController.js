@@ -20,13 +20,6 @@ const processUnreadEmails = async () => {
             // Process the email
             console.log(`Processing email: ${email.subject}`);
 
-            // Skip replies for now or handle them by adding comments
-            if (isReply(email.subject)) {
-                // Implementation for appending comment to existing ticket goes here
-                await markEmailAsRead(email.id);
-                continue;
-            }
-
             const cleanHtml = (html) => {
                 if (!html) return '';
                 return html.replace(/<br\s*\/?>/gi, '\n')
@@ -49,6 +42,81 @@ const processUnreadEmails = async () => {
             // Filter out auto-responses, bounce messages, and empty emails
             if (!email.subject || !bodyContent || bodyContent.trim() === '' || isAutoResponse(email.subject, email.from?.emailAddress?.address)) {
                 console.log(`Ignoring auto-response, bounce message, or empty email: ${email.subject}`);
+                await markEmailAsRead(email.id);
+                continue;
+            }
+
+            // Handle Replies
+            if (isReply(email.subject)) {
+                console.log(`Processing Reply: ${email.subject}`);
+                
+                // 1. Find matching ticket
+                let matchedTicket = null;
+                const ticketMatch = email.subject.match(/TKT-\d{4}-\d{6}/i);
+                
+                if (ticketMatch) {
+                    const { data } = await supabase.from('tickets').select('id, status').eq('ticket_number', ticketMatch[0].toUpperCase()).maybeSingle();
+                    matchedTicket = data;
+                }
+                
+                if (!matchedTicket && email.conversationId) {
+                    const { data } = await supabase.from('tickets').select('id, status').eq('conversation_id', email.conversationId).maybeSingle();
+                    matchedTicket = data;
+                }
+                
+                if (matchedTicket) {
+                    // Extract just the new reply part (primitive approach: split by standard reply dividers)
+                    let newComment = bodyContent.split(/On .* wrote:|From: .*|_{10,}|-{10,}/i)[0].trim();
+                    if (!newComment) newComment = bodyContent.trim();
+                    
+                    // Handle Attachments
+                    let attachmentLinks = [];
+                    if (email.hasAttachments) {
+                        const attachments = await fetchEmailAttachments(email.id);
+                        for (const att of attachments) {
+                            if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
+                                try {
+                                    const buffer = Buffer.from(att.contentBytes, 'base64');
+                                    const path = `${matchedTicket.id}/${Date.now()}_${att.name}`;
+                                    const { data, error: uploadError } = await supabase.storage.from('ticket-attachments').upload(path, buffer, { contentType: att.contentType });
+                                    if (data) {
+                                        const { data: { publicUrl } } = supabase.storage.from('ticket-attachments').getPublicUrl(data.path);
+                                        attachmentLinks.push(`[Attachment: ${att.name}](${publicUrl})`);
+                                    } else {
+                                        console.error('Error uploading reply attachment:', uploadError);
+                                    }
+                                } catch (err) {
+                                    console.error('Error processing reply attachment:', err);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (attachmentLinks.length > 0) {
+                        newComment += '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
+                    }
+                    
+                    // Insert Comment
+                    await supabase.from('ticket_comments').insert([{
+                        ticket_id: matchedTicket.id,
+                        comment_text: newComment,
+                        source: `Email from ${email.from.emailAddress.name}`
+                    }]);
+                    
+                    // Auto-Reopen if Awaiting Customer or Resolved
+                    if (matchedTicket.status === 'Awaiting Customer' || matchedTicket.status === 'Resolved') {
+                        await supabase.from('tickets').update({ status: 'Open' }).eq('id', matchedTicket.id);
+                        await supabase.from('ticket_status_history').insert([{
+                            ticket_id: matchedTicket.id,
+                            old_status: matchedTicket.status,
+                            new_status: 'Open',
+                            comments: '[System] Ticket automatically reopened due to customer reply.'
+                        }]);
+                    }
+                } else {
+                    console.warn(`Could not find matching ticket for reply: ${email.subject}`);
+                }
+                
                 await markEmailAsRead(email.id);
                 continue;
             }

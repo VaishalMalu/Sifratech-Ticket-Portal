@@ -52,7 +52,7 @@ export default function TicketDetailModal() {
   let stats = [];
   if (role.role === 'Account Manager' || role.isAdmin || role.role === 'Delivery Manager' || role.role === 'Manager') {
     if (t.status === 'Open') stats = ['Assigned', 'Closed'];
-    else if (t.status === 'Assigned') stats = ['In Progress', 'Closed', 'Open'];
+    else if (t.status === 'Assigned') stats = ['In Progress', 'Awaiting Customer', 'Closed', 'Open'];
     else if (t.status === 'In Progress') stats = ['Resolved', 'Awaiting Customer', 'Closed'];
     else if (t.status === 'Awaiting Customer') stats = ['In Progress', 'Resolved', 'Closed'];
     else if (t.status === 'Resolved') stats = ['Closed', 'Reopened'];
@@ -60,7 +60,7 @@ export default function TicketDetailModal() {
     else stats = ['Open', 'Closed'];
   } else if (role.isSupport) {
     if (t.status === 'Open') stats = ['Assigned'];
-    else if (t.status === 'Assigned') stats = ['In Progress'];
+    else if (t.status === 'Assigned') stats = ['In Progress', 'Awaiting Customer'];
     else if (t.status === 'In Progress') stats = ['Resolved', 'Awaiting Customer'];
     else if (t.status === 'Awaiting Customer') stats = ['In Progress', 'Resolved'];
   } else {
@@ -76,7 +76,17 @@ export default function TicketDetailModal() {
   // Use all users for the dropdown as requested
   const allSystemUsers = usersList || [];
   const handleStatusUpdate = async (s) => { setUpdating(`status-${s}`); await updateTicketStatus(t.id, s); setUpdating(''); };
-  const handleAssign = async () => { if(assignSel) { setUpdating('assign'); await reassignTicket(t.id, assignSel); setUpdating(''); } };
+  const handleAssign = async () => { 
+    if(assignSel) { 
+      setUpdating('assign'); 
+      try {
+        await reassignTicket(t.id, assignSel); 
+      } catch (e) {
+        toast.error('handleAssign Error: ' + e.message);
+      }
+      setUpdating(''); 
+    } 
+  };
   const handleSaveRes = async () => { setUpdating('res'); await saveResolution(t.id, resNotes); setUpdating(''); };
   const handleAddComment = async () => { 
     if(commentTxt.trim()){ 
@@ -87,16 +97,6 @@ export default function TicketDetailModal() {
       
       if (isFirstComment && (t.status === 'Open' || t.status === 'Assigned' || t.status === 'New') && role.label === t.assignedTo) {
         await updateTicketStatus(t.id, 'In Progress');
-        fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/in-progress`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            toEmail: t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : 'it@dutco.com',
-            ticketNumber: t.number || t.id,
-            title: t.summary,
-            portalUrl: window.location.origin
-          })
-        }).catch(err => console.error('Failed to send in-progress email:', err));
       }
 
       setCommentTxt(''); 

@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import Tickets from './pages/Tickets';
 import Team from './pages/Team';
 import Settings from './pages/Settings';
+import NotFound from './pages/NotFound';
 
 // A simple protected route component
 function ProtectedRoute({ children }) {
@@ -47,6 +48,9 @@ export default function App() {
               <Route path="team" element={<Team />} />
               <Route path="settings" element={<Settings />} />
             </Route>
+            
+            {/* 404 Fallback Route */}
+            <Route path="*" element={<NotFound />} />
             
           </Routes>
         </Router>

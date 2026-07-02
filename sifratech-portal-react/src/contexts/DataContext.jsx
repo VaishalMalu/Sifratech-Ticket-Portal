@@ -28,13 +28,23 @@ export function DataProvider({ children }) {
   const apiFetch = async (url, options = {}) => {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
-    return fetch(url, {
+    const response = await fetch(url, {
       ...options,
       headers: {
         ...options.headers,
         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       }
     });
+    
+    if (response.status === 401) {
+        toast.error('Session expired. Please log in again.');
+        // We do not have direct access to logout here without getting it from useAuth,
+        // but wait! DataContext destructures currentUser from useAuth.
+        // Let's rely on the AuthContext's onAuthStateChange for automatic logout if the token is completely invalid.
+        // But if we want to force logout here, we can dispatch an event or call supabase.auth.signOut().
+        supabase.auth.signOut();
+    }
+    return response;
   };
 
   const fetchSettings = async () => {
@@ -95,6 +105,7 @@ export function DataProvider({ children }) {
       }
     } catch(err) {
       console.error("Error fetching settings:", err);
+      toast.error('Failed to load system settings. Please refresh the page.');
     }
   };
 
@@ -113,6 +124,8 @@ export function DataProvider({ children }) {
 
       if (error) {
         console.error("Error fetching tickets from Supabase:", error);
+        toast.error('Database connection failed. Showing offline ticket mode.');
+        setTickets([]);
         return;
       }
 
@@ -219,6 +232,8 @@ export function DataProvider({ children }) {
       setTickets(mappedTickets);
     } catch (err) {
       console.error(err);
+      toast.error('Failed to parse tickets. Check database schema.');
+      setTickets([]);
     }
   };
 
@@ -245,7 +260,92 @@ export function DataProvider({ children }) {
            }
         }
         
-        fetchTickets(); // refetch on any change
+        // Prevent Thundering Herd: Spread 1000s of users fetching the updated row over 2 seconds
+        setTimeout(async () => {
+           if (payload.eventType === 'DELETE') {
+              setTickets(prev => prev.filter(t => t.id !== payload.old.id));
+           } else if (payload.new?.id) {
+              const { data: t, error } = await supabase
+                .from('tickets')
+                .select(`
+                  *,
+                  users:assigned_to (full_name),
+                  ticket_comments (comment_text, created_at, source),
+                  ticket_status_history (old_status, new_status, comments, created_at)
+                `)
+                .eq('id', payload.new.id)
+                .single();
+                
+              if (t && !error) {
+                  // Map the single ticket exactly like fetchTickets does
+                  const assignedUser = t.users;
+                  let modName = t.module;
+                  
+                  const mappedTicket = {
+                      id: t.id,
+                      number: t.ticket_number,
+                      title: t.title,
+                      status: t.status,
+                      priority: t.priority,
+                      client: t.company,
+                      raisedBy: t.customer_name || t.created_by,
+                      module: modName,
+                      type: t.ticket_type,
+                      requestType: t.request_type,
+                      severity: t.severity,
+                      businessImpact: t.business_impact,
+                      assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
+                      assignedToId: t.assigned_to,
+                      project: 'ASM Support',
+                      environment: 'Production',
+                      createdAt: t.created_at,
+                      detectedDate: t.created_at,
+                      longDescription: t.description,
+                      summary: t.title,
+                      email: t.email_address,
+                      created: t.created_at,
+                      dueDate: t.due_date,
+                      resolution: t.resolution_code || '',
+                      resolutionCode: t.resolution_code,
+                      resolvedBy: t.resolved_by,
+                      resolvedAt: t.resolved_at,
+                      closedBy: t.closed_by,
+                      closedAt: t.closed_at,
+                      updatedBy: t.updated_by,
+                      comments: t.ticket_comments ? t.ticket_comments.map(c => {
+                        let by = 'System';
+                        let msg = c.comment_text;
+                        if (msg && msg.startsWith('[')) {
+                           const cb = msg.indexOf(']');
+                           if (cb !== -1) {
+                              by = msg.substring(1, cb);
+                              msg = msg.substring(cb + 1).trim();
+                           }
+                        }
+                        return { ts: c.created_at, by: by, msg: msg };
+                      }) : [],
+                      auditLog: t.ticket_status_history ? t.ticket_status_history.map(h => {
+                        let by = 'System';
+                        let msg = h.comments || `Status changed from ${h.old_status} to ${h.new_status}`;
+                        if (msg && msg.startsWith('[')) {
+                           const cb = msg.indexOf(']');
+                           if (cb !== -1) {
+                              by = msg.substring(1, cb);
+                              msg = msg.substring(cb + 1).trim();
+                           }
+                        }
+                        return { ts: h.created_at, by: by, msg: msg };
+                      }) : []
+                  };
+
+                  setTickets(prev => {
+                      const exists = prev.find(x => x.id === mappedTicket.id);
+                      if (exists) return prev.map(x => x.id === mappedTicket.id ? mappedTicket : x);
+                      return [...prev, mappedTicket];
+                  });
+              }
+           }
+        }, Math.random() * 2000);
       })
       .subscribe();
 
@@ -351,17 +451,18 @@ export function DataProvider({ children }) {
       }]);
       if (histError) console.error("Error inserting ticket_status_history:", histError);
       
-      // Send Email Notification if Resolved or Closed
-      if (newStatus === 'Resolved' || newStatus === 'Closed') {
-         if (t) {
-            let toEmail = t.email;
-            if (!toEmail && t.raisedBy) {
-               const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
-               toEmail = customerUser?.email;
-            }
-            if (!toEmail) toEmail = (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+      // Send Email Notifications
+      if (t) {
+         let toEmail = t.email;
+         if (!toEmail && t.raisedBy) {
+            const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
+            toEmail = customerUser?.email;
+         }
+         if (!toEmail) toEmail = (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
 
-            if (toEmail) {
+         if (toEmail) {
+            // "Resolved" Notification
+            if (newStatus === 'Resolved') {
                apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -369,10 +470,39 @@ export function DataProvider({ children }) {
                      toEmail: toEmail,
                      ticketNumber: t.number || t.id,
                      title: t.summary,
-                     resolutionNotes: t.resolution || 'Ticket has been marked as ' + newStatus + '.',
+                     resolutionNotes: t.resolution || 'Ticket has been marked as Resolved.',
                      portalUrl: `${window.location.origin}/tickets?id=${id}`
                   })
-               }).catch(err => console.error(`Failed to send ${newStatus} email:`, err));
+               }).catch(err => console.error(`Failed to send Resolved email:`, err));
+            }
+            
+            // "In Progress" Notification (Only if moved from Open or New)
+            if (newStatus === 'In Progress' && (oldStatus === 'Open' || oldStatus === 'New')) {
+               apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/in-progress`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                     toEmail: toEmail,
+                     ticketNumber: t.number || t.id,
+                     title: t.summary,
+                     portalUrl: `${window.location.origin}/tickets?id=${id}`
+                  })
+               }).catch(err => console.error(`Failed to send In Progress email:`, err));
+            }
+
+            // "Closed" Notification (Only if moved from Open, New, In Progress, or Resolved)
+            if (newStatus === 'Closed' && oldStatus !== 'Closed') {
+               apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                     toEmail: toEmail,
+                     ticketNumber: t.number || t.id,
+                     title: t.summary,
+                     resolutionNotes: 'This ticket has been permanently closed by our team. If you require further assistance, please open a new ticket.',
+                     portalUrl: `${window.location.origin}/tickets?id=${id}`
+                  })
+               }).catch(err => console.error(`Failed to send Closed email:`, err));
             }
          }
       }
@@ -404,6 +534,19 @@ export function DataProvider({ children }) {
       
       fetchTickets();
       toast.success('Comment posted successfully');
+      
+      // Auto-update status to Awaiting Customer if commented by an engineer
+      const t = tickets.find(x => x.id === id);
+      if (t && currentUser) {
+          const isEngineer = currentUser.isSupport || currentUser.role === 'Account Manager' || currentUser.isAdmin || currentUser.role === 'Delivery Manager';
+          if (isEngineer && t.status !== 'Resolved' && t.status !== 'Closed' && t.status !== 'Awaiting Customer') {
+              // We don't auto-update if it's New/Open because the first comment logic handles changing to In-Progress.
+              // But if it's already In Progress, we move it to Awaiting Customer.
+              if (t.status === 'In Progress') {
+                  await updateTicketStatus(id, 'Awaiting Customer');
+              }
+          }
+      }
     } else {
       console.error('Error adding comment:', error);
       toast.error('Failed to post comment: ' + (error?.message || 'Database error'));
@@ -493,13 +636,13 @@ export function DataProvider({ children }) {
       ticket.id === id ? { ...ticket, assignedTo: assignedToName, status: 'Assigned' } : ticket
     ));
 
-    // Find the real UUID and email for the selected user name
-    const { data: users } = await supabase.from('users').select('id, email').eq('full_name', assignedToName).maybeSingle();
+    // Find the real UUID and email for the selected user name using our loaded usersList
+    const assignedUser = usersList.find(u => u.full_name === assignedToName);
     
-    if (users) {
+    if (assignedUser) {
       const { error } = await supabase
         .from('tickets')
-        .update({ assigned_to: users.id, status: 'Assigned' })
+        .update({ assigned_to: assignedUser.id, status: 'Assigned' })
         .eq('id', id);
         
       if (!error) {
@@ -512,13 +655,13 @@ export function DataProvider({ children }) {
         if (histError) console.error("Error inserting ticket_status_history:", histError);
 
         // Send Email Notification to Engineer
-        if (users.email) {
+        if (assignedUser.email) {
           const t = tickets.find(x => x.id === id);
           apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/assign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              toEmail: users.email,
+              toEmail: assignedUser.email,
               ticketNumber: t.number || t.id,
               title: t.summary,
               priority: t.priority,
@@ -530,9 +673,12 @@ export function DataProvider({ children }) {
               slaDueDate: t.dueDate || new Date(Date.now() + 24*36e5).toISOString(),
               portalUrl: `${window.location.origin}/tickets?id=${id}`
             })
-          }).then(res => {
+          }).then(async res => {
             if (res.ok) toast.success(`Assignment email sent to ${assignedToName}`);
-            else toast.error('Backend failed to send assignment email.');
+            else {
+               const errText = await res.text();
+               toast.error(`Backend failed: ${res.status} - ${errText}`);
+            }
           }).catch(err => {
             console.error('Failed to send assignment email:', err);
             toast.error('Failed to connect to backend for email.');
