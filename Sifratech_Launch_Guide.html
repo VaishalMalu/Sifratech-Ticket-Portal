@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sifratech Support Portal - Launch Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1A9FCC;
+            --primary-dark: #127293;
+            --secondary: #35C8E8;
+            --accent: #E09A2B;
+            --text-main: #1A2A3A;
+            --text-muted: #6B7A8D;
+            --bg-light: #F8FAFC;
+            --border: #E2E8F0;
+            --success: #4CAF7D;
+            --danger: #E05252;
+            --page-width: 210mm;
+            --page-height: 297mm;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            background-color: #E2E8F0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .document-container {
+            width: var(--page-width);
+            margin: 0 auto;
+            background: transparent;
+        }
+
+        .page {
+            width: var(--page-width);
+            min-height: var(--page-height);
+            background: white;
+            margin: 2rem auto;
+            padding: 2.5in 1.5in;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            position: relative;
+            page-break-after: always;
+            overflow: hidden;
+        }
+
+        .page.cover {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            background: linear-gradient(135deg, #0A1929 0%, #1A2A3A 100%);
+            color: white;
+            padding: 3in 1.5in;
+        }
+
+        .cover-graphic {
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(26,159,204,0.15) 0%, rgba(26,159,204,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .cover-logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cover-logo span {
+            color: var(--secondary);
+        }
+
+        .cover-title {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            letter-spacing: -1.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            font-weight: 300;
+            margin-bottom: 4rem;
+        }
+
+        .cover-footer {
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 2rem;
+            width: 100%;
+        }
+
+        .cover-footer p {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 0.2rem;
+        }
+
+        /* Inner Pages */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary);
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1.25rem;
+            font-size: 1.05rem;
+            color: #334155;
+        }
+
+        ul, ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: #334155;
+            font-size: 1.05rem;
+        }
+
+        /* Components */
+        .alert {
+            background: #F0F9FF;
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .alert h4 {
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .email-template {
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .email-header {
+            background: var(--bg-light);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .email-row {
+            display: flex;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .email-label {
+            width: 80px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .email-value {
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .email-body {
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #334155;
+            background: #FAFAFA;
+            white-space: pre-wrap;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-top: 3px solid var(--primary);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: #F0F9FF;
+            color: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .feature-card p {
+            font-size: 0.9rem;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        .step-container {
+            display: flex;
+            margin-bottom: 2rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-right: 1.5rem;
+        }
+
+        .step-content h3 {
+            margin-top: 0;
+            color: var(--primary-dark);
+        }
+        
+        .step-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .img-placeholder {
+            width: 100%;
+            height: 250px;
+            background: #E2E8F0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94A3B8;
+            font-weight: 500;
+            margin: 1.5rem 0;
+            border: 1px dashed #CBD5E1;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 1rem 0;
+        }
+
+        .tech-badge {
+            background: #F1F5F9;
+            color: #334155;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid #E2E8F0;
+        }
+
+        /* Print overrides */
+        @media print {
+            body { background: white; }
+            .document-container { width: 100%; margin: 0; }
+            .page { 
+                margin: 0; 
+                box-shadow: none; 
+                width: 100%; 
+                height: 100%;
+                padding: 1in;
+            }
+            .page.cover {
+                padding: 2in 1in;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="document-container">
+
+    <!-- COVER PAGE -->
+    <div class="page cover">
+        <div class="cover-graphic"></div>
+        <div class="cover-logo">
+            <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
+                <circle cx="22" cy="10" r="3.5" fill="#35C8E8"/>
+                <circle cx="8" cy="22" r="2.8" fill="#35C8E8" opacity=".7"/>
+                <circle cx="36" cy="22" r="2.8" fill="#35C8E8" opacity=".7"/>
+                <circle cx="13" cy="34" r="2.5" fill="#1A9FCC" opacity=".6"/>
+                <circle cx="31" cy="34" r="2.5" fill="#1A9FCC" opacity=".6"/>
+                <circle cx="22" cy="26" r="3.5" fill="#35C8E8"/>
+                <line x1="22" y1="10" x2="8" y2="22" stroke="#35C8E8" stroke-width="1.2" opacity=".5"/>
+                <line x1="22" y1="10" x2="36" y2="22" stroke="#35C8E8" stroke-width="1.2" opacity=".5"/>
+                <line x1="8" y1="22" x2="22" y2="26" stroke="#35C8E8" stroke-width="1.2" opacity=".5"/>
+                <line x1="36" y1="22" x2="22" y2="26" stroke="#35C8E8" stroke-width="1.2" opacity=".5"/>
+                <line x1="22" y1="26" x2="13" y2="34" stroke="#1A9FCC" stroke-width="1.2" opacity=".4"/>
+                <line x1="22" y1="26" x2="31" y2="34" stroke="#1A9FCC" stroke-width="1.2" opacity=".4"/>
+                <line x1="8" y1="22" x2="13" y2="34" stroke="#1A9FCC" stroke-width="1" opacity=".3"/>
+                <line x1="36" y1="22" x2="31" y2="34" stroke="#1A9FCC" stroke-width="1" opacity=".3"/>
+            </svg>
+            SIFRA<span>TECH</span>
+        </div>
+        <h1 class="cover-title" style="border:none; padding:0; color:white;">Support Portal<br>Platform</h1>
+        <div class="cover-subtitle">Official Launch &amp; Operational Guide</div>
+        
+        <div class="cover-footer">
+            <p><strong>Version:</strong> 1.0.0 — Launch Edition</p>
+            <p><strong>Prepared By:</strong> Sifratech Development &amp; Operations Team</p>
+            <p><strong>Classification:</strong> Confidential &amp; Proprietary</p>
+        </div>
+    </div>
+
+    <!-- TABLE OF CONTENTS -->
+    <div class="page">
+        <h1>Table of Contents</h1>
+        
+        <div style="font-size: 1.1rem; line-height: 2;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px;">
+                <strong>1. Customer Guide</strong><span>Page 3</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>1.1 Raising a Ticket via Outlook</span><span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>1.2 Email Templates for High Accuracy</span><span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>1.3 Accessing the Client Portal</span><span></span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; margin-top: 20px;">
+                <strong>2. Support Team Guide (Internal)</strong><span>Page 5</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>2.1 Navigating the Dashboard</span><span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>2.2 Managing &amp; Resolving Tickets</span><span></span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; margin-top: 20px;">
+                <strong>3. Account Manager Guide</strong><span>Page 7</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>3.1 Operational Overview &amp; KPIs</span><span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>3.2 Manual Assignment &amp; Escalations</span><span></span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; margin-top: 20px;">
+                <strong>4. Developer &amp; Technical Architecture</strong><span>Page 9</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>4.1 Stack &amp; Infrastructure</span><span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dotted #CBD5E1; margin-bottom: 10px; padding-left: 20px;">
+                <span>4.2 Integration Specifications (AI &amp; Outlook)</span><span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 1: CUSTOMER GUIDE -->
+    <div class="page">
+        <h1>1. Customer Guide</h1>
+        <p>Welcome to the Sifratech Support experience. We have designed our portal to make raising and tracking incidents as frictionless as possible. You can raise a ticket directly from your Microsoft Outlook client, or log into the portal for full visibility.</p>
+
+        <h2>1.1 Raising a Ticket via Outlook</h2>
+        <p>You do not need to log into the portal to raise a ticket. Simply send an email to our dedicated support address.</p>
+        
+        <div class="step-container">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Draft your Email</h3>
+                <p>Open Outlook and create a new email addressed to <strong>asmsupport@sifratc.com</strong>.</p>
+            </div>
+        </div>
+        
+        <div class="step-container">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Choose your format (Plain vs Template)</h3>
+                <p><strong>Plain Email:</strong> You can simply type your issue in plain text. Our backend AI will automatically read your email, determine the urgency, categorize the Oracle Module, and assign it to the right team.</p>
+                <p><strong>Structured Template:</strong> If you want to ensure 100% accuracy and bypass AI guessing, you can use our standardized template. <em>(Highly Recommended for complex technical issues)</em>.</p>
+            </div>
+        </div>
+
+        <h2>1.2 The Official Email Template</h2>
+        <p>If you prefer to provide structured data that our system can instantly map to database fields, copy and paste the below block into your email body. Fill in the values after the colons.</p>
+
+        <div class="email-template">
+            <div class="email-header">
+                <div class="email-row"><div class="email-label">To:</div><div class="email-value">asmsupport@sifratc.com</div></div>
+                <div class="email-row"><div class="email-label">Subject:</div><div class="email-value">[Your Issue Summary]</div></div>
+            </div>
+            <div class="email-body">**SIFRATECH TICKET TEMPLATE**
+(Please fill the details below)
+
+Priority: High / Medium / Low
+Module: Financials / HRMS / SCM / PPM / Payroll
+Type: Bug / Data Fix / New Requirement
+Phone: +971 xx xxx xxxx
+Ext: 1234
+
+**Description of Issue:**
+Please describe the issue in detail here...</div>
+        </div>
+
+        <div class="alert">
+            <h4><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> AI Triage Feature</h4>
+            <p>If you don't use the template, don't worry! Our integrated Anthropic Claude AI model will read your plain text email and automatically extract the priority, module, and intent.</p>
+        </div>
+        
+        <div class="img-placeholder">[Screenshot: Outlook Mail Window with Template Filled]</div>
+
+    </div>
+
+    <!-- SECTION 1 (CONT) -->
+    <div class="page">
+        <h2>1.3 Accessing the Client Portal</h2>
+        <p>Once your email is sent, you will immediately receive an automated confirmation email containing your Ticket ID (e.g., <code>TKT-2026-104592</code>) and a secure link to the portal.</p>
+
+        <div class="step-container">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Login Securely</h3>
+                <p>Click the link in your email or navigate to <strong>support.sifratech.com</strong>. Enter your registered email address and your password. Access is strictly authenticated via our secure backend.</p>
+            </div>
+        </div>
+
+        <div class="step-container">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Track Status</h3>
+                <p>On the "Tickets" tab, you will see a live view of your tickets. You can see whether the ticket is <em>Open, Assigned, In Progress, or Resolved</em>.</p>
+            </div>
+        </div>
+
+        <div class="step-container">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Communicate with Engineers</h3>
+                <p>Click on any ticket to open the details view. You can add comments, attach screenshots/logs, and view updates directly from the Sifratech engineering team.</p>
+            </div>
+        </div>
+
+        <div class="img-placeholder">[Screenshot: Client Dashboard showing their specific tickets and statuses]</div>
+    </div>
+
+    <!-- SECTION 2: INTERNAL TEAM GUIDE -->
+    <div class="page">
+        <h1>2. Support Team Guide (Internal)</h1>
+        <p>This section is for Sifratech Support Engineers. The portal provides a focused, zero-clutter environment to manage your assigned workloads effectively.</p>
+
+        <h2>2.1 Navigating the Dashboard</h2>
+        <p>When you log in, the system recognizes your role as an Engineer and filters your view.</p>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg></div>
+                <h4>Personalized Dashboard</h4>
+                <p>Your KPI metrics only reflect tickets assigned to you or your specific module group. You won't be distracted by unrelated data.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                <h4>SLA Tracking</h4>
+                <p>Tickets nearing their SLA breach limit are automatically highlighted in red. Focus on the 'Ageing' metrics to prioritize your day.</p>
+            </div>
+        </div>
+
+        <h2>2.2 Managing &amp; Resolving Tickets</h2>
+        <p>Handling a ticket requires adherence to strict status workflows to ensure clients receive accurate automated updates.</p>
+
+        <ol>
+            <li><strong>Acknowledge:</strong> When a new ticket is assigned to you, open it and add an initial comment. This automatically shifts the status to <em>In Progress</em> and emails the client.</li>
+            <li><strong>Investigate:</strong> Use the AI Summary panel. The AI pre-reads long email chains and gives you a 2-sentence summary, the client's sentiment (e.g., Frustrated, Neutral), and recommended next steps.</li>
+            <li><strong>Communicate:</strong> If you need more info, change the status to <em>Awaiting Customer</em>.</li>
+            <li><strong>Resolve:</strong> Once fixed, use the <strong>Resolution Notes</strong> box. You can even click the <em>✨ AI Reply Suggestion</em> button to have the AI generate a professional resolution email based on your technical notes.</li>
+        </ol>
+
+        <div class="alert">
+            <h4><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Role Level Security (RLS)</h4>
+            <p>You cannot close tickets that do not belong to your team, and you cannot view sensitive Account Management settings. Access is enforced at the database level.</p>
+        </div>
+
+        <div class="img-placeholder">[Screenshot: Ticket Detail Modal showing AI Summary and Resolution Box]</div>
+    </div>
+
+    <!-- SECTION 3: ACCOUNT MANAGER GUIDE -->
+    <div class="page">
+        <h1>3. Account Manager Guide</h1>
+        <p>As an Account Manager or Delivery Manager, you have elevated "See All" privileges. Your goal is operational oversight, ensuring SLAs are met across all clients and modules.</p>
+
+        <h2>3.1 Operational Overview &amp; KPIs</h2>
+        <p>Your dashboard aggregates data across the entire organization. You will see macro-level donuts and bar charts breaking down incident volume by Oracle Module, Priority, and Status.</p>
+        
+        <ul>
+            <li><strong>SLA Monitoring:</strong> A dedicated chart shows SLA compliance percentages across Top, High, Medium, and Low priorities.</li>
+            <li><strong>Team Workload:</strong> Navigate to the <strong>Team</strong> tab to see a real-time matrix of all engineers, how many open tickets they hold, and their average resolution times.</li>
+        </ul>
+
+        <h2>3.2 Manual Assignment &amp; Escalations</h2>
+        <p>While the AI and Webhook system attempts to auto-assign tickets based on the <code>seed_users.js</code> team mappings, you retain ultimate control.</p>
+
+        <div class="step-container">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Review Unassigned Tickets</h3>
+                <p>Filter the main ticket list by "Unassigned". Open the ticket details.</p>
+            </div>
+        </div>
+
+        <div class="step-container">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Select Engineer</h3>
+                <p>Use the "Ticket Assignment" dropdown visible only to Managers. Select the appropriate engineer from the live database list and click <strong>Assign Engineer</strong>.</p>
+            </div>
+        </div>
+
+        <div class="step-container">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Automated Notifications</h3>
+                <p>The system will instantly dispatch a secure email via Microsoft Graph API to the engineer notifying them of the assignment, and a parallel email to the client confirming their assigned handler.</p>
+            </div>
+        </div>
+
+        <div class="img-placeholder">[Screenshot: Manager View showing Team Workload Matrix and Assignment Dropdowns]</div>
+    </div>
+
+    <!-- SECTION 4: DEVELOPER GUIDE -->
+    <div class="page">
+        <h1>4. Developer &amp; Technical Architecture</h1>
+        <p>This section outlines what was built under the hood to deliver this production-ready enterprise application.</p>
+
+        <h2>4.1 Stack &amp; Infrastructure</h2>
+        <div class="tech-stack">
+            <span class="tech-badge">React 18</span>
+            <span class="tech-badge">Vite</span>
+            <span class="tech-badge">Node.js Express</span>
+            <span class="tech-badge">Supabase (PostgreSQL)</span>
+            <span class="tech-badge">Microsoft Graph API</span>
+            <span class="tech-badge">Anthropic Claude AI</span>
+        </div>
+
+        <h3>Frontend Architecture (Sifratech Portal React)</h3>
+        <ul>
+            <li><strong>Routing &amp; Protection:</strong> Utilizes <code>react-router-dom</code> with a strict <code>&lt;ProtectedRoute&gt;</code> wrapper. Unauthenticated users are blocked.</li>
+            <li><strong>State Management:</strong> Built with modular React Contexts (<code>AuthContext</code>, <code>DataContext</code>, <code>ModalContext</code>) to prevent prop-drilling and ensure clean separation of concerns.</li>
+            <li><strong>Realtime:</strong> Supabase realtime subscriptions (<code>postgres_changes</code>) are implemented on the tickets table, allowing the UI to update instantly without refreshing when an email arrives.</li>
+        </ul>
+
+        <h3>Backend Architecture (Sifratech Backend)</h3>
+        <ul>
+            <li><strong>Authentication:</strong> Fully integrated with Supabase Auth. Credentials are secure, and session tokens are validated on every secure route.</li>
+            <li><strong>Database schema:</strong> Relational structure handling <code>users</code>, <code>roles</code>, <code>teams</code>, <code>tickets</code>, <code>ticket_comments</code>, and <code>ticket_status_history</code>.</li>
+            <li><strong>RLS (Row Level Security):</strong> Postgres policies restrict data access at the database level ensuring Clients only see their company's tickets.</li>
+        </ul>
+
+        <h2>4.2 Integration Specifications</h2>
+        
+        <h3>Microsoft Graph API (Email Processing)</h3>
+        <p>The Node.js backend exposes a webhook <code>/api/webhooks/outlook</code>. When an email hits <code>asmsupport@sifratc.com</code>:</p>
+        <ol>
+            <li>Microsoft posts the payload to the backend.</li>
+            <li>The <code>emailProcessor.js</code> service parses the HTML body.</li>
+            <li>It checks if the email matches the strict Regex Template. If it does, it maps it directly.</li>
+            <li>If it's plain text, it passes the text to the AI for extraction.</li>
+            <li>A ticket is inserted into Supabase, and replies are dispatched via the Graph API <code>/sendMail</code> endpoint.</li>
+        </ol>
+
+        <h3>AI Triage &amp; Sentiment Analysis</h3>
+        <p>The portal utilizes LLMs (Large Language Models) in two distinct ways:</p>
+        <ul>
+            <li><strong>Backend Extraction:</strong> Turning unstructured angry customer emails into structured JSON (Priority, Module).</li>
+            <li><strong>Frontend Assistance:</strong> The <code>/api/ai/suggest-reply</code> endpoint allows engineers to click a button and generate a perfectly formatted resolution response based on brief, shorthand technical notes.</li>
+        </ul>
+
+        <div class="alert" style="border-left-color: #E05252; background: #FEF2F2;">
+            <h4 style="color: #E05252;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Security Notice Executed</h4>
+            <p>During final delivery, all legacy local-storage demo fallback accounts were stripped from the codebase. The platform now relies 100% on cryptographically signed JWTs provided by Supabase Auth.</p>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

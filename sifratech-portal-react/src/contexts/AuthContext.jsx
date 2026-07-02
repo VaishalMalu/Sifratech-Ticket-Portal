@@ -1,16 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { ROLES, DEMO_CREDS } from '../data/mockData';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('sifratech_auth');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Compute permissions dynamically so they aren't stuck in localStorage
+  // Compute permissions dynamically
   const activeUser = React.useMemo(() => {
     if (!currentUser) return null;
     const roleName = currentUser.role || 'Customer';
@@ -30,55 +27,72 @@ export function AuthProvider({ children }) {
   }, [currentUser]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-         if (!session) {
-            setCurrentUser(null);
-            localStorage.removeItem('sifratech_auth');
-         }
+    const fetchSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
+          const roleName = userData?.roles?.name || 'Customer';
+          setCurrentUser({
+            id: session.user.id,
+            label: userData?.full_name || session.user.email,
+            email: session.user.email,
+            role: roleName,
+            client: userData?.teams?.name || null
+          });
+        } else {
+          setCurrentUser(null);
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setCurrentUser(null);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
+        const roleName = userData?.roles?.name || 'Customer';
+        setCurrentUser({
+          id: session.user.id,
+          label: userData?.full_name || session.user.email,
+          email: session.user.email,
+          role: roleName,
+          client: userData?.teams?.name || null
+        });
       }
     });
+
     return () => subscription?.unsubscribe();
   }, []);
 
   const login = async (username, password) => {
-    // 1. Try Live Supabase Authentication first
-    if (username.includes('@')) {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
-      });
-      if (data?.user) {
-        // Fetch public profile and role
-        const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', data.user.id).single();
-        const roleName = userData?.roles?.name || 'Customer';
-        
-        const userObj = {
-          id: data.user.id,
-          label: userData?.full_name || username,
-          email: username,
-          role: roleName,
-          client: userData?.teams?.name || null
-        };
-        setCurrentUser(userObj);
-        localStorage.setItem('sifratech_auth', JSON.stringify(userObj));
-        return true;
-      }
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: username,
+      password: password,
+    });
+    
+    if (error) {
+      console.error("Login failed:", error.message);
+      return false;
     }
-
-    // 2. Fallback to Demo Credentials
-    const u = username.trim().toLowerCase().replace(/\s+/g, '_');
-    const cred = DEMO_CREDS.find(c => c.user === u && c.pass === password);
-    if (cred) {
-      let roleKey = 'am';
-      if (u.includes('client')) roleKey = 'client1';
-      else if (u === 'support_venkat') roleKey = 'support_venkat';
-      else if (u === 'admin_dhaya') roleKey = 'admin_dhaya';
-      else if (u.includes('support')) roleKey = 'support_venkat';
+    
+    if (data?.user) {
+      const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', data.user.id).single();
+      const roleName = userData?.roles?.name || 'Customer';
       
-      const user = { ...ROLES[roleKey], roleKey };
-      setCurrentUser(user);
-      localStorage.setItem('sifratech_auth', JSON.stringify(user));
+      setCurrentUser({
+        id: data.user.id,
+        label: userData?.full_name || username,
+        email: username,
+        role: roleName,
+        client: userData?.teams?.name || null
+      });
       return true;
     }
     return false;
@@ -87,15 +101,16 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
-    localStorage.removeItem('sifratech_auth');
   };
 
-  // Allows switching roles for demo purposes without logging out
-  const switchRole = (roleKey) => {
-    const user = { ...ROLES[roleKey], roleKey };
-    setCurrentUser(user);
-    localStorage.setItem('sifratech_auth', JSON.stringify(user));
+  const switchRole = () => {
+    // Disabled in proper auth mode
+    console.warn("Role switching is disabled in proper auth mode.");
   };
+
+  if (loading) {
+    return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', fontFamily: 'var(--font)', color: '#6B7A8D' }}>Loading secure portal...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ currentUser: activeUser, login, logout, switchRole }}>

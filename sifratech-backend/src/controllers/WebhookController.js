@@ -5,6 +5,8 @@ const { assignTicket } = require('../services/AssignmentEngine');
 const { calculateDueDate } = require('../services/SlaEngine');
 const { supabase } = require('../config/supabaseClient');
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 let isProcessing = false;
 
 const processUnreadEmails = async () => {
@@ -60,13 +62,13 @@ const processUnreadEmails = async () => {
                 const ticketMatch = email.subject.match(/TKT-\d{4}-\d{6}/i);
                 
                 if (ticketMatch) {
-                    const { data } = await supabase.from('tickets').select('id, status').eq('ticket_number', ticketMatch[0].toUpperCase()).maybeSingle();
-                    matchedTicket = data;
+                    const { data } = await supabase.from('tickets').select('id, status').eq('ticket_number', ticketMatch[0].toUpperCase()).limit(1);
+                    if (data && data.length > 0) matchedTicket = data[0];
                 }
                 
                 if (!matchedTicket && email.conversationId) {
-                    const { data } = await supabase.from('tickets').select('id, status').eq('conversation_id', email.conversationId).maybeSingle();
-                    matchedTicket = data;
+                    const { data } = await supabase.from('tickets').select('id, status').eq('conversation_id', email.conversationId).limit(1);
+                    if (data && data.length > 0) matchedTicket = data[0];
                 }
                 
                 if (matchedTicket) {
@@ -145,9 +147,9 @@ const processUnreadEmails = async () => {
                 .from('tickets')
                 .select('id')
                 .eq('email_message_id', email.id)
-                .maybeSingle();
+                .limit(1);
 
-            if (existingTicket) {
+            if (existingTicket && existingTicket.length > 0) {
                 console.log(`Ticket already exists for email ${email.id}. Skipping...`);
                 await markEmailAsRead(email.id);
                 continue;
@@ -172,14 +174,13 @@ const processUnreadEmails = async () => {
             // Merge Data
             const ticketData = {
                 title: extractedData.title || email.subject,
-                description: extractedData.description || email.bodyPreview,
+                description: extractedData.description || bodyContent,
                 oracle_module_name: aiData.oracle_module,
                 ticket_type: aiData.incident_type || extractedData.type || 'Email Inquiry',
                 request_type: 'Inbound Mail',
                 priority: aiData.priority,
                 severity: aiData.severity,
                 business_impact: aiData.business_impact || extractedData.business_impact,
-                // Add new fields for autonomous processing
                 // Add new fields for autonomous processing
                 customer_name: email.from.emailAddress.name,
                 email_address: email.from.emailAddress.address,
@@ -200,10 +201,10 @@ const processUnreadEmails = async () => {
                 .from('oracle_modules')
                 .select('id')
                 .ilike('name', ticketData.oracle_module_name)
-                .maybeSingle();
+                .limit(1);
 
-            if (moduleData) {
-                ticketData.oracle_module_id = moduleData.id;
+            if (moduleData && moduleData.length > 0) {
+                ticketData.oracle_module_id = moduleData[0].id;
             }
             delete ticketData.oracle_module_name; // remove non-column field
 
@@ -211,11 +212,44 @@ const processUnreadEmails = async () => {
                 .from('tickets')
                 .insert([ticketData])
                 .select()
-                .maybeSingle();
+                .limit(1);
 
-            if (error) {
+            if (error || !newTicket || newTicket.length === 0) {
                 console.error('Error creating ticket in DB:', error);
                 continue;
+            }
+
+            const createdTicket = newTicket[0];
+
+            // Auto-create customer account if they don't exist
+            try {
+                // Try creating auth user
+                const defaultPassword = 'Welcome@2026';
+                const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+                    email: ticketData.email_address,
+                    password: defaultPassword,
+                    email_confirm: true,
+                    user_metadata: { full_name: ticketData.customer_name }
+                });
+                
+                if (!createError && newUser && newUser.user) {
+                    // Add to customer_accounts table
+                    await supabase.from('customer_accounts').insert([{
+                        email: ticketData.email_address,
+                        plain_password: defaultPassword
+                    }]);
+                    
+                    // Add to public.users table
+                    await supabase.from('users').insert([{
+                        id: newUser.user.id,
+                        full_name: ticketData.customer_name,
+                        email: ticketData.email_address,
+                        is_active: true
+                    }]);
+                    console.log(`Auto-created customer account for ${ticketData.email_address}`);
+                }
+            } catch(e) {
+                console.error('Error auto-creating customer account:', e);
             }
 
             // Handle Attachments
@@ -226,7 +260,7 @@ const processUnreadEmails = async () => {
                     if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
                         try {
                             const buffer = Buffer.from(att.contentBytes, 'base64');
-                            const path = `${newTicket.id}/${Date.now()}_${att.name}`;
+                            const path = `${createdTicket.id}/${Date.now()}_${att.name}`;
                             
                             const { data, error: uploadError } = await supabase.storage
                                 .from('ticket-attachments')
@@ -247,19 +281,28 @@ const processUnreadEmails = async () => {
                 }
 
                 if (attachmentLinks.length > 0) {
-                    const newDesc = newTicket.description + '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
-                    await supabase.from('tickets').update({ description: newDesc }).eq('id', newTicket.id);
+                    const newDesc = createdTicket.description + '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
+                    await supabase.from('tickets').update({ description: newDesc }).eq('id', createdTicket.id);
                 }
             }
 
-            // 4. Removed Auto-Assign Team/Engineer (as requested, tickets will be unassigned by default)
-            // const assignment = await assignTicket(newTicket.id, aiData.oracle_module);
+            // 4. Auto-Assign (via AI/Rules)
+            await assignTicket(createdTicket.id, aiData.oracle_module || ticketData.oracle_module_name);
+            
+            // Generate Resolution Suggestion (Background)
+            if (aiData.suggested_resolution) {
+                await supabase.from('ticket_comments').insert([{
+                    ticket_id: createdTicket.id,
+                    comment_text: `[System] AI Suggested Resolution: ${aiData.suggested_resolution}`,
+                    source: 'AI Engine'
+                }]);
+            }
 
             // 5. Send Email Notification
             const replyBody = `
                 <h2>Ticket Created Successfully</h2>
-                <p><strong>Ticket Number:</strong> ${newTicket.ticket_number}</p>
-                <p><strong>Title:</strong> ${newTicket.title}</p>
+                <p><strong>Ticket Number:</strong> ${createdTicket.ticket_number}</p>
+                <p><strong>Title:</strong> ${createdTicket.title}</p>
                 <p>We have received your ticket. It is currently in our queue and will be reviewed and assigned to an engineer shortly.</p>
             `;
             await sendEmailReply(email.conversationId, email.id, email.from.emailAddress.address, `Re: ${email.subject}`, replyBody);

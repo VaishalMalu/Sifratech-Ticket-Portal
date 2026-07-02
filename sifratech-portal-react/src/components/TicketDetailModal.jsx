@@ -26,10 +26,14 @@ export default function TicketDetailModal() {
   const [aiRepLoading, setAiRepLoading] = useState(false);
   const [aiRepResult, setAiRepResult] = useState('');
 
+  const [aiSumBtnLoading, setAiSumBtnLoading] = useState(false);
+  const [showAiSummary, setShowAiSummary] = useState(false);
+  const [aiSummaryText, setAiSummaryText] = useState('');
+
   useEffect(() => {
     if (t) {
       setResNotes(t.resolution || '');
-      setAssignSel(t.assignedTo || '');
+      setAssignSel(t.status === 'Pending Approval' || t.assignedTo === 'Unassigned' ? '' : (t.assignedTo || ''));
       
       // AI Summary Sim
       const timer = setTimeout(() => {
@@ -44,7 +48,7 @@ export default function TicketDetailModal() {
     }
   }, [t]);
 
-  if (!t) return null;
+  if (!t || !currentUser) return null;
 
   const role = currentUser;
   const canUp = role.canClose || role.isSupport || role.seeAll;
@@ -104,6 +108,29 @@ export default function TicketDetailModal() {
     } 
   };
   
+  const handleAiSummarize = async () => {
+    if (aiSummaryText) {
+       setShowAiSummary(true);
+       return;
+    }
+    setAiSumBtnLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/ai/summarize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: t.longDescription })
+      });
+      const data = await response.json();
+      setAiSummaryText(data.summary || "AI failed to generate a summary.");
+      setShowAiSummary(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while generating AI summary.");
+    } finally {
+      setAiSumBtnLoading(false);
+    }
+  };
+
   const handleAiReply = async () => {
     setAiRepPanel(true);
     setAiRepLoading(true);
@@ -129,6 +156,28 @@ export default function TicketDetailModal() {
 
   const aAge = age(t.createdAt);
   const breached = aAge > sla[t.priority];
+
+  const renderMarkdown = (text) => {
+    if (!text) return null;
+    return text.split(/(\[.*?\]\(.*?\))/g).map((part, idx) => {
+      const m = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (m) {
+        const url = m[2];
+        const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || m[1].match(/\.(jpeg|jpg|gif|png|webp)$/i);
+        if (isImage) {
+          return (
+            <div key={idx} style={{ marginTop: '8px', marginBottom: '8px' }}>
+              <a href={url} target="_blank" rel="noreferrer">
+                <img src={url} alt={m[1]} style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '4px', border: '1px solid #E2E8F0' }} />
+              </a>
+            </div>
+          );
+        }
+        return <a key={idx} href={url} target="_blank" rel="noreferrer" style={{ color: '#1A5FA8', textDecoration: 'underline' }}>{m[1]}</a>;
+      }
+      return <span key={idx} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>;
+    });
+  };
 
   return (
     <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
@@ -172,7 +221,24 @@ export default function TicketDetailModal() {
           </div>
         </div>
 
-        <div className="det-section"><h3>Description</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>{t.longDescription}</p></div>
+        <div className="det-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={{ margin: 0 }}>Description</h3>
+            {!showAiSummary && (
+              <button className="btn-p" style={{ padding: '4px 8px', fontSize: '11px', border: '1px solid #1A5FA8' }} onClick={handleAiSummarize} disabled={aiSumBtnLoading}>
+                <IconSparkles size={12} style={{ marginRight: 4 }}/> {aiSumBtnLoading ? 'Summarizing...' : 'AI Summarize'}
+              </button>
+            )}
+          </div>
+          <p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>
+             {showAiSummary ? aiSummaryText : renderMarkdown(t.longDescription)}
+          </p>
+          {showAiSummary && (
+             <div style={{ marginTop: '8px' }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setShowAiSummary(false); }} style={{ fontSize: '11px', color: '#1A5FA8' }}>Show original description</a>
+             </div>
+          )}
+        </div>
         {t.resolution && <div className="det-section"><h3>Resolution</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>{t.resolution}</p></div>}
 
         {canUp && (
@@ -209,10 +275,10 @@ export default function TicketDetailModal() {
           <div className="det-section"><h3>Ticket Assignment</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select value={assignSel} onChange={e => setAssignSel(e.target.value)} style={{ background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '7px 10px', fontSize: '12px', color: '#1A2A3A', fontFamily: 'var(--font)' }}>
-                <option value="">— {(!t.assignedTo || t.assignedTo === 'Unassigned') ? 'assign to' : 'reassign to'} —</option>
+                <option value="">— {(!t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval') ? 'assign to' : 'reassign to'} —</option>
                 {allSystemUsers.map(m => <option key={m.id} value={m.full_name}>{m.full_name}</option>)}
               </select>
-              <button className="btn-s" onClick={handleAssign} disabled={!!updating}>{updating === 'assign' ? ((!t.assignedTo || t.assignedTo === 'Unassigned') ? 'Assigning...' : 'Reassigning...') : ((!t.assignedTo || t.assignedTo === 'Unassigned') ? 'Assign Engineer' : 'Reassign Engineer')}</button>
+              <button className="btn-s" onClick={handleAssign} disabled={!!updating}>{updating === 'assign' ? ((!t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval') ? 'Assigning...' : 'Reassigning...') : ((!t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval') ? 'Assign Engineer' : 'Reassign Engineer')}</button>
             </div>
           </div>
         )}
@@ -251,24 +317,7 @@ export default function TicketDetailModal() {
               <div key={i} className="comment-entry">
                 <div className="comment-meta">{c.by} · {fmt(c.ts)}</div>
                 <div style={{ color: '#1A2A3A', whiteSpace: 'pre-wrap' }}>
-                  {c.msg.split(/(\[.*?\]\(.*?\))/g).map((part, idx) => {
-                    const m = part.match(/\[(.*?)\]\((.*?)\)/);
-                    if (m) {
-                      const url = m[2];
-                      const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || m[1].match(/\.(jpeg|jpg|gif|png|webp)$/i);
-                      if (isImage) {
-                        return (
-                          <div key={idx} style={{ marginTop: '8px', marginBottom: '8px' }}>
-                            <a href={url} target="_blank" rel="noreferrer">
-                              <img src={url} alt={m[1]} style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '4px', border: '1px solid #E2E8F0' }} />
-                            </a>
-                          </div>
-                        );
-                      }
-                      return <a key={idx} href={url} target="_blank" rel="noreferrer" style={{ color: '#1A5FA8', textDecoration: 'underline' }}>{m[1]}</a>;
-                    }
-                    return <span key={idx} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>;
-                  })}
+                  {renderMarkdown(c.msg)}
                 </div>
               </div>
             )) : <div style={{ fontSize: '12px', color: '#6B7A8D', marginBottom: '10px' }}>No comments yet.</div>}

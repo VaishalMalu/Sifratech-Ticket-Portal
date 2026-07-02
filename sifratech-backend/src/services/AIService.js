@@ -157,7 +157,57 @@ Provide ONLY the polished text, nothing else.`;
     }
 };
 
+const summarizeTicketDescription = async (description) => {
+    const prompt = `You are a helpful IT assistant.
+Please summarize the following ticket description into a concise 1-2 sentence summary that captures the core issue.
+Do not include any pleasantries or greetings. Just the summary.
+
+Description:
+${description}
+
+Summary:`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error('Error generating AI summary with Gemini:', error.message || error);
+        
+        // Fallback to Groq API
+        if (process.env.GROQ_API_KEY) {
+            try {
+                const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.3-70b-versatile',
+                        messages: [
+                            { role: 'user', content: prompt }
+                        ]
+                    })
+                });
+                
+                if (groqResponse.ok) {
+                    const groqData = await groqResponse.json();
+                    return groqData.choices[0].message.content;
+                }
+            } catch (groqError) {
+                console.error('Error with Groq API fallback:', groqError.message || groqError);
+            }
+        }
+        
+        return "Could not generate summary.";
+    }
+};
+
 module.exports = {
     analyzeTicketData,
-    generateResolutionReply
+    generateResolutionReply,
+    summarizeTicketDescription
 };

@@ -633,10 +633,35 @@ export function DataProvider({ children }) {
   const reassignTicket = async (id, assignedToName) => {
     // Optimistic Update
     setTickets(prev => prev.map(ticket => 
-      ticket.id === id ? { ...ticket, assignedTo: assignedToName, status: 'Assigned' } : ticket
+      ticket.id === id ? { 
+        ...ticket, 
+        assignedTo: assignedToName || 'Unassigned', 
+        status: (!assignedToName || assignedToName === 'Unassigned') ? 'Open' : 'Assigned' 
+      } : ticket
     ));
 
-    // Find the real UUID and email for the selected user name using our loaded usersList
+    const t = tickets.find(x => x.id === id);
+
+    // Handle unassigning
+    if (!assignedToName || assignedToName === 'Unassigned') {
+      const { error } = await supabase
+        .from('tickets')
+        .update({ assigned_to: null, status: 'Open' })
+        .eq('id', id);
+      
+      if (!error) {
+        await supabase.from('ticket_status_history').insert([{
+          ticket_id: id,
+          old_status: t ? t.status : 'Assigned',
+          new_status: 'Open',
+          comments: `[${currentUser ? currentUser.label : 'System'}] Ticket unassigned.`
+        }]);
+        fetchTickets();
+        toast.success('Ticket unassigned successfully');
+      }
+      return;
+    }
+
     const assignedUser = usersList.find(u => u.full_name === assignedToName);
     
     if (assignedUser) {
@@ -646,9 +671,10 @@ export function DataProvider({ children }) {
         .eq('id', id);
         
       if (!error) {
+        const t = tickets.find(x => x.id === id);
         const { error: histError } = await supabase.from('ticket_status_history').insert([{
           ticket_id: id,
-          old_status: 'Pending Approval',
+          old_status: t ? t.status : 'Open',
           new_status: 'Assigned',
           comments: `[${currentUser ? currentUser.label : 'System'}] Manually assigned to ${assignedToName}`
         }]);

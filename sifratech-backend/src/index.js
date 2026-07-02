@@ -106,7 +106,7 @@ app.post('/api/emails/customer-assign', authMiddleware, async (req, res) => {
             <p><strong>Ticket Number:</strong> ${ticketNumber}</p>
             <p><strong>Title:</strong> ${title}</p>
             <p>Your ticket has been assigned to our support engineer: <strong>${assignedTo}</strong>.</p>
-            <p><a href="${portalUrl}" style="padding: 10px 15px; background-color: #1A5FA8; color: white; text-decoration: none; border-radius: 4px;">View in Portal</a></p>
+            <p><a href="${portalUrl}" style="padding: 10px 15px; background-color: #1A5FA8; color: white; text-decoration: none; border-radius: 4px;">Sign In to View Ticket</a></p>
         `;
 
         await sendEmail(toEmail, subject, bodyContent);
@@ -209,6 +209,18 @@ app.post('/api/ai/suggest-reply', async (req, res) => {
     } catch (error) {
         console.error('Error suggesting reply:', error);
         res.status(500).json({ error: 'Failed to generate AI reply' });
+    }
+});
+
+app.post('/api/ai/summarize', async (req, res) => {
+    try {
+        const { summarizeTicketDescription } = require('./services/AIService');
+        const { description } = req.body;
+        const summary = await summarizeTicketDescription(description);
+        res.status(200).json({ summary });
+    } catch (error) {
+        console.error('Error summarizing description:', error);
+        res.status(500).json({ error: 'Failed to generate AI summary' });
     }
 });
 

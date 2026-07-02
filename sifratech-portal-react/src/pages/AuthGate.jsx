@@ -18,7 +18,10 @@ export default function AuthGate() {
     
     const success = await login(username, password);
     if (success) {
-      const from = location.state?.from?.pathname + (location.state?.from?.search || '') || '/dashboard';
+      let from = '/dashboard';
+      if (location.state && location.state.from) {
+         from = location.state.from.pathname + (location.state.from.search || '');
+      }
       navigate(from);
     } else {
       setError('Invalid username or password.');

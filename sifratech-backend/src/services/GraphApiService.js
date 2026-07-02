@@ -5,6 +5,23 @@ const { supabase } = require('../config/supabaseClient');
 const subscribeToSupportMailbox = async () => {
     try {
         const client = getGraphClient();
+        
+        // 1. Fetch existing subscriptions and delete ones matching our webhook URL to prevent duplicates
+        try {
+            const existingSubs = await client.api('/subscriptions').get();
+            if (existingSubs && existingSubs.value) {
+                for (const sub of existingSubs.value) {
+                    if (sub.notificationUrl === process.env.WEBHOOK_URL) {
+                        await client.api(`/subscriptions/${sub.id}`).delete();
+                        console.log(`Deleted existing duplicate subscription: ${sub.id}`);
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('Could not fetch/delete existing subscriptions. Continuing...', err.message);
+        }
+
+        // 2. Create the new subscription
         const subscription = {
             changeType: 'created',
             notificationUrl: process.env.WEBHOOK_URL, // e.g. https://your-domain.com/api/webhooks/outlook

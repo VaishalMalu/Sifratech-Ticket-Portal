@@ -97,9 +97,8 @@ async function processManually() {
             
             console.log(`Successfully created ticket: ${newTicket.ticket_number} with ID: ${newTicket.id}`);
 
-            // 4. Assign Team/Engineer
-            console.log('Assigning ticket...');
-            await assignTicket(newTicket.id, aiData.oracle_module);
+            // 4. Removed Auto-Assign Team/Engineer (as requested, tickets will be unassigned by default)
+            // await assignTicket(newTicket.id, aiData.oracle_module);
 
             // 5. Send Email Notification
             console.log('Sending confirmation email...');
@@ -107,8 +106,7 @@ async function processManually() {
                 <h2>Ticket Created Successfully</h2>
                 <p><strong>Ticket Number:</strong> ${newTicket.ticket_number}</p>
                 <p><strong>Title:</strong> ${newTicket.title}</p>
-                <p>We have received your ticket and assigned it to our support team.</p>
-                <p>You can track the status here: <a href="https://your-portal.com/tickets/${newTicket.id}">Portal Link</a></p>
+                <p>We have received your ticket. It is currently in our queue and will be reviewed and assigned to an engineer shortly.</p>
             `;
             await sendEmailReply(email.conversationId, email.id, email.from.emailAddress.address, `Re: ${email.subject}`, replyBody);
 
