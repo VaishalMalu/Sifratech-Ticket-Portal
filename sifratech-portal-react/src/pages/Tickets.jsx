@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useModal } from '../contexts/ModalContext';
 import { bc, age } from '../data/mockData';
+import * as XLSX from 'xlsx';
 
 export default function Tickets() {
   const { tickets } = useData();
@@ -15,11 +16,42 @@ export default function Tickets() {
     return true;
   });
 
+  const downloadExcel = () => {
+    const dataToExport = filteredTickets.map(t => ({
+      'Ticket #': t.number || t.id,
+      'Summary': t.summary,
+      'Type': t.type,
+      'Module': t.module,
+      'Priority': t.priority,
+      'Status': t.status,
+      'Assigned To': t.assignedTo || '—',
+      'Age (Days)': Math.max(0, Math.round(age(t.createdAt) / 24)),
+      'Raised By': t.raisedBy,
+      'Created At': t.createdAt ? new Date(t.createdAt).toLocaleString() : ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Tickets");
+    
+    const wscols = [
+      { wch: 18 }, { wch: 50 }, { wch: 15 }, { wch: 20 }, 
+      { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 15 }, 
+      { wch: 25 }, { wch: 25 }
+    ];
+    worksheet['!cols'] = wscols;
+
+    XLSX.writeFile(workbook, "Tickets_Export.xlsx");
+  };
+
   return (
     <div className="page active" style={{ padding: '20px' }}>
       <div className="page-header">
         <div className="page-title">Tickets</div>
-        <button className="btn-p" onClick={() => openModal('CREATE_TICKET')}><i className="ti ti-plus" aria-hidden="true"></i> New Ticket</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-s" onClick={downloadExcel}><i className="ti ti-download" aria-hidden="true"></i> Export Excel</button>
+          <button className="btn-p" onClick={() => openModal('CREATE_TICKET')}><i className="ti ti-plus" aria-hidden="true"></i> New Ticket</button>
+        </div>
       </div>
       <div className="toolbar">
         <input type="text" placeholder="Search by ID or summary..." value={search} onChange={e => setSearch(e.target.value)} />

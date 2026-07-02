@@ -15,6 +15,19 @@ app.use(express.json());
 const usersRoute = require('./routes/users');
 app.use('/api/users', usersRoute);
 
+app.get('/api/public/lookup', async (req, res) => {
+    try {
+        const { supabase } = require('./config/supabaseClient');
+        const [u, o] = await Promise.all([
+            supabase.from('users').select('id, full_name, email, roles(name), teams(name)'),
+            supabase.from('oracle_modules').select('*')
+        ]);
+        res.json({ users: u.data || [], oracle_modules: o.data || [] });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch public lookup data' });
+    }
+});
+
 app.post('/api/webhooks/outlook', handleOutlookWebhook);
 
 app.post('/api/emails/assign', authMiddleware, async (req, res) => {

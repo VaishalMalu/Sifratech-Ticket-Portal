@@ -50,27 +50,43 @@ export function DataProvider({ children }) {
         supabase.from('system_settings').select('*')
       ]);
 
-      if (u.data) setUsersList(u.data);
+      let finalUsers = u.data || [];
+      let finalModules = o.data || [];
+
+      if (finalUsers.length === 0 || finalModules.length === 0) {
+         try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/public/lookup`);
+            if (res.ok) {
+               const lookupData = await res.json();
+               if (finalUsers.length === 0) finalUsers = lookupData.users || [];
+               if (finalModules.length === 0) finalModules = lookupData.oracle_modules || [];
+            }
+         } catch (e) {
+            console.error("Failed to fetch public lookup in settings:", e);
+         }
+      }
+
+      if (finalUsers.length > 0) setUsersList(finalUsers);
       if (r.data) setRolesList(r.data);
       if (t.data) setTeamsList(t.data);
       if (c.data) {
         setCustomerAccounts(c.data);
         // Sync to clients state so getActiveClient works globally
         setClients(prev => {
-           return c.data.map((dbClient, i) => {
+           return c.data.map((dbClient, idx) => {
               const existing = prev.find(p => p.id === dbClient.id);
               return {
                  id: dbClient.id,
                  name: dbClient.company_name,
                  contact: dbClient.contact_email,
                  logoUrl: dbClient.logo_url,
-                 active: existing ? existing.active : (i === 0)
+                 active: existing ? existing.active : (idx === 0)
               };
            });
         });
       }
       if (s.data) setSlaConfig(s.data);
-      if (o.data) setOracleModules(o.data);
+      if (finalModules.length > 0) setOracleModules(finalModules);
       if (i.data) setIncidentTypes(i.data);
       if (ss.data) {
         const smap = {};
@@ -101,14 +117,39 @@ export function DataProvider({ children }) {
       }
 
       // Fetch Users to map UUIDs to names
-      const { data: userData, error: userError } = await supabase.from('users').select('id, full_name');
+      let userData = [];
+      const { data: directUsers, error: userError } = await supabase.from('users').select('id, full_name');
       if (userError) {
          console.error("Error fetching users:", userError);
+      }
+      userData = directUsers || [];
+
+      // If RLS blocked fetching (e.g. demo anon user), fetch via public backend route
+      let backendModules = [];
+      if (userData.length === 0) {
+         try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/public/lookup`);
+            if (res.ok) {
+               const lookupData = await res.json();
+               userData = lookupData.users || [];
+               backendModules = lookupData.oracle_modules || [];
+            }
+         } catch (e) {
+            console.error("Failed to fetch public lookup:", e);
+         }
       }
 
       // Map Supabase schema to the React frontend schema
       const mappedTickets = data.map(t => {
         const assignedUser = userData?.find(u => u.id === t.assigned_to);
+        
+        let modName = 'Unknown';
+        if (t.oracle_modules && t.oracle_modules.name) {
+            modName = t.oracle_modules.name;
+        } else if (t.oracle_module_id) {
+            const mod = backendModules.find(m => m.id === t.oracle_module_id);
+            if (mod) modName = mod.name;
+        }
         return {
         id: t.id,
         number: t.ticket_number,
@@ -117,7 +158,7 @@ export function DataProvider({ children }) {
         priority: t.priority,
         client: t.company,
         raisedBy: t.customer_name || t.created_by,
-        module: t.oracle_modules ? t.oracle_modules.name : 'Unknown',
+        module: modName,
         type: t.ticket_type,
         requestType: t.request_type,
         severity: t.severity,
