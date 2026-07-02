@@ -21,7 +21,7 @@ async function updateIncidentTypes() {
         { name: 'Enhancements' },
         { name: 'New Requirements' },
         { name: 'Operational Issue' },
-        { name: 'Phase II' },
+        { name: 'Webform Issue' },
         { name: 'Standard Functionality' },
         { name: 'Training' }
     ];

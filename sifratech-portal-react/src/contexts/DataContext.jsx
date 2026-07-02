@@ -433,13 +433,27 @@ export function DataProvider({ children }) {
     const oldStatus = t ? t.status : 'Unknown';
 
     // Optimistic UI Update
-    setTickets(prev => prev.map(ticket => 
-      ticket.id === id ? { ...ticket, status: newStatus } : ticket
-    ));
+    setTickets(prev => prev.map(ticket => {
+      if (ticket.id === id) {
+        const tUpdate = { ...ticket, status: newStatus };
+        if (newStatus === 'Closed') {
+          tUpdate.closedAt = new Date().toISOString();
+          tUpdate.closedBy = currentUser ? currentUser.id : null;
+        }
+        return tUpdate;
+      }
+      return ticket;
+    }));
+
+    const updateData = { status: newStatus };
+    if (newStatus === 'Closed') {
+       updateData.closed_at = new Date().toISOString();
+       updateData.closed_by = currentUser ? currentUser.id : null;
+    }
 
     const { error } = await supabase
       .from('tickets')
-      .update({ status: newStatus })
+      .update(updateData)
       .eq('id', id);
       
     if (!error) {

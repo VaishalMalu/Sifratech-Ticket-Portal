@@ -18,7 +18,7 @@ export const uid = () => 'TKT-' + nextId++;
 
 export function seedTickets() {
   const tickets = [];
-  const types = ['Access Issue', 'Bug', 'Data Entry Issue', 'Enhancements', 'New Requirements', 'Operational Issue', 'Phase II', 'Standard Functionality', 'Training'];
+  const types = ['Access Issue', 'Bug', 'Data Entry Issue', 'Enhancements', 'New Requirements', 'Operational Issue', 'Webform Issue', 'Standard Functionality', 'Training'];
   const mods = ['Financials', 'HRMS', 'SCM', 'PPM', 'Sourcing', 'Inventory', 'Payroll', 'Other'];
   const pris = ['High', 'Medium', 'Low', 'Top', 'Project'];
   const stats = ['Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
@@ -42,7 +42,14 @@ export function seedTickets() {
       comments: [], emailSent: true 
     };
     if (stat === 'In Progress') t.auditLog.push({ ts: hAgo(h - 1).toISOString(), by: assignee, msg: 'Status → In Progress.' });
-    if (stat === 'Resolved' || stat === 'Closed') t.auditLog.push({ ts: hAgo(h - 2).toISOString(), by: assignee, msg: 'Status → Resolved.' });
+    if (stat === 'Resolved' || stat === 'Closed') {
+      const resolvedTs = hAgo(h - 2).toISOString();
+      t.auditLog.push({ ts: resolvedTs, by: assignee, msg: 'Status → Resolved.' });
+      t.resolvedAt = resolvedTs;
+      if (stat === 'Closed') {
+        t.closedAt = resolvedTs;
+      }
+    }
     tickets.push(t);
   }
   return tickets;

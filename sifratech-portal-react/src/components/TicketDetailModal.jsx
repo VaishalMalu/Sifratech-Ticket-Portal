@@ -217,6 +217,7 @@ export default function TicketDetailModal() {
             <div className="det-row"><span className="lbl">Email</span><span>{t.email || '—'}</span></div>
             <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
             <div className="det-row"><span className="lbl">Team</span><span>{t.assignedTeam}</span></div>
+            {t.closedAt && <div className="det-row"><span className="lbl">Closed</span><span>{fmt(t.closedAt)}</span></div>}
             <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''}>{Math.max(0, Math.round(aAge / 24))} days</span></div>
           </div>
         </div>
