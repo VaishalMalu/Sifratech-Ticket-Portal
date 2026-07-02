@@ -5,9 +5,14 @@ const { assignTicket } = require('../services/AssignmentEngine');
 const { calculateDueDate } = require('../services/SlaEngine');
 const { supabase } = require('../config/supabaseClient');
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+let isProcessing = false;
 
 const processUnreadEmails = async () => {
+    if (isProcessing) {
+        console.log("Already processing emails. Skipping concurrent execution to prevent duplicates.");
+        return;
+    }
+    isProcessing = true;
     try {
         // Fetch new unread emails
         const newEmails = await fetchUnreadEmails();
@@ -247,16 +252,15 @@ const processUnreadEmails = async () => {
                 }
             }
 
-            // 4. Assign Team/Engineer
-            const assignment = await assignTicket(newTicket.id, aiData.oracle_module);
+            // 4. Removed Auto-Assign Team/Engineer (as requested, tickets will be unassigned by default)
+            // const assignment = await assignTicket(newTicket.id, aiData.oracle_module);
 
             // 5. Send Email Notification
             const replyBody = `
                 <h2>Ticket Created Successfully</h2>
                 <p><strong>Ticket Number:</strong> ${newTicket.ticket_number}</p>
                 <p><strong>Title:</strong> ${newTicket.title}</p>
-                <p>We have received your ticket and assigned it to our support team.</p>
-                <p>You can track the status here: <a href="https://your-portal.com/tickets/${newTicket.id}">Portal Link</a></p>
+                <p>We have received your ticket. It is currently in our queue and will be reviewed and assigned to an engineer shortly.</p>
             `;
             await sendEmailReply(email.conversationId, email.id, email.from.emailAddress.address, `Re: ${email.subject}`, replyBody);
 
@@ -269,6 +273,8 @@ const processUnreadEmails = async () => {
 
     } catch (error) {
         console.error('Error processing emails:', error);
+    } finally {
+        isProcessing = false;
     }
 };
 
