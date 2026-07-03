@@ -413,7 +413,8 @@ export function DataProvider({ children }) {
         assigned_to: assignedUserId,
         phone_number: ticket.mobileNo,
         source: 'Portal',
-        closed_at: ticket.closeDate || null
+        closed_at: ticket.closeDate ? new Date(ticket.closeDate).toISOString() : null,
+        created_at: ticket.startDate ? new Date(ticket.startDate).toISOString() : undefined
       }])
       .select();
       
