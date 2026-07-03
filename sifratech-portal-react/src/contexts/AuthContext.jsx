@@ -4,7 +4,12 @@ import { supabase } from '../lib/supabaseClient';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState({
+    id: 'user1',
+    label: 'Account Manager',
+    role: 'Account Manager',
+    client: 'Al Seer Marine'
+  });
   const [loading, setLoading] = useState(true);
 
   // Compute permissions dynamically

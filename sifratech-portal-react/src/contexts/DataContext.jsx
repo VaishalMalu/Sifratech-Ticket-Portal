@@ -408,11 +408,12 @@ export function DataProvider({ children }) {
         status: initialStatus,
         priority: ticket.priority || 'Medium',
         company: ticket.client || 'Unknown',
-        customer_name: ticket.raisedBy || 'Unknown',
+        customer_name: ticket.requestedBy || ticket.raisedBy || 'Unknown',
         email_address: currentUser ? currentUser.email : null,
         assigned_to: assignedUserId,
         phone_number: ticket.mobileNo,
-        source: 'Portal'
+        source: 'Portal',
+        closed_at: ticket.closeDate || null
       }])
       .select();
       

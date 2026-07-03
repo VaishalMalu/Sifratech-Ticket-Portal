@@ -28,7 +28,7 @@ async function updateIncidentTypes() {
 
     console.log('Inserting new incident types...');
     const { error: insertError } = await supabase.from('incident_types').insert(newTypes);
-    
+
     if (insertError) {
         console.error('Error inserting:', insertError);
     } else {

@@ -23,6 +23,9 @@ export default function CreateTicketModal() {
   const [ext, setExt] = useState('');
   const [cc, setCc] = useState('');
   const [assignee, setAssignee] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [closeDate, setCloseDate] = useState('');
+  const [requestedBy, setRequestedBy] = useState('');
 
   const [aiPanel, setAiPanel] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -77,6 +80,7 @@ export default function CreateTicketModal() {
       createdAt: now.toISOString(),
       expectedDate: expected.toISOString(),
       raisedBy: currentUser.label,
+      requestedBy: requestedBy,
       client: currentUser.client || 'Al Seer Marine',
       assignedTo: assignee,
       assignedTeam: 'Sifratech Support',
@@ -85,6 +89,8 @@ export default function CreateTicketModal() {
       ccMail: cc,
       longDescription: desc,
       resolution: '',
+      startDate: startDate || null,
+      closeDate: closeDate || null,
       auditLog: [{ ts: now.toISOString(), by: 'System', msg: `Ticket created by ${currentUser.label}. Status: New.` }],
       comments: [],
       emailSent: true
@@ -108,6 +114,9 @@ export default function CreateTicketModal() {
           <div className="fl"><label>Project <span className="req">*</span></label><input value={project} onChange={e => setProject(e.target.value)} /></div>
           <div className="fl"><label>Detected date</label><input value={new Date().toLocaleDateString('en-GB')} readOnly /></div>
           
+          <div className="fl"><label>Start date</label><input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} /></div>
+          <div className="fl"><label>Close date</label><input type="date" value={closeDate} onChange={e => setCloseDate(e.target.value)} /></div>
+
           <div className="fl full"><label>Incident Title <span className="req">*</span></label>
             <input placeholder="Short title for the incident" value={summary} onChange={e => { setSummary(e.target.value); setTimeout(handleAiTriage, 500); }} />
           </div>
@@ -127,7 +136,7 @@ export default function CreateTicketModal() {
           </div>
           <div className="fl"><label>Module <span className="req">*</span></label>
             <select value={module} onChange={e => setModule(e.target.value)}>
-              <option>Financials</option><option>HRMS</option><option>SCM</option><option>PPM</option><option>Sourcing</option><option>Inventory</option><option>Payroll</option><option>Other</option>
+              <option>Financials</option><option>HRMS</option><option>SCM</option><option>PPM</option><option>Sourcing</option><option>Inventory</option><option>Payroll</option><option>Technical</option><option>Other</option>
             </select>
           </div>
           <div className="fl"><label>Priority</label>
@@ -140,7 +149,8 @@ export default function CreateTicketModal() {
               <option>Development</option><option>Patching</option><option>Testing</option><option>Production</option>
             </select>
           </div>
-          <div className="fl"><label>Detected by</label><input value={currentUser.label} readOnly /></div>
+          <div className="fl"><label>Raised by</label><input value={currentUser.label} readOnly /></div>
+          <div className="fl"><label>Requested by</label><input placeholder="Name of business user" value={requestedBy} onChange={e => setRequestedBy(e.target.value)} /></div>
           <div className="fl"><label>Mobile no.</label><input placeholder="+971 xx xxx xxxx" value={mob} onChange={e => setMob(e.target.value)} /></div>
           <div className="fl"><label>Ext no.</label><input placeholder="Ext." value={ext} onChange={e => setExt(e.target.value)} /></div>
           <div className="fl full"><label>CC mail</label><input placeholder="comma-separated emails" value={cc} onChange={e => setCc(e.target.value)} /></div>

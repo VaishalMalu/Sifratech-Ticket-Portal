@@ -514,10 +514,11 @@ function openCreateModal(){
       <div class="fl"><label>Detected date</label><input value="${new Date().toLocaleDateString('en-GB')}" readonly></div>
       <div class="fl full"><label>Incident summary <span class="req">*</span></label><input id="fs" placeholder="Describe the error/issue in one line" oninput="aiTriage()"></div>
       <div class="fl"><label>Incident type <span class="req">*</span></label><select id="ft"><option>Bug</option><option>Data Extract</option><option>Data Fix</option><option>Enhancement</option><option>New Requirement</option><option>New Setup Request</option><option>Reports</option><option>Responsibility Assignment</option><option>Training Request</option></select></div>
-      <div class="fl"><label>Module <span class="req">*</span></label><select id="fm"><option>Financials</option><option>HRMS</option><option>SCM</option><option>PPM</option><option>Sourcing</option><option>Inventory</option><option>Payroll</option><option>Other</option></select></div>
+      <div class="fl"><label>Module <span class="req">*</span></label><select id="fm"><option>Financials</option><option>HRMS</option><option>SCM</option><option>PPM</option><option>Sourcing</option><option>Inventory</option><option>Payroll</option><option>Technical</option><option>Other</option></select></div>
       <div class="fl"><label>Priority</label><select id="fpri"><option>High</option><option selected>Medium</option><option>Low</option><option>Top</option><option>Project</option></select></div>
       <div class="fl"><label>Environment</label><select id="fe"><option>Development</option><option>Patching</option><option>Testing</option><option>Production</option></select></div>
-      <div class="fl"><label>Detected by</label><input value="${role.label}" readonly></div>
+      <div class="fl"><label>Raised by</label><input value="${role.label}" readonly></div>
+      <div class="fl"><label>Requested by</label><input id="freq" placeholder="Name of business user"></div>
       <div class="fl"><label>Mobile no.</label><input id="fmob" placeholder="+971 xx xxx xxxx"></div>
       <div class="fl"><label>Ext no.</label><input id="fext" placeholder="Ext."></div>
       <div class="fl full"><label>CC mail</label><input id="fcc" placeholder="comma-separated emails"></div>
