@@ -6,7 +6,7 @@ import { uid } from '../data/mockData';
 
 export default function CreateTicketModal() {
   const { closeModal, openModal } = useModal();
-  const { addTicket, sla, team, usersList, incidentTypes } = useData();
+  const { addTicket, slaConfig, team, usersList, incidentTypes, oracleModules, getActiveClient } = useData();
   const { currentUser } = useAuth();
 
   // Use all users for the dropdown as requested
@@ -14,11 +14,16 @@ export default function CreateTicketModal() {
 
   const [summary, setSummary] = useState('');
   const [desc, setDesc] = useState('');
-  const [type, setType] = useState('Bug');
-  const [module, setModule] = useState('Financials');
-  const [priority, setPriority] = useState('Medium');
-  const [env, setEnv] = useState('Development');
-  const [project, setProject] = useState('Oracle EBS R12');
+  const defaultType = incidentTypes && incidentTypes.length > 0 ? incidentTypes[0].name : '';
+  const defaultModule = oracleModules && oracleModules.length > 0 ? oracleModules[0].name : '';
+  const defaultPriority = slaConfig && slaConfig.length > 0 ? slaConfig[0].priority : 'Medium';
+  const activeClientName = getActiveClient()?.name || 'Unknown';
+
+  const [type, setType] = useState(defaultType);
+  const [module, setModule] = useState(defaultModule);
+  const [priority, setPriority] = useState(defaultPriority);
+  const [env, setEnv] = useState('Production');
+  const [project, setProject] = useState(`${activeClientName} Support`);
   const [mob, setMob] = useState('');
   const [ext, setExt] = useState('');
   const [cc, setCc] = useState('');
@@ -63,7 +68,8 @@ export default function CreateTicketModal() {
     if (!desc) return alert('Long description is required.');
 
     const now = new Date();
-    const expected = new Date(now.getTime() + (sla[priority] || 24) * 36e5);
+    const slaHours = slaConfig?.find(s => s.priority === priority)?.resolution_hours || 24;
+    const expected = new Date(now.getTime() + slaHours * 36e5);
 
     const t = {
       id: uid(),
@@ -81,9 +87,9 @@ export default function CreateTicketModal() {
       expectedDate: expected.toISOString(),
       raisedBy: currentUser.label,
       requestedBy: requestedBy,
-      client: currentUser.client || 'Al Seer Marine',
+      client: currentUser.client || activeClientName,
       assignedTo: assignee,
-      assignedTeam: 'Sifratech Support',
+      assignedTeam: team?.length > 0 ? team[0].name : 'Unassigned',
       mobileNo: mob,
       extNo: ext,
       ccMail: cc,
@@ -105,7 +111,7 @@ export default function CreateTicketModal() {
 
   return (
     <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-      <div className="modal">
+      <div className="modal" style={{ maxWidth: '960px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-hdr">
           <div><h2>Create new ticket</h2><div className="sub">Fields marked <span style={{ color: 'var(--red)' }}>*</span> are required</div></div>
           <button className="close-x" onClick={closeModal}>×</button>
@@ -136,12 +142,20 @@ export default function CreateTicketModal() {
           </div>
           <div className="fl"><label>Module <span className="req">*</span></label>
             <select value={module} onChange={e => setModule(e.target.value)}>
-              <option>Financials</option><option>HRMS</option><option>SCM</option><option>PPM</option><option>Sourcing</option><option>Inventory</option><option>Payroll</option><option>Technical</option><option>Other</option>
+              {oracleModules && oracleModules.length > 0 ? (
+                oracleModules.map(m => <option key={m.id || m.name} value={m.name}>{m.name}</option>)
+              ) : (
+                <option>Unknown</option>
+              )}
             </select>
           </div>
           <div className="fl"><label>Priority</label>
             <select value={priority} onChange={e => setPriority(e.target.value)}>
-              <option>High</option><option>Medium</option><option>Low</option><option>Top</option><option>Project</option>
+              {slaConfig && slaConfig.length > 0 ? (
+                slaConfig.map(s => <option key={s.id || s.priority} value={s.priority}>{s.priority}</option>)
+              ) : (
+                <option>Medium</option>
+              )}
             </select>
           </div>
           <div className="fl"><label>Environment</label>

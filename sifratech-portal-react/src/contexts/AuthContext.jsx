@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
     id: 'user1',
     label: 'Account Manager',
     role: 'Account Manager',
-    client: 'Al Seer Marine'
+    client: null
   });
   const [loading, setLoading] = useState(true);
 

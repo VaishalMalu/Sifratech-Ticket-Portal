@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useModal } from '../contexts/ModalContext';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { age, bc } from '../data/mockData';
 
 export default function Dashboard() {
-  const { tickets, sla, getActiveClient, incidentTypes } = useData();
+  const { tickets, getActiveClient, incidentTypes, oracleModules, slaConfig } = useData();
+  const { openModal } = useModal();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -16,7 +18,14 @@ export default function Dashboard() {
   const open = tickets.filter(t => t.status === 'Open').length;
   const inProgress = tickets.filter(t => t.status === 'In Progress').length;
   const resolved = tickets.filter(t => ['Resolved', 'Closed'].includes(t.status)).length;
-  const breach = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > sla[t.priority]).length;
+  const slaMap = {};
+  if (slaConfig && slaConfig.length > 0) {
+      slaConfig.forEach(s => slaMap[s.priority] = s.resolution_hours);
+  } else {
+      slaMap['Top'] = 4; slaMap['High'] = 8; slaMap['Medium'] = 24; slaMap['Low'] = 72; slaMap['Project'] = 168;
+  }
+
+  const breach = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > slaMap[t.priority]).length;
   const aged = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > 72).length;
 
   const statusData = [
@@ -35,20 +44,33 @@ export default function Dashboard() {
     { name: 'Project', value: tickets.filter(t => t.priority === 'Project').length, color: '#5BA8A4' },
   ].filter(d => d.value > 0);
 
-  const modules = ['Financials', 'HRMS', 'SCM', 'PPM', 'Sourcing', 'Inventory', 'Payroll', 'Other'];
+  const modules = (oracleModules && oracleModules.length > 0) ? oracleModules.map(m => m.name) : [...new Set(tickets.map(t => t.module).filter(Boolean))];
   const moduleData = modules.map(m => ({ name: m.substring(0, 3), full: m, value: tickets.filter(t => t.module === m).length }));
 
   const dbTypes = incidentTypes && incidentTypes.length > 0 ? incidentTypes.map(t => t.name) : ['Bug', 'Data Entry Issue', 'Enhancements'];
   const typeColors = ['#1A9FCC', '#35C8E8', '#E09A2B', '#E05252', '#8B7FD4', '#4CAF7D', '#5BA8A4', '#1A9FCC', '#E09A2B', '#8B7FD4', '#E05252'];
   const typeData = dbTypes.map((t, i) => ({ name: t.substring(0, 15) + (t.length > 15 ? '..' : ''), full: t, value: tickets.filter(x => x.type === t).length, color: typeColors[i % typeColors.length] })).filter(d => d.value > 0);
 
-  const slaData = [
-    { name: 'Top', color: '#8B7FD4', compliance: Math.round((tickets.filter(t => t.priority === 'Top' && age(t.createdAt) <= sla['Top']).length / (tickets.filter(t => t.priority === 'Top').length || 1)) * 100) || 0 },
-    { name: 'High', color: '#E05252', compliance: Math.round((tickets.filter(t => t.priority === 'High' && age(t.createdAt) <= sla['High']).length / (tickets.filter(t => t.priority === 'High').length || 1)) * 100) || 0 },
-    { name: 'Medium', color: '#E09A2B', compliance: Math.round((tickets.filter(t => t.priority === 'Medium' && age(t.createdAt) <= sla['Medium']).length / (tickets.filter(t => t.priority === 'Medium').length || 1)) * 100) || 0 },
-    { name: 'Low', color: '#4CAF7D', compliance: Math.round((tickets.filter(t => t.priority === 'Low' && age(t.createdAt) <= sla['Low']).length / (tickets.filter(t => t.priority === 'Low').length || 1)) * 100) || 0 },
-    { name: 'Project', color: '#5BA8A4', compliance: Math.round((tickets.filter(t => t.priority === 'Project' && age(t.createdAt) <= sla['Project']).length / (tickets.filter(t => t.priority === 'Project').length || 1)) * 100) || 0 }
+  const priorities = (slaConfig && slaConfig.length > 0) ? slaConfig : [
+    { priority: 'Top', resolution_hours: 4 },
+    { priority: 'High', resolution_hours: 8 },
+    { priority: 'Medium', resolution_hours: 24 },
+    { priority: 'Low', resolution_hours: 72 },
+    { priority: 'Project', resolution_hours: 168 }
   ];
+  const priColors = { 'Top': '#8B7FD4', 'High': '#E05252', 'Medium': '#E09A2B', 'Low': '#4CAF7D', 'Project': '#5BA8A4' };
+  
+  const slaData = priorities.map(s => {
+      const p = s.priority;
+      const hours = s.resolution_hours;
+      const subset = tickets.filter(t => t.priority === p);
+      const compliant = subset.filter(t => age(t.createdAt) <= hours).length;
+      return {
+          name: p,
+          color: priColors[p] || '#1A9FCC',
+          compliance: Math.round((compliant / (subset.length || 1)) * 100) || 0
+      };
+  });
 
   const ageingTickets = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > 72).sort((a, b) => age(b.createdAt) - age(a.createdAt));
 
@@ -185,7 +207,7 @@ export default function Dashboard() {
             <thead><tr><th>Ticket #</th><th>Summary</th><th>Priority</th><th>Assigned to</th><th>Age (Days)</th><th>Status</th></tr></thead>
             <tbody>
               {ageingTickets.map(t => (
-                <tr key={t.id}>
+                <tr key={t.id} onClick={() => openModal('TICKET_DETAIL', { ticketId: t.id })} style={{ cursor: 'pointer' }}>
                   <td style={{ fontWeight: 600, color: '#1A5FA8', fontFamily: 'var(--mono)' }}>{t.number || t.id}</td>
                   <td>{t.summary}</td>
                   <td><span className={`badge ${bc(t.priority, 'p')}`}>{t.priority}</span></td>

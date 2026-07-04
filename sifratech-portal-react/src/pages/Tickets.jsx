@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { useModal } from '../contexts/ModalContext';
-import { bc, age } from '../data/mockData';
+import { bc, age, fmt } from '../data/mockData';
 import * as XLSX from 'xlsx';
 
 export default function Tickets() {
-  const { tickets } = useData();
+  const { tickets, oracleModules, slaConfig } = useData();
   const { openModal } = useModal();
   const [search, setSearch] = useState('');
   const [filterStat, setFilterStat] = useState('');
@@ -22,7 +22,8 @@ export default function Tickets() {
         !(t.email && t.email.toLowerCase().includes(search.toLowerCase()))
        ) return false;
     if (filterDate && t.createdAt && !t.createdAt.startsWith(filterDate)) return false;
-    if (filterStat && t.status !== filterStat) return false;
+    if (filterStat === 'Exclude Resolved' && t.status === 'Resolved') return false;
+    else if (filterStat && filterStat !== 'Exclude Resolved' && t.status !== filterStat) return false;
     if (filterType && t.type !== filterType) return false;
     if (filterModule && t.module !== filterModule) return false;
     if (filterPriority && t.priority !== filterPriority) return false;
@@ -33,6 +34,11 @@ export default function Tickets() {
   const uniqueTypes = [...new Set(tickets.map(t => t.type).filter(Boolean))];
   const uniqueModules = [...new Set(tickets.map(t => t.module).filter(Boolean))];
   const uniqueAssignees = [...new Set(tickets.map(t => t.assignedTo).filter(Boolean))];
+  const uniqueStatuses = [...new Set(tickets.map(t => t.status).filter(Boolean))];
+  const uniquePriorities = [...new Set(tickets.map(t => t.priority).filter(Boolean))];
+
+  const modulesList = (oracleModules && oracleModules.length > 0) ? oracleModules.map(m => m.name) : uniqueModules;
+  const prioritiesList = (slaConfig && slaConfig.length > 0) ? slaConfig.map(s => s.priority) : uniquePriorities;
 
   const downloadExcel = () => {
     const dataToExport = filteredTickets.map(t => ({
@@ -77,12 +83,9 @@ export default function Tickets() {
         <input type="text" placeholder="Search by ID, summary, or email..." value={search} onChange={e => setSearch(e.target.value)} style={{ minWidth: '220px' }} />
         <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
         <select value={filterStat} onChange={e => setFilterStat(e.target.value)}>
-          <option value="">All statuses</option>
-          <option>Open</option>
-          <option>In Progress</option>
-          <option>Awaiting Customer</option>
-          <option>Resolved</option>
-          <option>Closed</option>
+          <option value="">All Statuses</option>
+          <option value="Exclude Resolved">Exclude Resolved</option>
+          {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="">All Types</option>
@@ -90,15 +93,11 @@ export default function Tickets() {
         </select>
         <select value={filterModule} onChange={e => setFilterModule(e.target.value)}>
           <option value="">All Modules</option>
-          {uniqueModules.map(mod => <option key={mod} value={mod}>{mod}</option>)}
+          {modulesList.map(mod => <option key={mod} value={mod}>{mod}</option>)}
         </select>
         <select value={filterPriority} onChange={e => setFilterPriority(e.target.value)}>
           <option value="">All Priorities</option>
-          <option>Top</option>
-          <option>High</option>
-          <option>Medium</option>
-          <option>Low</option>
-          <option>Project</option>
+          {prioritiesList.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
         <select value={filterAssignee} onChange={e => setFilterAssignee(e.target.value)}>
           <option value="">All Assignees</option>
@@ -119,8 +118,8 @@ export default function Tickets() {
                 <td data-label="Status"><span className={`badge ${bc(t.status, 's')}`}>{t.status}</span></td>
                 <td data-label="Assigned to" style={{ color: '#4A5A6A' }}>{t.assignedTo || '—'}</td>
                 <td data-label="Age (Days)" className={age(t.createdAt) > 24 ? 'ageing-warn' : ''}>{Math.max(0, Math.round(age(t.createdAt) / 24))}</td>
-                <td data-label="Start Date" style={{ color: '#4A5A6A' }}>{t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : '—'}</td>
-                <td data-label="Close Date" style={{ color: '#4A5A6A' }}>{(t.resolvedAt || t.closedAt) ? new Date(t.resolvedAt || t.closedAt).toLocaleDateString('en-GB') : '—'}</td>
+                <td data-label="Start Date" style={{ color: '#4A5A6A' }}>{fmt(t.createdAt)}</td>
+                <td data-label="Close Date" style={{ color: '#4A5A6A' }}>{(t.resolvedAt || t.closedAt) ? fmt(t.resolvedAt || t.closedAt) : '—'}</td>
                 <td data-label="Raised by" style={{ color: '#4A5A6A' }}>{t.raisedBy}</td>
                 <td data-label="Email" style={{ color: '#4A5A6A' }}>{t.email || '—'}</td>
               </tr>

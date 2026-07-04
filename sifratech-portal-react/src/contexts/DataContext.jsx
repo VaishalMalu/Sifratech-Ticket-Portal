@@ -178,7 +178,7 @@ export function DataProvider({ children }) {
         businessImpact: t.business_impact,
         assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
         assignedToId: t.assigned_to,
-        project: 'ASM Support', // default for now
+        project: t.company || 'Unknown',
         environment: 'Production', // default
         createdAt: t.created_at,
         detectedDate: t.created_at, // mapped to created_at
@@ -296,7 +296,7 @@ export function DataProvider({ children }) {
                       businessImpact: t.business_impact,
                       assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
                       assignedToId: t.assigned_to,
-                      project: 'ASM Support',
+                      project: t.company || 'Unknown',
                       environment: 'Production',
                       createdAt: t.created_at,
                       detectedDate: t.created_at,
@@ -475,7 +475,10 @@ export function DataProvider({ children }) {
             const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
             toEmail = customerUser?.email;
          }
-         if (!toEmail) toEmail = (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+         if (!toEmail && t.client) {
+            const clientAcct = customerAccounts.find(c => c.company_name === t.client);
+            if (clientAcct) toEmail = clientAcct.contact_email;
+         }
 
          if (toEmail) {
             // "Resolved" Notification
@@ -532,6 +535,19 @@ export function DataProvider({ children }) {
   };
 
   const addComment = async (id, msg) => {
+    // Optimistic Update
+    setTickets(prev => prev.map(ticket => {
+      if (ticket.id === id) {
+         const newComment = {
+            ts: new Date().toISOString(),
+            by: currentUser ? currentUser.label : 'System',
+            msg: msg
+         };
+         return { ...ticket, comments: [...ticket.comments, newComment] };
+      }
+      return ticket;
+    }));
+
     const { error } = await supabase
       .from('ticket_comments')
       .insert([{
@@ -612,8 +628,9 @@ export function DataProvider({ children }) {
            toEmail = customerUser?.email;
         }
         
-        if (!toEmail && resolvedTicket.client === 'Al Seer Marine') {
-           toEmail = 'support@alseermarine.com';
+        if (!toEmail && resolvedTicket.client) {
+           const clientAcct = customerAccounts.find(c => c.company_name === resolvedTicket.client);
+           if (clientAcct) toEmail = clientAcct.contact_email;
         }
 
         if (toEmail) {
@@ -731,7 +748,12 @@ export function DataProvider({ children }) {
           let custEmail = t.email;
           if (!custEmail && t.raisedBy) {
             supabase.from('users').select('email').ilike('full_name', `%${t.raisedBy}%`).maybeSingle().then(({ data: custUser }) => {
-              custEmail = custUser?.email || (t.client === 'Al Seer Marine' ? 'support@alseermarine.com' : null);
+              let fallbackEmail = null;
+              if (t.client) {
+                 const clientAcct = customerAccounts.find(c => c.company_name === t.client);
+                 if (clientAcct) fallbackEmail = clientAcct.contact_email;
+              }
+              custEmail = custUser?.email || fallbackEmail;
               if (custEmail) {
                 apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/customer-assign`, {
                   method: 'POST',

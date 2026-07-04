@@ -7,6 +7,31 @@ import { IconSparkles } from '@tabler/icons-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
+const STATUS_COLORS = { 'Open': '#3ECDC2', 'In Progress': '#E09A2B', 'Awaiting Customer': '#E09A2B', 'Resolved': '#4CAF7D', 'Closed': '#3A4A5C', 'Reopened': '#E05252', 'Assigned': '#1A9FCC' };
+
+const ADMIN_TRANSITIONS = {
+  'Open': ['Assigned', 'Closed'],
+  'Assigned': ['In Progress', 'Awaiting Customer', 'Closed', 'Open'],
+  'In Progress': ['Resolved', 'Awaiting Customer', 'Closed'],
+  'Awaiting Customer': ['In Progress', 'Resolved', 'Closed'],
+  'Resolved': ['Closed', 'Reopened'],
+  'Closed': ['Reopened'],
+  'default': ['Open', 'Closed']
+};
+
+const SUPPORT_TRANSITIONS = {
+  'Open': ['Assigned'],
+  'Assigned': ['In Progress', 'Awaiting Customer'],
+  'In Progress': ['Resolved', 'Awaiting Customer'],
+  'Awaiting Customer': ['In Progress', 'Resolved'],
+  'default': []
+};
+
+const CLIENT_TRANSITIONS = {
+  'Resolved': ['Closed', 'Reopened'],
+  'default': []
+};
+
 export default function TicketDetailModal() {
   const { modal, closeModal } = useModal();
   const { allTickets, sla, updateTicketStatus, team, addComment, saveResolution, reassignTicket, usersList } = useData();
@@ -55,21 +80,11 @@ export default function TicketDetailModal() {
   
   let stats = [];
   if (role.role === 'Account Manager' || role.isAdmin || role.role === 'Delivery Manager' || role.role === 'Manager') {
-    if (t.status === 'Open') stats = ['Assigned', 'Closed'];
-    else if (t.status === 'Assigned') stats = ['In Progress', 'Awaiting Customer', 'Closed', 'Open'];
-    else if (t.status === 'In Progress') stats = ['Resolved', 'Awaiting Customer', 'Closed'];
-    else if (t.status === 'Awaiting Customer') stats = ['In Progress', 'Resolved', 'Closed'];
-    else if (t.status === 'Resolved') stats = ['Closed', 'Reopened'];
-    else if (t.status === 'Closed') stats = ['Reopened'];
-    else stats = ['Open', 'Closed'];
+    stats = ADMIN_TRANSITIONS[t.status] || ADMIN_TRANSITIONS['default'];
   } else if (role.isSupport) {
-    if (t.status === 'Open') stats = ['Assigned'];
-    else if (t.status === 'Assigned') stats = ['In Progress', 'Awaiting Customer'];
-    else if (t.status === 'In Progress') stats = ['Resolved', 'Awaiting Customer'];
-    else if (t.status === 'Awaiting Customer') stats = ['In Progress', 'Resolved'];
+    stats = SUPPORT_TRANSITIONS[t.status] || SUPPORT_TRANSITIONS['default'];
   } else {
-    // Client
-    if (t.status === 'Resolved') stats = ['Closed', 'Reopened'];
+    stats = CLIENT_TRANSITIONS[t.status] || CLIENT_TRANSITIONS['default'];
   }
 
   // Prevent moving to working/closed states if nobody is assigned
@@ -79,7 +94,17 @@ export default function TicketDetailModal() {
 
   // Use all users for the dropdown as requested
   const allSystemUsers = usersList || [];
-  const handleStatusUpdate = async (s) => { setUpdating(`status-${s}`); await updateTicketStatus(t.id, s); setUpdating(''); };
+  const handleStatusUpdate = async (s) => {
+    if (!commentTxt.trim()) {
+      toast.error('Please add a comment before updating the status.');
+      return;
+    }
+    setUpdating(`status-${s}`);
+    await addComment(t.id, commentTxt);
+    setCommentTxt('');
+    await updateTicketStatus(t.id, s);
+    setUpdating('');
+  };
   const handleAssign = async () => { 
     if(assignSel) { 
       setUpdating('assign'); 
@@ -181,7 +206,7 @@ export default function TicketDetailModal() {
 
   return (
     <div className="modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-      <div className="modal" style={{ maxWidth: '720px', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="modal" style={{ maxWidth: '960px', maxHeight: '90vh', overflowY: 'auto' }}>
         <div className="modal-hdr">
           <div><div style={{ fontSize: '11px', color: '#6B7A8D', fontFamily: 'var(--mono)', marginBottom: '4px' }}>{t.number || t.id}</div><h2>{t.summary}</h2></div>
           <button className="close-x" onClick={closeModal}>×</button>
@@ -260,10 +285,9 @@ export default function TicketDetailModal() {
             )}
             <div className="status-btns">
               {stats.filter(s => s !== t.status).map(s => {
-                const statusColors = { 'Open': '#3ECDC2', 'In Progress': '#E09A2B', 'Awaiting Customer': '#E09A2B', 'Resolved': '#4CAF7D', 'Closed': '#3A4A5C', 'Reopened': '#E05252', 'Assigned': '#1A9FCC' };
                 return (
                   <button key={s} className="btn-s" onClick={() => handleStatusUpdate(s)} disabled={!!updating} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: statusColors[s] || '#ccc' }}></span>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[s] || '#ccc' }}></span>
                     {updating === `status-${s}` ? 'Updating...' : s}
                   </button>
                 );
