@@ -96,7 +96,7 @@ const sendEmailReply = async (conversationId, messageId, toEmail, subject, bodyC
 };
 
 // Send a new email
-const sendEmail = async (toEmail, subject, bodyContent) => {
+const sendEmail = async (toEmail, subject, bodyContent, ccEmail = null) => {
     try {
         const client = getGraphClient();
         const message = {
@@ -107,8 +107,13 @@ const sendEmail = async (toEmail, subject, bodyContent) => {
             },
             saveToSentItems: true
         };
+        
+        if (ccEmail) {
+            message.message.ccRecipients = [{ emailAddress: { address: ccEmail } }];
+        }
+        
         await client.api(`users/${process.env.MS_GRAPH_MAILBOX}/sendMail`).post(message);
-        console.log(`Sent email to ${toEmail}`);
+        console.log(`Sent email to ${toEmail}${ccEmail ? ` (CC: ${ccEmail})` : ''}`);
     } catch (error) {
         console.error('Error sending email:', error);
     }

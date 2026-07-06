@@ -510,6 +510,26 @@ export function DataProvider({ children }) {
                }).catch(err => console.error(`Failed to send In Progress email:`, err));
             }
 
+            // "Awaiting Customer" Notification
+            if (newStatus === 'Awaiting Customer' && oldStatus !== 'Awaiting Customer') {
+               apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/awaiting-customer`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                     toEmail: toEmail,
+                     ticketNumber: t.number || t.id,
+                     title: t.summary,
+                     portalUrl: `${window.location.origin}/tickets?id=${id}`,
+                     actionBy: currentUser?.email
+                  })
+               })
+               .then(async res => {
+                  if (res.ok) toast.success(`Awaiting Customer email sent to ${toEmail}`);
+                  else toast.error('Failed to send Awaiting Customer email');
+               })
+               .catch(err => console.error(`Failed to send Awaiting Customer email:`, err));
+            }
+
             // "Closed" Notification (Only if moved from Open, New, In Progress, or Resolved)
             if (newStatus === 'Closed' && oldStatus !== 'Closed') {
                apiFetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api/emails/resolved`, {

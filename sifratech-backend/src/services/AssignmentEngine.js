@@ -3,6 +3,13 @@ const { supabase } = require('../config/supabaseClient');
 // Assign a ticket to the appropriate team and engineer
 const assignTicket = async (ticketId, oracleModuleName) => {
     try {
+        // 0. Fetch ticket details to avoid self-assignment
+        const { data: ticketData } = await supabase
+            .from('tickets')
+            .select('email_address, customer_name')
+            .eq('id', ticketId)
+            .single();
+
         // 1. Find the module and its default team
         let { data: moduleData } = await supabase
             .from('oracle_modules')
@@ -30,15 +37,27 @@ const assignTicket = async (ticketId, oracleModuleName) => {
         const teamId = moduleData.default_team_id;
 
         // 2. Find engineers in this team
-        const { data: engineers } = await supabase
+        const { data: allEngineers } = await supabase
             .from('users')
-            .select('id')
+            .select('id, email, full_name')
             .eq('team_id', teamId)
             .eq('is_active', true);
 
-        if (!engineers || engineers.length === 0) {
+        if (!allEngineers || allEngineers.length === 0) {
             console.warn(`No active engineers found for team ${teamId}.`);
             return { team_id: teamId, assigned_to: null };
+        }
+
+        // Exclude the user who raised the ticket if there are other engineers available
+        let engineers = allEngineers;
+        if (ticketData && allEngineers.length > 1) {
+            const filteredEngineers = allEngineers.filter(eng => 
+                eng.email !== ticketData.email_address &&
+                eng.full_name !== ticketData.customer_name
+            );
+            if (filteredEngineers.length > 0) {
+                engineers = filteredEngineers;
+            }
         }
 
         // 3. Load balancing: find the engineer with the least open tickets

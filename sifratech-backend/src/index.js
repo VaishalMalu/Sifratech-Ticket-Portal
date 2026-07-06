@@ -141,6 +141,37 @@ app.post('/api/emails/in-progress', authMiddleware, async (req, res) => {
     }
 });
 
+app.post('/api/emails/awaiting-customer', authMiddleware, async (req, res) => {
+    try {
+        const { sendEmail } = require('./services/GraphApiService');
+        const { supabase } = require('./config/supabaseClient');
+        const { toEmail, ticketNumber, title, portalUrl, actionBy } = req.body;
+        
+        if (!toEmail) return res.status(400).json({ error: 'toEmail is required' });
+
+        const { data: amUser } = await supabase.from('users').select('email').eq('full_name', 'Account Manager').maybeSingle();
+        let ccEmail = null;
+        if (amUser && amUser.email && actionBy !== amUser.email) {
+            ccEmail = amUser.email;
+        }
+
+        const subject = `Action Required: Ticket ${ticketNumber} - ${title}`;
+        const bodyContent = `
+            <h2>We need more information from you to proceed.</h2>
+            <p><strong>Ticket Number:</strong> ${ticketNumber}</p>
+            <p><strong>Title:</strong> ${title}</p>
+            <p>Our support team requires additional details or confirmation from you to continue investigating this issue. Please review the ticket and provide the requested information.</p>
+            <p><a href="${portalUrl}" style="padding: 10px 15px; background-color: #1A5FA8; color: white; text-decoration: none; border-radius: 4px;">View in Portal</a></p>
+        `;
+
+        await sendEmail(toEmail, subject, bodyContent, ccEmail);
+        res.status(200).json({ success: true, message: 'Email sent successfully' });
+    } catch (error) {
+        console.error('Error sending awaiting-customer email:', error);
+        res.status(500).json({ error: 'Failed to send awaiting-customer email' });
+    }
+});
+
 app.post('/api/emails/resolved', authMiddleware, async (req, res) => {
     try {
         const { sendEmail } = require('./services/GraphApiService');

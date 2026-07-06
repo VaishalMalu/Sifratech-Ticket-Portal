@@ -58,7 +58,8 @@ export default function TicketDetailModal() {
   useEffect(() => {
     if (t) {
       setResNotes(t.resolution || '');
-      setAssignSel(t.status === 'Pending Approval' || t.assignedTo === 'Unassigned' ? '' : (t.assignedTo || ''));
+      const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
+      setAssignSel(t.status === 'Pending Approval' || t.assignedTo === 'Unassigned' || isTeam ? '' : (t.assignedTo || ''));
       
       // AI Summary Sim
       const timer = setTimeout(() => {
@@ -95,13 +96,11 @@ export default function TicketDetailModal() {
   // Use all users for the dropdown as requested
   const allSystemUsers = usersList || [];
   const handleStatusUpdate = async (s) => {
-    if (!commentTxt.trim()) {
-      toast.error('Please add a comment before updating the status.');
-      return;
-    }
     setUpdating(`status-${s}`);
-    await addComment(t.id, commentTxt);
-    setCommentTxt('');
+    if (commentTxt.trim()) {
+      await addComment(t.id, commentTxt);
+      setCommentTxt('');
+    }
     await updateTicketStatus(t.id, s);
     setUpdating('');
   };
@@ -300,10 +299,24 @@ export default function TicketDetailModal() {
           <div className="det-section"><h3>Ticket Assignment</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select value={assignSel} onChange={e => setAssignSel(e.target.value)} style={{ background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '7px 10px', fontSize: '12px', color: '#1A2A3A', fontFamily: 'var(--font)' }}>
-                <option value="">— {(!t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval') ? 'assign to' : 'reassign to'} —</option>
-                {allSystemUsers.map(m => <option key={m.id} value={m.full_name}>{m.full_name}</option>)}
+                {(() => {
+                  const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
+                  const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval' || isTeam;
+                  return <option value="">— {isUnassigned ? 'assign to' : 'reassign to'} —</option>;
+                })()}
+                {allSystemUsers
+                   .filter(u => !u.full_name?.toLowerCase().endsWith('team'))
+                   .map(m => <option key={m.id} value={m.full_name}>{m.full_name}</option>)
+                }
               </select>
-              <button className="btn-s" onClick={handleAssign} disabled={!!updating}>{updating === 'assign' ? ((!t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval') ? 'Assigning...' : 'Reassigning...') : ((!t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval') ? 'Assign Engineer' : 'Reassign Engineer')}</button>
+              <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>
+                {(() => {
+                  const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
+                  const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval' || isTeam;
+                  if (updating === 'assign') return isUnassigned ? 'Assigning...' : 'Reassigning...';
+                  return isUnassigned ? 'Assign Engineer' : 'Reassign Engineer';
+                })()}
+              </button>
             </div>
           </div>
         )}
