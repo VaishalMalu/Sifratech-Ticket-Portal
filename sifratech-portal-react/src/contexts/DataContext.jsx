@@ -180,8 +180,8 @@ export function DataProvider({ children }) {
         assignedToId: t.assigned_to,
         project: t.company || 'Unknown',
         environment: 'Production', // default
-        createdAt: t.created_at,
-        detectedDate: t.created_at, // mapped to created_at
+        createdAt: t.created_at || new Date().toISOString(),
+        detectedDate: t.created_at || new Date().toISOString(), // mapped to created_at
         longDescription: t.description,
         summary: t.title, // alias for title
         email: t.email_address,
@@ -298,8 +298,8 @@ export function DataProvider({ children }) {
                       assignedToId: t.assigned_to,
                       project: t.company || 'Unknown',
                       environment: 'Production',
-                      createdAt: t.created_at,
-                      detectedDate: t.created_at,
+                      createdAt: t.created_at || new Date().toISOString(),
+                      detectedDate: t.created_at || new Date().toISOString(),
                       longDescription: t.description,
                       summary: t.title,
                       email: t.email_address,

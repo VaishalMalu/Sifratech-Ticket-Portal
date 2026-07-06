@@ -56,7 +56,10 @@ export function seedTickets() {
 }
 
 export function age(createdAtStr) {
-  return Math.round((now() - new Date(createdAtStr)) / 36e5);
+  if (!createdAtStr) return 0;
+  const d = new Date(createdAtStr);
+  if (isNaN(d.getTime())) return 0;
+  return Math.round((now() - d) / 36e5);
 }
 
 export function fmt(dStr) {

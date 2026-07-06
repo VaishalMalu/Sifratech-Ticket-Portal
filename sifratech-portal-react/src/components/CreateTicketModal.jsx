@@ -28,7 +28,7 @@ export default function CreateTicketModal() {
   const [ext, setExt] = useState('');
   const [cc, setCc] = useState('');
   const [assignee, setAssignee] = useState('');
-  const [startDate, setStartDate] = useState('');
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [closeDate, setCloseDate] = useState('');
   const [requestedBy, setRequestedBy] = useState('');
 
