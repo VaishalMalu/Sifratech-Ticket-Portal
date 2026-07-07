@@ -172,7 +172,11 @@ export default function CreateTicketModal() {
             <div className="fl"><label>Assign to</label>
               <select value={assignee} onChange={e => setAssignee(e.target.value)}>
                 <option value="">— unassigned —</option>
-                {allSystemUsers.map(m => <option key={m.id} value={m.full_name}>{m.full_name}</option>)}
+                {allSystemUsers.map(m => {
+                   let dName = m.full_name;
+                   if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
+                   return <option key={m.id} value={m.full_name}>{dName}</option>;
+                })}
               </select>
             </div>
           )}

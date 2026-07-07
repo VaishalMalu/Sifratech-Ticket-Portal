@@ -380,8 +380,15 @@ export default function TicketDetailModal() {
                   );
                 })()}
                 {allSystemUsers
-                   .filter(u => !u.full_name?.toLowerCase().endsWith('team'))
-                   .map(m => <option key={m.id} value={m.full_name}>{m.full_name}</option>)
+                   .filter(u => {
+                      const n = u.full_name?.toLowerCase() || '';
+                      return !n.endsWith('team') || n === 'scmteam' || n === 'scm team';
+                   })
+                   .map(m => {
+                      let dName = m.full_name;
+                      if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
+                      return <option key={m.id} value={m.full_name}>{dName}</option>;
+                   })
                 }
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>
