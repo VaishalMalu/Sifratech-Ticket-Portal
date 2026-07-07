@@ -184,7 +184,7 @@ const processUnreadEmails = async () => {
                 // Add new fields for autonomous processing
                 customer_name: email.from.emailAddress.name,
                 email_address: email.from.emailAddress.address,
-                company: extractedData.company,
+                company: extractedData.company || 'ASM- Oracle Fusion support',
                 phone_number: extractedData.phone_number,
                 source: 'Outlook',
                 email_message_id: email.id,
@@ -287,7 +287,7 @@ const processUnreadEmails = async () => {
             }
 
             // 4. Auto-Assign (via AI/Rules)
-            await assignTicket(createdTicket.id, aiData.oracle_module || ticketData.oracle_module_name);
+            // await assignTicket(createdTicket.id, aiData.oracle_module || ticketData.oracle_module_name);
             
             // Generate Resolution Suggestion (Background)
             if (aiData.suggested_resolution) {

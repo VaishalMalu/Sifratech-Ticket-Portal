@@ -178,7 +178,7 @@ export function DataProvider({ children }) {
         businessImpact: t.business_impact,
         assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
         assignedToId: t.assigned_to,
-        project: t.company || 'Unknown',
+        project: t.company || 'ASM- Oracle Fusion support',
         environment: 'Production', // default
         createdAt: t.created_at || new Date().toISOString(),
         detectedDate: t.created_at || new Date().toISOString(), // mapped to created_at
@@ -296,7 +296,7 @@ export function DataProvider({ children }) {
                       businessImpact: t.business_impact,
                       assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
                       assignedToId: t.assigned_to,
-                      project: t.company || 'Unknown',
+                      project: t.company || 'ASM- Oracle Fusion support',
                       environment: 'Production',
                       createdAt: t.created_at || new Date().toISOString(),
                       detectedDate: t.created_at || new Date().toISOString(),
@@ -745,7 +745,7 @@ export function DataProvider({ children }) {
               ticketNumber: t.number || t.id,
               title: t.summary,
               priority: t.priority,
-              customerDetails: t.client + ' / ' + t.raisedBy,
+              customerDetails: [t.client, t.raisedBy].filter(Boolean).join(' / '),
               module: t.module,
               status: 'Assigned',
               assignedBy: currentUser ? currentUser.label : 'System',

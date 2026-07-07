@@ -302,7 +302,12 @@ export default function TicketDetailModal() {
                 {(() => {
                   const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
                   const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval' || isTeam;
-                  return <option value="">— {isUnassigned ? 'assign to' : 'reassign to'} —</option>;
+                  return (
+                    <>
+                      <option value="">— {isUnassigned ? 'assign to' : 'reassign to'} —</option>
+                      {!isUnassigned && <option value="Unassigned">Unassigned</option>}
+                    </>
+                  );
                 })()}
                 {allSystemUsers
                    .filter(u => !u.full_name?.toLowerCase().endsWith('team'))

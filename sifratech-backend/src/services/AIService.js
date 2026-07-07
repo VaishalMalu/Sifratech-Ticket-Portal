@@ -33,7 +33,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
     Valid Environments: Development, Patching, Testing, Production.
     Valid Incident Types: ${validIncidentTypes}.
     
-    If the project is unknown, default to "R12".
+    If the project is unknown, default to "ASM- Oracle Fusion support".
     If the environment is unknown, default to "Production".
     
     Respond ONLY with valid JSON.
@@ -87,7 +87,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
         const hasExtractedData = extractedData && Object.values(extractedData).some(v => v !== null);
         return {
             is_valid_ticket: true, // Default to true in fallback so we never drop emails when APIs are down
-            project: 'R12',
+            project: 'ASM- Oracle Fusion support',
             environment: 'Production',
             incident_type: extractedData.type || 'Email Inquiry',
             oracle_module: extractedData.oracle_module || 'Unknown',
