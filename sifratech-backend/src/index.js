@@ -8,6 +8,7 @@ const { subscribeToSupportMailbox } = require('./services/GraphApiService');
 const { authMiddleware } = require('./middleware/authMiddleware');
 
 const app = express();
+app.set('trust proxy', 1); // Enable trusting the reverse proxy (Render) to correctly parse X-Forwarded-For for rate limiting
 const PORT = process.env.PORT || 3000;
 
 // Apply Helmet for security headers
