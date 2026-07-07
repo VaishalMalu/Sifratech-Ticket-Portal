@@ -14,6 +14,7 @@ export default function Tickets() {
   const [filterPriority, setFilterPriority] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('');
   const [filterDate, setFilterDate] = useState('');
+  const [sortOrder, setSortOrder] = useState('Newest First');
 
   const filteredTickets = tickets.filter(t => {
     if (search && 
@@ -29,6 +30,12 @@ export default function Tickets() {
     if (filterPriority && t.priority !== filterPriority) return false;
     if (filterAssignee && t.assignedTo !== filterAssignee) return false;
     return true;
+  }).sort((a, b) => {
+    const da = new Date(a.createdAt).getTime() || 0;
+    const db = new Date(b.createdAt).getTime() || 0;
+    if (sortOrder === 'Newest First') return db - da;
+    if (sortOrder === 'Oldest First') return da - db;
+    return 0;
   });
 
   const uniqueTypes = [...new Set(tickets.map(t => t.type).filter(Boolean))];
@@ -81,6 +88,10 @@ export default function Tickets() {
       </div>
       <div className="toolbar" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <input type="text" placeholder="Search by ID, summary, or email..." value={search} onChange={e => setSearch(e.target.value)} style={{ minWidth: '220px' }} />
+        <select value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
+          <option value="Newest First">Newest First</option>
+          <option value="Oldest First">Oldest First</option>
+        </select>
         <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
         <select value={filterStat} onChange={e => setFilterStat(e.target.value)}>
           <option value="">All Statuses</option>
