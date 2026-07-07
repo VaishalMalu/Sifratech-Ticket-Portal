@@ -270,6 +270,7 @@ export function DataProvider({ children }) {
                 .select(`
                   *,
                   users:assigned_to (full_name),
+                  oracle_modules (name),
                   ticket_comments (comment_text, created_at, source),
                   ticket_status_history (old_status, new_status, comments, created_at)
                 `)
@@ -279,7 +280,10 @@ export function DataProvider({ children }) {
               if (t && !error) {
                   // Map the single ticket exactly like fetchTickets does
                   const assignedUser = t.users;
-                  let modName = t.module;
+                  let modName = 'Unknown';
+                  if (t.oracle_modules && t.oracle_modules.name) {
+                      modName = t.oracle_modules.name;
+                  }
                   
                   const mappedTicket = {
                       id: t.id,
@@ -396,6 +400,16 @@ export function DataProvider({ children }) {
         if (m) moduleId = m.id;
     }
 
+    let parsedCreatedAt = undefined;
+    if (ticket.startDate) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (ticket.startDate === todayStr) {
+            parsedCreatedAt = new Date().toISOString();
+        } else {
+            parsedCreatedAt = new Date(ticket.startDate).toISOString();
+        }
+    }
+
     const { data, error } = await supabase
       .from('tickets')
       .insert([{
@@ -414,7 +428,7 @@ export function DataProvider({ children }) {
         phone_number: ticket.mobileNo,
         source: 'Portal',
         closed_at: ticket.closeDate ? new Date(ticket.closeDate).toISOString() : null,
-        created_at: ticket.startDate ? new Date(ticket.startDate).toISOString() : undefined
+        created_at: parsedCreatedAt
       }])
       .select();
       
@@ -452,6 +466,12 @@ export function DataProvider({ children }) {
     if (newStatus === 'Closed') {
        updateData.closed_at = new Date().toISOString();
        updateData.closed_by = currentUser ? currentUser.id : null;
+    } else if (newStatus !== 'Resolved') {
+       // If transitioning away from Closed or Resolved, clear the dates
+       updateData.closed_at = null;
+       updateData.closed_by = null;
+       updateData.resolved_at = null;
+       updateData.resolved_by = null;
     }
 
     const { error } = await supabase
@@ -472,7 +492,7 @@ export function DataProvider({ children }) {
       if (t) {
          let toEmail = t.email;
          if (!toEmail && t.raisedBy) {
-            const { data: customerUser } = await supabase.from('users').select('email').eq('full_name', t.raisedBy).maybeSingle();
+             const { data: customerUser } = await supabase.from('users').select('email').ilike('full_name', `%${t.raisedBy}%`).maybeSingle();
             toEmail = customerUser?.email;
          }
          if (!toEmail && t.client) {
@@ -684,6 +704,46 @@ export function DataProvider({ children }) {
     }
   };
 
+  const updateTicketDetails = async (id, details) => {
+    // Optimistic Update
+    setTickets(prev => prev.map(ticket => 
+      ticket.id === id ? { ...ticket, ...details } : ticket
+    ));
+
+    // Map frontend fields to DB columns
+    const dbUpdate = {};
+    if (details.summary !== undefined) dbUpdate.title = details.summary;
+    if (details.longDescription !== undefined) dbUpdate.description = details.longDescription;
+    if (details.project !== undefined) dbUpdate.company = details.project;
+    if (details.email !== undefined) dbUpdate.email_address = details.email;
+    if (details.raisedBy !== undefined) dbUpdate.customer_name = details.raisedBy;
+    if (details.priority !== undefined) dbUpdate.priority = details.priority;
+    if (details.type !== undefined) dbUpdate.ticket_type = details.type;
+
+    // Handle module update if provided
+    if (details.module !== undefined) {
+        const { data: m } = await supabase.from('oracle_modules').select('id').ilike('name', details.module).maybeSingle();
+        if (m) dbUpdate.oracle_module_id = m.id;
+    }
+
+    const { error } = await supabase.from('tickets').update(dbUpdate).eq('id', id);
+
+    if (!error) {
+      await supabase.from('ticket_status_history').insert([{
+        ticket_id: id,
+        old_status: 'Any',
+        new_status: 'Any',
+        comments: `[${currentUser ? currentUser.label : 'System'}] Ticket details updated.`
+      }]);
+      fetchTickets();
+      toast.success('Ticket details updated successfully');
+    } else {
+      console.error('Update Ticket Details Error:', error);
+      toast.error('Failed to update ticket: ' + (error?.message || 'Database error'));
+      fetchTickets();
+    }
+  };
+
   const reassignTicket = async (id, assignedToName) => {
     // Optimistic Update
     setTickets(prev => prev.map(ticket => 
@@ -887,6 +947,7 @@ export function DataProvider({ children }) {
       sla: SLA,
       addTicket, 
       updateTicketStatus,
+      updateTicketDetails,
       setActiveClient,
       getActiveClient,
       addComment,

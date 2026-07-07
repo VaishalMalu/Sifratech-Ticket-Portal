@@ -18,9 +18,9 @@ export default function Tickets() {
 
   const filteredTickets = tickets.filter(t => {
     if (search && 
-        !t.summary.toLowerCase().includes(search.toLowerCase()) && 
+        !(t.summary?.toLowerCase().includes(search.toLowerCase())) && 
         !(t.number || t.id).toLowerCase().includes(search.toLowerCase()) && 
-        !(t.email && t.email.toLowerCase().includes(search.toLowerCase()))
+        !(t.email?.toLowerCase().includes(search.toLowerCase()))
        ) return false;
     if (filterDate && t.createdAt && !t.createdAt.startsWith(filterDate)) return false;
     if (filterStat === 'Exclude Resolved' && t.status === 'Resolved') return false;

@@ -34,7 +34,7 @@ const CLIENT_TRANSITIONS = {
 
 export default function TicketDetailModal() {
   const { modal, closeModal } = useModal();
-  const { allTickets, sla, updateTicketStatus, team, addComment, saveResolution, reassignTicket, usersList } = useData();
+  const { allTickets, sla, updateTicketStatus, updateTicketDetails, team, addComment, saveResolution, reassignTicket, usersList, incidentTypes, oracleModules, slaConfig } = useData();
   const { currentUser } = useAuth();
   const { ticketId } = modal.props;
 
@@ -43,6 +43,10 @@ export default function TicketDetailModal() {
   const [commentTxt, setCommentTxt] = useState('');
   const [assignSel, setAssignSel] = useState('');
   const [updating, setUpdating] = useState('');
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
   
   const [aiSumLoading, setAiSumLoading] = useState(true);
   const [aiSumResult, setAiSumResult] = useState(null);
@@ -58,8 +62,7 @@ export default function TicketDetailModal() {
   useEffect(() => {
     if (t) {
       setResNotes(t.resolution || '');
-      const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
-      setAssignSel(t.status === 'Pending Approval' || t.assignedTo === 'Unassigned' || isTeam ? '' : (t.assignedTo || ''));
+      setAssignSel(t.status === 'Pending Approval' || t.assignedTo === 'Unassigned' ? '' : (t.assignedTo || ''));
       
       // AI Summary Sim
       const timer = setTimeout(() => {
@@ -73,6 +76,29 @@ export default function TicketDetailModal() {
       return () => clearTimeout(timer);
     }
   }, [t]);
+
+  useEffect(() => {
+    if (t && !isEditing) {
+       setEditForm({
+          project: t.project || '',
+          environment: t.environment || '',
+          raisedBy: t.raisedBy || '',
+          email: t.email || '',
+          summary: t.summary || '',
+          longDescription: t.longDescription || '',
+          priority: t.priority || '',
+          module: t.module || '',
+          type: t.type || ''
+       });
+    }
+  }, [t, isEditing]);
+
+  const handleSaveEdit = async () => {
+      setSavingEdit(true);
+      await updateTicketDetails(t.id, editForm);
+      setSavingEdit(false);
+      setIsEditing(false);
+  };
 
   if (!t || !currentUser) return null;
 
@@ -231,21 +257,65 @@ export default function TicketDetailModal() {
           )}
         </div>
 
-        <div className="det-section" style={{ marginTop: '16px' }}><h3>Ticket details</h3>
-          <div className="det-grid">
-            <div className="det-row"><span className="lbl">Project</span><span>{t.project}</span></div>
-            <div className="det-row"><span className="lbl">Environment</span><span>{t.environment}</span></div>
-            <div className="det-row"><span className="lbl">Detected</span><span>{fmt(t.detectedDate)}</span></div>
-            <div className="det-row"><span className="lbl">Expected resolution</span><span>{fmt(t.expectedDate)}</span></div>
-            <div className="det-row"><span className="lbl">Raised by</span><span>{t.raisedBy}</span></div>
-            <div className="det-row"><span className="lbl">Email</span><span>{t.email || '—'}</span></div>
-            <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
-            <div className="det-row"><span className="lbl">Team</span><span>{t.assignedTeam}</span></div>
-            {t.closedAt && <div className="det-row"><span className="lbl">Closed</span><span>{fmt(t.closedAt)}</span></div>}
-            <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''}>{Math.max(0, Math.round(aAge / 24))} days</span></div>
+        <div className="det-section" style={{ marginTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+             <h3 style={{ margin: 0 }}>Ticket details</h3>
+             {(role.role === 'Account Manager' || role.isAdmin) && (
+                 <button className="btn-s" onClick={() => setIsEditing(!isEditing)} disabled={savingEdit}>
+                     {isEditing ? 'Cancel Edit' : 'Edit Ticket'}
+                 </button>
+             )}
           </div>
+          
+          {isEditing ? (
+             <div className="fg" style={{ padding: '16px', background: '#F9FBFC', borderRadius: 'var(--r)', border: '1px solid #E2E8F0' }}>
+                <div className="fl"><label>Project</label><input value={editForm.project} onChange={e => setEditForm({...editForm, project: e.target.value})} /></div>
+                <div className="fl"><label>Environment</label>
+                   <select value={editForm.environment} onChange={e => setEditForm({...editForm, environment: e.target.value})}>
+                      <option>Development</option><option>Patching</option><option>Testing</option><option>Production</option>
+                   </select>
+                </div>
+                <div className="fl"><label>Raised by</label><input value={editForm.raisedBy} onChange={e => setEditForm({...editForm, raisedBy: e.target.value})} /></div>
+                <div className="fl"><label>Email</label><input value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} /></div>
+                
+                <div className="fl"><label>Priority</label>
+                   <select value={editForm.priority} onChange={e => setEditForm({...editForm, priority: e.target.value})}>
+                     {slaConfig?.map(s => <option key={s.id || s.priority} value={s.priority}>{s.priority}</option>)}
+                   </select>
+                </div>
+                <div className="fl"><label>Type</label>
+                   <select value={editForm.type} onChange={e => setEditForm({...editForm, type: e.target.value})}>
+                     {incidentTypes?.map(it => <option key={it.id || it.name} value={it.name}>{it.name}</option>)}
+                   </select>
+                </div>
+                <div className="fl"><label>Module</label>
+                   <select value={editForm.module} onChange={e => setEditForm({...editForm, module: e.target.value})}>
+                     {oracleModules?.map(m => <option key={m.id || m.name} value={m.name}>{m.name}</option>)}
+                   </select>
+                </div>
+                <div className="fl full"><label>Summary</label><input value={editForm.summary} onChange={e => setEditForm({...editForm, summary: e.target.value})} /></div>
+                <div className="fl full"><label>Long Description</label><textarea value={editForm.longDescription} onChange={e => setEditForm({...editForm, longDescription: e.target.value})} style={{ minHeight: '100px' }} /></div>
+                <div className="full" style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                   <button className="btn-p" onClick={handleSaveEdit} disabled={savingEdit} style={{ padding: '8px 24px' }}>{savingEdit ? 'Saving...' : 'Save Changes'}</button>
+                </div>
+             </div>
+          ) : (
+            <div className="det-grid">
+              <div className="det-row"><span className="lbl">Project</span><span>{t.project}</span></div>
+              <div className="det-row"><span className="lbl">Environment</span><span>{t.environment}</span></div>
+              <div className="det-row"><span className="lbl">Detected</span><span>{fmt(t.detectedDate)}</span></div>
+              <div className="det-row"><span className="lbl">Expected resolution</span><span>{fmt(t.expectedDate)}</span></div>
+              <div className="det-row"><span className="lbl">Raised by</span><span>{t.raisedBy}</span></div>
+              <div className="det-row"><span className="lbl">Email</span><span>{t.email || '—'}</span></div>
+              <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
+              <div className="det-row"><span className="lbl">Team</span><span>{t.assignedTeam}</span></div>
+              {t.closedAt && <div className="det-row"><span className="lbl">Closed</span><span>{fmt(t.closedAt)}</span></div>}
+              <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''}>{Math.max(0, Math.round(aAge / 24))} days</span></div>
+            </div>
+          )}
         </div>
 
+        {!isEditing && (
         <div className="det-section">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ margin: 0 }}>Description</h3>
@@ -264,6 +334,7 @@ export default function TicketDetailModal() {
              </div>
           )}
         </div>
+        )}
         {t.resolution && <div className="det-section"><h3>Resolution</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>{t.resolution}</p></div>}
 
         {canUp && (
@@ -300,8 +371,7 @@ export default function TicketDetailModal() {
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select value={assignSel} onChange={e => setAssignSel(e.target.value)} style={{ background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '7px 10px', fontSize: '12px', color: '#1A2A3A', fontFamily: 'var(--font)' }}>
                 {(() => {
-                  const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
-                  const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval' || isTeam;
+                  const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval';
                   return (
                     <>
                       <option value="">— {isUnassigned ? 'assign to' : 'reassign to'} —</option>
@@ -316,8 +386,7 @@ export default function TicketDetailModal() {
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>
                 {(() => {
-                  const isTeam = t.assignedTo && typeof t.assignedTo === 'string' && t.assignedTo.toLowerCase().endsWith('team');
-                  const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval' || isTeam;
+                  const isUnassigned = !t.assignedTo || t.assignedTo === 'Unassigned' || t.status === 'Pending Approval';
                   if (updating === 'assign') return isUnassigned ? 'Assigning...' : 'Reassigning...';
                   return isUnassigned ? 'Assign Engineer' : 'Reassign Engineer';
                 })()}
