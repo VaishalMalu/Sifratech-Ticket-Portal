@@ -120,7 +120,7 @@ export default function Tickets() {
           <thead><tr><th>Ticket #</th><th>Summary</th><th>Type</th><th>Module</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Age (Days)</th><th>Start Date</th><th>Close Date</th><th>Raised by</th><th>Email</th></tr></thead>
           <tbody>
             {filteredTickets.length > 0 ? filteredTickets.map(t => (
-              <tr key={t.id} onClick={() => openModal('TICKET_DETAIL', { ticketId: t.id })} style={{ cursor: 'pointer' }}>
+              <tr key={t.id} className={t.status === 'Closed' ? 'row-closed' : ''} onClick={() => openModal('TICKET_DETAIL', { ticketId: t.id })} style={{ cursor: 'pointer' }}>
                 <td data-label="Ticket #" style={{ fontWeight: 600, color: '#1A5FA8', fontFamily: 'var(--mono)' }}>{t.number || t.id}</td>
                 <td data-label="Summary" className="td-summary">{t.summary}</td>
                 <td data-label="Type" style={{ color: '#4A5A6A' }}>{t.type}</td>
