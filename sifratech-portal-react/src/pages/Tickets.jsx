@@ -44,7 +44,7 @@ export default function Tickets() {
   const uniqueStatuses = [...new Set(tickets.map(t => t.status).filter(Boolean))];
   const uniquePriorities = [...new Set(tickets.map(t => t.priority).filter(Boolean))];
 
-  const modulesList = (oracleModules && oracleModules.length > 0) ? oracleModules.map(m => m.name) : uniqueModules;
+  const modulesList = uniqueModules.sort();
   const prioritiesList = (slaConfig && slaConfig.length > 0) ? slaConfig.map(s => s.priority) : uniquePriorities;
 
   const downloadExcel = () => {

@@ -44,7 +44,7 @@ export default function Dashboard() {
     { name: 'Project', value: tickets.filter(t => t.priority === 'Project').length, color: '#5BA8A4' },
   ].filter(d => d.value > 0);
 
-  const modules = (oracleModules && oracleModules.length > 0) ? oracleModules.map(m => m.name) : [...new Set(tickets.map(t => t.module).filter(Boolean))];
+  const modules = [...new Set(tickets.map(t => t.module).filter(Boolean))].sort();
   const moduleData = modules.map(m => ({ name: m.substring(0, 3), full: m, value: tickets.filter(t => t.module === m).length }));
 
   const dbTypes = incidentTypes && incidentTypes.length > 0 ? incidentTypes.map(t => t.name) : ['Bug', 'Data Entry Issue', 'Enhancements'];

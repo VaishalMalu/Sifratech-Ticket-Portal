@@ -382,14 +382,18 @@ export default function TicketDetailModal() {
                 {allSystemUsers
                    .filter(u => {
                       const n = u.full_name?.toLowerCase() || '';
-                      return !n.endsWith('team') || n === 'scmteam' || n === 'scm team';
+                      return !n.endsWith('team') || n === 'scmteam' || n === 'scm team' || n === 'ppmteam' || n === 'ppm team';
                    })
                    .map(m => {
                       let dName = m.full_name;
                       if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
+                      if (dName?.toLowerCase() === 'ppmteam') dName = 'PPM Team';
                       return <option key={m.id} value={m.full_name}>{dName}</option>;
                    })
                 }
+                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'ppm team' || u.full_name?.toLowerCase() === 'ppmteam') && (
+                  <option value="PPM Team">PPM Team</option>
+                )}
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>
                 {(() => {

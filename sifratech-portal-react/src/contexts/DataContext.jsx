@@ -361,10 +361,31 @@ export function DataProvider({ children }) {
   const visibleTickets = React.useMemo(() => {
     if (!currentUser) return [];
     if (currentUser.seeAll) return tickets;
-    if (currentUser.isSupport) return tickets.filter(t => t.assignedTo === currentUser.label || t.raisedBy === currentUser.label);
+    if (currentUser.isSupport) {
+      let myModules = [];
+      if (currentUser.team && teamsList && oracleModules) {
+        const teamDb = teamsList.find(tm => tm.name === currentUser.team);
+        if (teamDb) {
+          myModules = oracleModules.filter(om => om.default_team_id === teamDb.id).map(om => om.name);
+        }
+      }
+
+      return tickets.filter(t => {
+        if (t.assignedTo === currentUser.label || t.raisedBy === currentUser.label) return true;
+        // Allow support users to see all tickets in modules assigned to their team
+        if (myModules.includes(t.module)) return true;
+        
+        // Fallback for explicitly named team accounts without properly mapped teams in db
+        const lbl = currentUser.label?.toLowerCase() || '';
+        if ((lbl === 'scm team' || lbl === 'scmteam') && t.module === 'SCM') return true;
+        if ((lbl === 'ppm team' || lbl === 'ppmteam') && t.module === 'PPM') return true;
+        
+        return false;
+      });
+    }
     if (currentUser.client) return tickets.filter(t => t.client === currentUser.client || t.raisedBy === currentUser.label);
     return tickets.filter(t => t.raisedBy === currentUser.label); // Default fallback: only see your own tickets
-  }, [tickets, currentUser]);
+  }, [tickets, currentUser, teamsList, oracleModules]);
 
   const addTicket = async (ticket) => {
     // Prevent duplicate tickets (same title and user within 24 hours)
