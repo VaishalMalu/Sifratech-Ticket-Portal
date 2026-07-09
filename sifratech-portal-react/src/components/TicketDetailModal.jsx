@@ -209,7 +209,7 @@ export default function TicketDetailModal() {
 
   const renderMarkdown = (text) => {
     if (!text) return null;
-    const cleanText = text.replace(/\n{3,}/g, '\n\n');
+    const cleanText = text.replace(/\n{3,}/g, '\n\n').trim();
     return cleanText.split(/(\[.*?\]\(.*?\))/g).map((part, idx) => {
       const m = part.match(/\[(.*?)\]\((.*?)\)/);
       if (m) {
