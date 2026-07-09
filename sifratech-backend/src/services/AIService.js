@@ -41,7 +41,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -117,7 +117,7 @@ Provide ONLY the polished text, nothing else.`;
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-2.5-flash',
             contents: prompt,
         });
         return response.text;
@@ -158,8 +158,8 @@ Provide ONLY the polished text, nothing else.`;
 };
 
 const summarizeTicketDescription = async (description) => {
-    const prompt = `You are a helpful IT assistant.
-Please summarize the following ticket description into a concise 1-2 sentence summary that captures the core issue.
+    let textPrompt = `You are a helpful IT assistant.
+Please summarize the following ticket description and any provided attached files into a concise summary that captures the core issue.
 Do not include any pleasantries or greetings. Just the summary.
 
 Description:
@@ -167,10 +167,54 @@ ${description}
 
 Summary:`;
 
+    // Parse description to find markdown image/pdf links: e.g. [Attachment: name.pdf](https://url)
+    const attachmentLinks = [];
+    const regex = /\[.*?\]\((.*?)\)/g;
+    let match;
+    while ((match = regex.exec(description)) !== null) {
+        attachmentLinks.push(match[1]);
+    }
+
+    const fetchedAttachments = await Promise.all(attachmentLinks.slice(0, 3).map(async (url) => {
+        try {
+            const res = await fetch(url);
+            if (res.ok) {
+                const buffer = await res.arrayBuffer();
+                const mimeType = res.headers.get('content-type') || 'application/octet-stream';
+                
+                // Gemini supports PDF, images, video, audio, text.
+                if (mimeType.includes('pdf') || mimeType.includes('image') || mimeType.includes('text')) {
+                    const base64Data = Buffer.from(buffer).toString('base64');
+                    return {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: mimeType
+                        }
+                    };
+                }
+            }
+        } catch (err) {
+            console.warn('Could not fetch attachment for AI summary:', err);
+        }
+        return null;
+    }));
+
+    const finalParts = [{ text: textPrompt }];
+    const validAttachments = fetchedAttachments.filter(Boolean);
+    
+    for (const att of validAttachments) {
+        if (att.type === 'text') {
+            textPrompt += att.content;
+            finalParts[0].text = textPrompt;
+        } else if (att.inlineData) {
+            finalParts.push(att);
+        }
+    }
+
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: prompt,
+            model: 'gemini-2.5-flash',
+            contents: finalParts,
         });
         return response.text;
     } catch (error) {
@@ -188,7 +232,7 @@ Summary:`;
                     body: JSON.stringify({
                         model: 'llama-3.3-70b-versatile',
                         messages: [
-                            { role: 'user', content: prompt }
+                            { role: 'user', content: textPrompt }
                         ]
                     })
                 });

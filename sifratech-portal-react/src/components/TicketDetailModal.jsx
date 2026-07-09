@@ -214,15 +214,29 @@ export default function TicketDetailModal() {
       if (m) {
         const url = m[2];
         const isImage = url.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i) || m[1].match(/\.(jpeg|jpg|gif|png|webp)$/i);
+        const isPdf = url.match(/\.pdf(\?.*)?$/i) || m[1].match(/\.pdf$/i);
+        
         if (isImage) {
           return (
             <div key={idx} style={{ marginTop: '8px', marginBottom: '8px' }}>
               <a href={url} target="_blank" rel="noreferrer">
-                <img src={url} alt={m[1]} style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '4px', border: '1px solid #E2E8F0' }} />
+                <img src={url} alt={m[1]} style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '4px', border: '1px solid #E2E8F0', backgroundColor: '#e2e8f0' }} />
               </a>
             </div>
           );
         }
+        
+        if (isPdf) {
+          return (
+            <div key={idx} style={{ marginTop: '8px', marginBottom: '16px' }}>
+              <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#3A4A5C' }}>{m[1]}</div>
+              <object data={url} type="application/pdf" width="100%" height="600px" style={{ borderRadius: '4px', border: '1px solid #E2E8F0' }}>
+                <p>Your browser does not support PDFs. <a href={url} target="_blank" rel="noreferrer" style={{ color: '#1A5FA8', textDecoration: 'underline' }}>Download the PDF</a>.</p>
+              </object>
+            </div>
+          );
+        }
+        
         return <a key={idx} href={url} target="_blank" rel="noreferrer" style={{ color: '#1A5FA8', textDecoration: 'underline' }}>{m[1]}</a>;
       }
       return <span key={idx} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>;
@@ -325,9 +339,9 @@ export default function TicketDetailModal() {
               </button>
             )}
           </div>
-          <p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>
+          <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>
              {showAiSummary ? aiSummaryText : renderMarkdown(t.longDescription)}
-          </p>
+          </div>
           {showAiSummary && (
              <div style={{ marginTop: '8px' }}>
                 <a href="#" onClick={(e) => { e.preventDefault(); setShowAiSummary(false); }} style={{ fontSize: '11px', color: '#1A5FA8' }}>Show original description</a>

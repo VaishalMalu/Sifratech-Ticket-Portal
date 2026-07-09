@@ -84,11 +84,15 @@ const processUnreadEmails = async () => {
                             if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
                                 try {
                                     const buffer = Buffer.from(att.contentBytes, 'base64');
-                                    const path = `${matchedTicket.id}/${Date.now()}_${att.name}`;
-                                    const { data, error: uploadError } = await supabase.storage.from('ticket-attachments').upload(path, buffer, { contentType: att.contentType });
+                                    const safeName = att.name.replace(/[^\w\.\-\s]/g, '_');
+                                    const path = `${matchedTicket.id}/${Date.now()}_${safeName}`;
+                                    
+                                    const arrayBuffer = new Uint8Array(buffer).buffer;
+                                    
+                                    const { data, error: uploadError } = await supabase.storage.from('ticket-attachments').upload(path, arrayBuffer, { contentType: att.contentType });
                                     if (data) {
                                         const { data: { publicUrl } } = supabase.storage.from('ticket-attachments').getPublicUrl(data.path);
-                                        attachmentLinks.push(`[Attachment: ${att.name}](${publicUrl})`);
+                                        attachmentLinks.push(`[Attachment: ${safeName}](${publicUrl})`);
                                     } else {
                                         console.error('Error uploading reply attachment:', uploadError);
                                     }
@@ -260,17 +264,20 @@ const processUnreadEmails = async () => {
                     if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
                         try {
                             const buffer = Buffer.from(att.contentBytes, 'base64');
-                            const path = `${createdTicket.id}/${Date.now()}_${att.name}`;
+                            const safeName = att.name.replace(/[^\w\.\-\s]/g, '_');
+                            const path = `${createdTicket.id}/${Date.now()}_${safeName}`;
+                            
+                            const arrayBuffer = new Uint8Array(buffer).buffer;
                             
                             const { data, error: uploadError } = await supabase.storage
                                 .from('ticket-attachments')
-                                .upload(path, buffer, { contentType: att.contentType });
+                                .upload(path, arrayBuffer, { contentType: att.contentType });
                                 
                             if (data) {
                                 const { data: { publicUrl } } = supabase.storage
                                     .from('ticket-attachments')
                                     .getPublicUrl(data.path);
-                                attachmentLinks.push(`[Attachment: ${att.name}](${publicUrl})`);
+                                attachmentLinks.push(`[Attachment: ${safeName}](${publicUrl})`);
                             } else {
                                 console.error('Error uploading attachment:', uploadError);
                             }
