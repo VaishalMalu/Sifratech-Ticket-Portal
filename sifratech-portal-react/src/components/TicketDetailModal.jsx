@@ -209,7 +209,8 @@ export default function TicketDetailModal() {
 
   const renderMarkdown = (text) => {
     if (!text) return null;
-    return text.split(/(\[.*?\]\(.*?\))/g).map((part, idx) => {
+    const cleanText = text.replace(/\n{3,}/g, '\n\n');
+    return cleanText.split(/(\[.*?\]\(.*?\))/g).map((part, idx) => {
       const m = part.match(/\[(.*?)\]\((.*?)\)/);
       if (m) {
         const url = m[2];
@@ -239,7 +240,18 @@ export default function TicketDetailModal() {
         
         return <a key={idx} href={url} target="_blank" rel="noreferrer" style={{ color: '#1A5FA8', textDecoration: 'underline' }}>{m[1]}</a>;
       }
-      return <span key={idx} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>;
+      
+      const subparts = part.split(/(\*\*.*?\*\*)/g);
+      return (
+        <span key={idx} style={{ whiteSpace: 'pre-wrap' }}>
+          {subparts.map((sp, i) => {
+            if (sp.startsWith('**') && sp.endsWith('**')) {
+              return <strong key={i}>{sp.slice(2, -2)}</strong>;
+            }
+            return <span key={i}>{sp}</span>;
+          })}
+        </span>
+      );
     });
   };
 
