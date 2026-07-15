@@ -176,10 +176,18 @@ export default function CreateTicketModal() {
                    let dName = m.full_name;
                    if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
                    if (dName?.toLowerCase() === 'ppmteam') dName = 'PPM Team';
+                   if (dName?.toLowerCase() === 'hcmteam') dName = 'HCM Team';
+                   if (dName?.toLowerCase() === 'technicalteam') dName = 'Technical Team';
                    return <option key={m.id} value={m.full_name}>{dName}</option>;
                 })}
                 {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'ppm team' || u.full_name?.toLowerCase() === 'ppmteam') && (
                   <option value="PPM Team">PPM Team</option>
+                )}
+                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'hcm team' || u.full_name?.toLowerCase() === 'hcmteam') && (
+                  <option value="HCM Team">HCM Team</option>
+                )}
+                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'technical team' || u.full_name?.toLowerCase() === 'technicalteam') && (
+                  <option value="Technical Team">Technical Team</option>
                 )}
               </select>
             </div>
