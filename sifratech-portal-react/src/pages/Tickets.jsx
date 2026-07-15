@@ -24,7 +24,8 @@ export default function Tickets() {
        ) return false;
     if (filterDate && t.createdAt && !t.createdAt.startsWith(filterDate)) return false;
     if (filterStat === 'Exclude Resolved' && t.status === 'Resolved') return false;
-    else if (filterStat && filterStat !== 'Exclude Resolved' && t.status !== filterStat) return false;
+    if (filterStat === 'Exclude Closed & Resolved' && (t.status === 'Closed' || t.status === 'Resolved')) return false;
+    else if (filterStat && filterStat !== 'Exclude Resolved' && filterStat !== 'Exclude Closed & Resolved' && t.status !== filterStat) return false;
     if (filterType && t.type !== filterType) return false;
     if (filterModule && t.module !== filterModule) return false;
     if (filterPriority && t.priority !== filterPriority) return false;
@@ -98,6 +99,7 @@ export default function Tickets() {
         <select value={filterStat} onChange={e => setFilterStat(e.target.value)}>
           <option value="">All Statuses</option>
           <option value="Exclude Resolved">Exclude Resolved</option>
+          <option value="Exclude Closed & Resolved">Exclude Closed & Resolved</option>
           {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={filterType} onChange={e => setFilterType(e.target.value)}>
