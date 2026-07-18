@@ -32,53 +32,76 @@ export function AuthProvider({ children }) {
   }, [currentUser]);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    let subscription = null;
+    let isMounted = true;
+
+    const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
-          const roleName = userData?.roles?.name || 'Customer';
-          setCurrentUser({
-            id: session.user.id,
-            label: userData?.full_name || session.user.email,
-            email: session.user.email,
-            role: roleName,
-            client: userData?.teams?.name || null
-          });
-        } else {
-          const fallback = localStorage.getItem('fallbackUser');
-          if (fallback) {
-            setCurrentUser(JSON.parse(fallback));
+        // Use Promise.race to prevent infinite hang on Supabase lock deadlock
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 4000));
+        
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+        
+        if (isMounted) {
+          if (session) {
+            const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
+            const roleName = userData?.roles?.name || 'Customer';
+            setCurrentUser({
+              id: session.user.id,
+              label: userData?.full_name || session.user.email,
+              email: session.user.email,
+              role: roleName,
+              client: userData?.teams?.name || null
+            });
           } else {
-            setCurrentUser(null);
+            const fallback = localStorage.getItem('fallbackUser');
+            if (fallback) {
+              setCurrentUser(JSON.parse(fallback));
+            } else {
+              setCurrentUser(null);
+            }
           }
         }
       } catch (err) {
-        console.error("Auth init error:", err);
+        console.error("Auth init error/timeout:", err);
+        // On timeout, still try to load fallback user to avoid getting stuck
+        if (isMounted) {
+          const fallback = localStorage.getItem('fallbackUser');
+          if (fallback) setCurrentUser(JSON.parse(fallback));
+          else setCurrentUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
+      }
+
+      // ONLY subscribe after initial check completes to avoid lock deadlock
+      if (isMounted) {
+        const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+          if (event === 'SIGNED_OUT' || !session) {
+            setCurrentUser(null);
+          } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
+            const roleName = userData?.roles?.name || 'Customer';
+            setCurrentUser({
+              id: session.user.id,
+              label: userData?.full_name || session.user.email,
+              email: session.user.email,
+              role: roleName,
+              client: userData?.teams?.name || null
+            });
+          }
+        });
+        subscription = data.subscription;
       }
     };
 
-    fetchSession();
+    initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        setCurrentUser(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
-        const roleName = userData?.roles?.name || 'Customer';
-        setCurrentUser({
-          id: session.user.id,
-          label: userData?.full_name || session.user.email,
-          email: session.user.email,
-          role: roleName,
-          client: userData?.teams?.name || null
-        });
-      }
-    });
-
-    return () => subscription?.unsubscribe();
+    return () => {
+      isMounted = false;
+      if (subscription) subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (username, password) => {
