@@ -37,12 +37,10 @@ export function DataProvider({ children }) {
     });
     
     if (response.status === 401) {
-        toast.error('Session expired. Please log in again.');
-        // We do not have direct access to logout here without getting it from useAuth,
-        // but wait! DataContext destructures currentUser from useAuth.
-        // Let's rely on the AuthContext's onAuthStateChange for automatic logout if the token is completely invalid.
-        // But if we want to force logout here, we can dispatch an event or call supabase.auth.signOut().
-        supabase.auth.signOut();
+        toast.error('Session expired or unauthorized. Some features may not work.');
+        // We do not force logout here to prevent aggressive session clearing, 
+        // especially for fallback users or temporary network glitches.
+        // Rely on AuthContext's onAuthStateChange for actual token invalidation.
     }
     return response;
   };

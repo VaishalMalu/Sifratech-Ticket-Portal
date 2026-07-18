@@ -46,7 +46,12 @@ export function AuthProvider({ children }) {
             client: userData?.teams?.name || null
           });
         } else {
-          setCurrentUser(null);
+          const fallback = localStorage.getItem('fallbackUser');
+          if (fallback) {
+            setCurrentUser(JSON.parse(fallback));
+          } else {
+            setCurrentUser(null);
+          }
         }
       } catch (err) {
         console.error("Auth init error:", err);
@@ -88,13 +93,15 @@ export function AuthProvider({ children }) {
         // Fallback for development if Supabase is asleep or credentials fail
         if (username.includes('@sifratc.com') || username === 'Account Manager') {
            console.log("Using local fallback login due to Supabase error.");
-           setCurrentUser({
+           const fallbackUser = {
              id: 'local-fallback-id',
              label: username.split('@')[0],
              email: username,
              role: 'Admin',
              client: 'Sifratech'
-           });
+           };
+           localStorage.setItem('fallbackUser', JSON.stringify(fallbackUser));
+           setCurrentUser(fallbackUser);
            return true;
         }
         return false;
@@ -118,13 +125,15 @@ export function AuthProvider({ children }) {
       // Fallback for network timeouts
       if (username.includes('@sifratc.com') || username === 'Account Manager') {
          console.log("Using local fallback login due to network timeout.");
-         setCurrentUser({
+         const fallbackUser = {
            id: 'local-fallback-id',
            label: username.split('@')[0],
            email: username,
            role: 'Admin',
            client: 'Sifratech'
-         });
+         };
+         localStorage.setItem('fallbackUser', JSON.stringify(fallbackUser));
+         setCurrentUser(fallbackUser);
          return true;
       }
     }
@@ -132,6 +141,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    localStorage.removeItem('fallbackUser');
     await supabase.auth.signOut();
     setCurrentUser(null);
   };
