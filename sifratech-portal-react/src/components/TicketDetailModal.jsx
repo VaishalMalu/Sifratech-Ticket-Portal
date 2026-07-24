@@ -58,6 +58,8 @@ export default function TicketDetailModal() {
   const [aiSumBtnLoading, setAiSumBtnLoading] = useState(false);
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [aiSummaryText, setAiSummaryText] = useState('');
+  
+  const [selectedStatus, setSelectedStatus] = useState('');
 
   useEffect(() => {
     if (t) {
@@ -129,6 +131,7 @@ export default function TicketDetailModal() {
     }
     await updateTicketStatus(t.id, s);
     setUpdating('');
+    setSelectedStatus('');
   };
   const handleAssign = async () => { 
     if(assignSel) { 
@@ -379,15 +382,31 @@ export default function TicketDetailModal() {
                   </button>
                </div>
             )}
-            <div className="status-btns">
-              {stats.filter(s => s !== t.status).map(s => {
-                return (
-                  <button key={s} className="btn-s" onClick={() => handleStatusUpdate(s)} disabled={!!updating} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[s] || '#ccc' }}></span>
-                    {updating === `status-${s}` ? 'Updating...' : s}
-                  </button>
-                );
-              })}
+            
+            <div className="status-update-lov" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <select 
+                value={selectedStatus} 
+                onChange={e => setSelectedStatus(e.target.value)}
+                style={{ background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '7px 10px', fontSize: '13px', color: '#1A2A3A', fontFamily: 'var(--font)', minWidth: '150px' }}
+                disabled={!!updating}
+              >
+                <option value="">— Select next status —</option>
+                {stats.filter(s => s !== t.status).map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <button 
+                className="btn-p" 
+                onClick={() => {
+                  if(selectedStatus) {
+                    handleStatusUpdate(selectedStatus);
+                  }
+                }} 
+                disabled={!!updating || !selectedStatus}
+                style={{ padding: '7px 16px' }}
+              >
+                {updating.startsWith('status-') ? 'Updating...' : 'Update Status'}
+              </button>
             </div>
           </div>
         )}
