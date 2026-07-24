@@ -27,7 +27,8 @@ export function AuthProvider({ children }) {
       canCreate: true,
       canAssign: roleName === 'Admin' || roleName === 'Manager' || roleName === 'Delivery Manager' || roleName === 'Account Manager',
       canClose: roleName !== 'Customer' && roleName !== 'Client',
-      seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager'
+      seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager',
+      team: roleName !== 'Customer' && roleName !== 'Client' ? currentUser.client : null
     };
   }, [currentUser]);
 
