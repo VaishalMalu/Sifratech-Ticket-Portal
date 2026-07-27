@@ -124,6 +124,7 @@ export default function TicketDetailModal() {
   // Use all users for the dropdown as requested
   const allSystemUsers = usersList || [];
   const handleStatusUpdate = async (s) => {
+    if (!window.confirm(`Are you sure you want to update the status to "${s}"?`)) return;
     setUpdating(`status-${s}`);
     if (commentTxt.trim()) {
       await addComment(t.id, commentTxt);
