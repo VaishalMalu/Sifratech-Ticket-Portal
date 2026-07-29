@@ -15,7 +15,7 @@ const assignTicket = async (ticketId, oracleModuleName) => {
             .from('oracle_modules')
             .select('id, default_team_id')
             .ilike('name', oracleModuleName)
-            .single();
+            .maybeSingle();
 
         if (!moduleData) {
             console.warn(`Module ${oracleModuleName} not found. Attempting fallback to Triage team.`);

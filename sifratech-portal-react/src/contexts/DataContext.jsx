@@ -177,7 +177,8 @@ export function DataProvider({ children }) {
         assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
         assignedToId: t.assigned_to,
         project: t.company || 'ASM- Oracle Fusion support',
-        environment: 'Production', // default
+        environment: t.environment || 'Production',
+        expectedResolution: t.expected_resolution,
         createdAt: t.created_at || new Date().toISOString(),
         detectedDate: t.created_at || new Date().toISOString(), // mapped to created_at
         longDescription: t.description,
@@ -741,6 +742,9 @@ export function DataProvider({ children }) {
     if (details.raisedBy !== undefined) dbUpdate.customer_name = details.raisedBy;
     if (details.priority !== undefined) dbUpdate.priority = details.priority;
     if (details.type !== undefined) dbUpdate.ticket_type = details.type;
+    if (details.environment !== undefined) dbUpdate.environment = details.environment;
+    if (details.businessImpact !== undefined) dbUpdate.business_impact = details.businessImpact;
+    if (details.expectedResolution !== undefined) dbUpdate.expected_resolution = details.expectedResolution;
 
     // Handle module update if provided
     if (details.module !== undefined) {

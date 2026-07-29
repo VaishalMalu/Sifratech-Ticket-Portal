@@ -90,7 +90,9 @@ export default function TicketDetailModal() {
           longDescription: t.longDescription || '',
           priority: t.priority || '',
           module: t.module || '',
-          type: t.type || ''
+          type: t.type || '',
+          expectedResolution: t.expectedResolution || '',
+          businessImpact: t.businessImpact || ''
        });
     }
   }, [t, isEditing]);
@@ -302,7 +304,7 @@ export default function TicketDetailModal() {
                 <div className="fl"><label>Project</label><input value={editForm.project} onChange={e => setEditForm({...editForm, project: e.target.value})} /></div>
                 <div className="fl"><label>Environment</label>
                    <select value={editForm.environment} onChange={e => setEditForm({...editForm, environment: e.target.value})}>
-                      <option>Development</option><option>Patching</option><option>Testing</option><option>Production</option>
+                      <option>Production</option>
                    </select>
                 </div>
                 <div className="fl"><label>Raised by</label><input value={editForm.raisedBy} onChange={e => setEditForm({...editForm, raisedBy: e.target.value})} /></div>
@@ -323,6 +325,8 @@ export default function TicketDetailModal() {
                      {oracleModules?.map(m => <option key={m.id || m.name} value={m.name}>{m.name}</option>)}
                    </select>
                 </div>
+                <div className="fl full"><label>Expected Resolution</label><input value={editForm.expectedResolution || ''} onChange={e => setEditForm({...editForm, expectedResolution: e.target.value})} /></div>
+                <div className="fl full"><label>Business Impact</label><input value={editForm.businessImpact || ''} onChange={e => setEditForm({...editForm, businessImpact: e.target.value})} /></div>
                 <div className="fl full"><label>Summary</label><input value={editForm.summary} onChange={e => setEditForm({...editForm, summary: e.target.value})} /></div>
                 <div className="fl full"><label>Long Description</label><textarea value={editForm.longDescription} onChange={e => setEditForm({...editForm, longDescription: e.target.value})} style={{ minHeight: '100px' }} /></div>
                 <div className="full" style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -334,7 +338,8 @@ export default function TicketDetailModal() {
               <div className="det-row"><span className="lbl">Project</span><span>{t.project}</span></div>
               <div className="det-row"><span className="lbl">Environment</span><span>{t.environment}</span></div>
               <div className="det-row"><span className="lbl">Detected</span><span>{fmt(t.detectedDate)}</span></div>
-              <div className="det-row"><span className="lbl">Expected resolution</span><span>{fmt(t.expectedDate)}</span></div>
+              <div className="det-row"><span className="lbl">Expected resolution</span><span>{t.expectedResolution || '—'}</span></div>
+              <div className="det-row"><span className="lbl" style={{ color: '#E05252' }}>Business Impact</span><span style={{ fontWeight: 500 }}>{t.businessImpact || '—'}</span></div>
               <div className="det-row"><span className="lbl">Raised by</span><span>{t.raisedBy}</span></div>
               <div className="det-row"><span className="lbl">Email</span><span>{t.email || '—'}</span></div>
               <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
@@ -428,6 +433,7 @@ export default function TicketDetailModal() {
                 {allSystemUsers
                    .filter(u => {
                       const n = u.full_name?.toLowerCase() || '';
+                      if (n === 'microsoft') return false; // Hide Microsoft
                       const allowedTeams = [
                         'scmteam', 'scm team',
                         'ppmteam', 'ppm team',
