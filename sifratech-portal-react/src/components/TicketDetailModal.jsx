@@ -428,7 +428,14 @@ export default function TicketDetailModal() {
                 {allSystemUsers
                    .filter(u => {
                       const n = u.full_name?.toLowerCase() || '';
-                      return !n.endsWith('team') || n === 'scmteam' || n === 'scm team' || n === 'ppmteam' || n === 'ppm team' || n === 'hcmteam' || n === 'hcm team' || n === 'technicalteam' || n === 'technical team';
+                      const allowedTeams = [
+                        'scmteam', 'scm team',
+                        'ppmteam', 'ppm team',
+                        'hcmteam', 'hcm team',
+                        'technicalteam', 'technical team',
+                        'financeteam', 'finance team', 'finance support team'
+                      ];
+                      return !n.endsWith('team') || allowedTeams.includes(n);
                    })
                    .map(m => {
                       let dName = m.full_name;
@@ -436,9 +443,13 @@ export default function TicketDetailModal() {
                       if (dName?.toLowerCase() === 'ppmteam') dName = 'PPM Team';
                       if (dName?.toLowerCase() === 'hcmteam') dName = 'HCM Team';
                       if (dName?.toLowerCase() === 'technicalteam') dName = 'Technical Team';
+                      if (dName?.toLowerCase() === 'financeteam') dName = 'Finance Team';
                       return <option key={m.id} value={m.full_name}>{dName}</option>;
                    })
                 }
+                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'scm team' || u.full_name?.toLowerCase() === 'scmteam') && (
+                  <option value="SCM Team">SCM Team</option>
+                )}
                 {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'ppm team' || u.full_name?.toLowerCase() === 'ppmteam') && (
                   <option value="PPM Team">PPM Team</option>
                 )}
@@ -447,6 +458,9 @@ export default function TicketDetailModal() {
                 )}
                 {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'technical team' || u.full_name?.toLowerCase() === 'technicalteam') && (
                   <option value="Technical Team">Technical Team</option>
+                )}
+                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'finance team' || u.full_name?.toLowerCase() === 'financeteam') && (
+                  <option value="Finance Team">Finance Team</option>
                 )}
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>

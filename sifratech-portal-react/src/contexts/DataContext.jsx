@@ -377,6 +377,8 @@ export function DataProvider({ children }) {
         const lbl = currentUser.label?.toLowerCase() || '';
         if ((lbl === 'scm team' || lbl === 'scmteam') && t.module === 'SCM') return true;
         if ((lbl === 'ppm team' || lbl === 'ppmteam') && t.module === 'PPM') return true;
+        if ((lbl === 'finance team' || lbl === 'financeteam') && t.module === 'Financials') return true;
+        if ((lbl === 'hcm team' || lbl === 'hcmteam') && (t.module === 'HRMS' || t.module === 'Payroll')) return true;
         if (lbl === 'technical team' || lbl === 'technicalteam' || currentUser.team?.toLowerCase() === 'technical team' || currentUser.team?.toLowerCase() === 'technicalteam') return true;
         
         return false;
