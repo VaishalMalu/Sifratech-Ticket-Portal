@@ -91,9 +91,7 @@ export default function TicketDetailModal() {
           longDescription: t.longDescription || '',
           priority: t.priority || '',
           module: t.module || '',
-          type: t.type || '',
-          expectedResolution: t.expectedResolution || '',
-          businessImpact: t.businessImpact || ''
+          type: t.type || ''
        });
     }
   }, [t, isEditing]);
@@ -127,7 +125,6 @@ export default function TicketDetailModal() {
   // Use all users for the dropdown as requested
   const allSystemUsers = usersList || [];
   const handleStatusUpdate = async (s) => {
-    if (!window.confirm(`Are you sure you want to update the status to "${s}"?`)) return;
     setUpdating(`status-${s}`);
     if (commentTxt.trim()) {
       await addComment(t.id, commentTxt);
@@ -135,7 +132,6 @@ export default function TicketDetailModal() {
     }
     await updateTicketStatus(t.id, s);
     setUpdating('');
-    setSelectedStatus('');
   };
   const handleAssign = async () => { 
     if(assignSel) { 
@@ -219,10 +215,22 @@ export default function TicketDetailModal() {
     if (t && t.longDescription && typeof t.longDescription === 'string' && t.longDescription.startsWith('{')) {
       descObj = JSON.parse(t.longDescription);
     }
-  } catch (e) {}
+  } catch (e) {
+    // Fallback for malformed JSON strings that might be in the database
+    if (t.longDescription) {
+      let origMatch = t.longDescription.match(/"original_email_body"\s*:\s*"(.*?)"\s*,\s*"normalized_email_body"/s);
+      let normMatch = t.longDescription.match(/"normalized_email_body"\s*:\s*"(.*?)"\s*,\s*"ai_metadata"/s);
+      if (origMatch || normMatch) {
+        descObj = {
+          original_email_body: origMatch ? origMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\r/g, '\r') : null,
+          normalized_email_body: normMatch ? normMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\r/g, '\r') : null
+        };
+      }
+    }
+  }
 
-  const displayDesc = descObj ? descObj.normalized_email_body : (t?.longDescription || '');
-  const displayHtml = descObj ? descObj.original_email_body : null;
+  const displayDesc = descObj ? (descObj.normalized_email_body || descObj.description || t?.longDescription) : (t?.longDescription || '');
+  const displayHtml = descObj ? (descObj.original_email_body || null) : null;
 
   const renderMarkdown = (text) => {
     if (!text) return null;
@@ -315,7 +323,7 @@ export default function TicketDetailModal() {
                 <div className="fl"><label>Project</label><input value={editForm.project} onChange={e => setEditForm({...editForm, project: e.target.value})} /></div>
                 <div className="fl"><label>Environment</label>
                    <select value={editForm.environment} onChange={e => setEditForm({...editForm, environment: e.target.value})}>
-                      <option>Production</option>
+                      <option>Development</option><option>Patching</option><option>Testing</option><option>Production</option>
                    </select>
                 </div>
                 <div className="fl"><label>Raised by</label><input value={editForm.raisedBy} onChange={e => setEditForm({...editForm, raisedBy: e.target.value})} /></div>
@@ -336,8 +344,6 @@ export default function TicketDetailModal() {
                      {oracleModules?.map(m => <option key={m.id || m.name} value={m.name}>{m.name}</option>)}
                    </select>
                 </div>
-                <div className="fl full"><label>Expected Resolution</label><input value={editForm.expectedResolution || ''} onChange={e => setEditForm({...editForm, expectedResolution: e.target.value})} /></div>
-                <div className="fl full"><label>Business Impact</label><input value={editForm.businessImpact || ''} onChange={e => setEditForm({...editForm, businessImpact: e.target.value})} /></div>
                 <div className="fl full"><label>Summary</label><input value={editForm.summary} onChange={e => setEditForm({...editForm, summary: e.target.value})} /></div>
                 <div className="fl full"><label>Long Description</label><textarea value={editForm.longDescription} onChange={e => setEditForm({...editForm, longDescription: e.target.value})} style={{ minHeight: '100px' }} /></div>
                 <div className="full" style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
@@ -349,8 +355,7 @@ export default function TicketDetailModal() {
               <div className="det-row"><span className="lbl">Project</span><span>{t.project}</span></div>
               <div className="det-row"><span className="lbl">Environment</span><span>{t.environment}</span></div>
               <div className="det-row"><span className="lbl">Detected</span><span>{fmt(t.detectedDate)}</span></div>
-              <div className="det-row"><span className="lbl">Expected resolution</span><span>{t.expectedResolution || '—'}</span></div>
-              <div className="det-row"><span className="lbl" style={{ color: '#E05252' }}>Business Impact</span><span style={{ fontWeight: 500 }}>{t.businessImpact || '—'}</span></div>
+              <div className="det-row"><span className="lbl">Expected resolution</span><span>{fmt(t.expectedDate)}</span></div>
               <div className="det-row"><span className="lbl">Raised by</span><span>{t.raisedBy}</span></div>
               <div className="det-row"><span className="lbl">Email</span><span>{t.email || '—'}</span></div>
               <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
@@ -419,31 +424,15 @@ export default function TicketDetailModal() {
                   </button>
                </div>
             )}
-            
-            <div className="status-update-lov" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <select 
-                value={selectedStatus} 
-                onChange={e => setSelectedStatus(e.target.value)}
-                style={{ background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '7px 10px', fontSize: '13px', color: '#1A2A3A', fontFamily: 'var(--font)', minWidth: '150px' }}
-                disabled={!!updating}
-              >
-                <option value="">— Select next status —</option>
-                {stats.filter(s => s !== t.status).map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <button 
-                className="btn-p" 
-                onClick={() => {
-                  if(selectedStatus) {
-                    handleStatusUpdate(selectedStatus);
-                  }
-                }} 
-                disabled={!!updating || !selectedStatus}
-                style={{ padding: '7px 16px' }}
-              >
-                {updating.startsWith('status-') ? 'Updating...' : 'Update Status'}
-              </button>
+            <div className="status-btns">
+              {stats.filter(s => s !== t.status).map(s => {
+                return (
+                  <button key={s} className="btn-s" onClick={() => handleStatusUpdate(s)} disabled={!!updating} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: STATUS_COLORS[s] || '#ccc' }}></span>
+                    {updating === `status-${s}` ? 'Updating...' : s}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -464,40 +453,17 @@ export default function TicketDetailModal() {
                 {allSystemUsers
                    .filter(u => {
                       const n = u.full_name?.toLowerCase() || '';
-                      if (n === 'microsoft') return false; // Hide Microsoft
-                      const allowedTeams = [
-                        'scmteam', 'scm team',
-                        'ppmteam', 'ppm team',
-                        'hcmteam', 'hcm team',
-                        'technicalteam', 'technical team',
-                        'financeteam', 'finance team', 'finance support team'
-                      ];
-                      return !n.endsWith('team') || allowedTeams.includes(n);
+                      return !n.endsWith('team') || n === 'scmteam' || n === 'scm team' || n === 'ppmteam' || n === 'ppm team';
                    })
                    .map(m => {
                       let dName = m.full_name;
                       if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
                       if (dName?.toLowerCase() === 'ppmteam') dName = 'PPM Team';
-                      if (dName?.toLowerCase() === 'hcmteam') dName = 'HCM Team';
-                      if (dName?.toLowerCase() === 'technicalteam') dName = 'Technical Team';
-                      if (dName?.toLowerCase() === 'financeteam') dName = 'Finance Team';
                       return <option key={m.id} value={m.full_name}>{dName}</option>;
                    })
                 }
-                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'scm team' || u.full_name?.toLowerCase() === 'scmteam') && (
-                  <option value="SCM Team">SCM Team</option>
-                )}
                 {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'ppm team' || u.full_name?.toLowerCase() === 'ppmteam') && (
                   <option value="PPM Team">PPM Team</option>
-                )}
-                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'hcm team' || u.full_name?.toLowerCase() === 'hcmteam') && (
-                  <option value="HCM Team">HCM Team</option>
-                )}
-                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'technical team' || u.full_name?.toLowerCase() === 'technicalteam') && (
-                  <option value="Technical Team">Technical Team</option>
-                )}
-                {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'finance team' || u.full_name?.toLowerCase() === 'financeteam') && (
-                  <option value="Finance Team">Finance Team</option>
                 )}
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>

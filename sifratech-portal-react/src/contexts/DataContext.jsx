@@ -37,10 +37,12 @@ export function DataProvider({ children }) {
     });
     
     if (response.status === 401) {
-        toast.error('Session expired or unauthorized. Some features may not work.');
-        // We do not force logout here to prevent aggressive session clearing, 
-        // especially for fallback users or temporary network glitches.
-        // Rely on AuthContext's onAuthStateChange for actual token invalidation.
+        toast.error('Session expired. Please log in again.');
+        // We do not have direct access to logout here without getting it from useAuth,
+        // but wait! DataContext destructures currentUser from useAuth.
+        // Let's rely on the AuthContext's onAuthStateChange for automatic logout if the token is completely invalid.
+        // But if we want to force logout here, we can dispatch an event or call supabase.auth.signOut().
+        supabase.auth.signOut();
     }
     return response;
   };
@@ -177,8 +179,7 @@ export function DataProvider({ children }) {
         assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
         assignedToId: t.assigned_to,
         project: t.company || 'ASM- Oracle Fusion support',
-        environment: t.environment || 'Production',
-        expectedResolution: t.expected_resolution,
+        environment: 'Production', // default
         createdAt: t.created_at || new Date().toISOString(),
         detectedDate: t.created_at || new Date().toISOString(), // mapped to created_at
         longDescription: t.description,
@@ -378,9 +379,6 @@ export function DataProvider({ children }) {
         const lbl = currentUser.label?.toLowerCase() || '';
         if ((lbl === 'scm team' || lbl === 'scmteam') && t.module === 'SCM') return true;
         if ((lbl === 'ppm team' || lbl === 'ppmteam') && t.module === 'PPM') return true;
-        if ((lbl === 'finance team' || lbl === 'financeteam') && t.module === 'Financials') return true;
-        if ((lbl === 'hcm team' || lbl === 'hcmteam') && (t.module === 'HRMS' || t.module === 'Payroll')) return true;
-        if (lbl === 'technical team' || lbl === 'technicalteam' || currentUser.team?.toLowerCase() === 'technical team' || currentUser.team?.toLowerCase() === 'technicalteam') return true;
         
         return false;
       });
@@ -742,9 +740,6 @@ export function DataProvider({ children }) {
     if (details.raisedBy !== undefined) dbUpdate.customer_name = details.raisedBy;
     if (details.priority !== undefined) dbUpdate.priority = details.priority;
     if (details.type !== undefined) dbUpdate.ticket_type = details.type;
-    if (details.environment !== undefined) dbUpdate.environment = details.environment;
-    if (details.businessImpact !== undefined) dbUpdate.business_impact = details.businessImpact;
-    if (details.expectedResolution !== undefined) dbUpdate.expected_resolution = details.expectedResolution;
 
     // Handle module update if provided
     if (details.module !== undefined) {

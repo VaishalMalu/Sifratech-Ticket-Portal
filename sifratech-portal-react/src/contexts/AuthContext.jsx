@@ -27,82 +27,53 @@ export function AuthProvider({ children }) {
       canCreate: true,
       canAssign: roleName === 'Admin' || roleName === 'Manager' || roleName === 'Delivery Manager' || roleName === 'Account Manager',
       canClose: roleName !== 'Customer' && roleName !== 'Client',
-      seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager',
-      team: roleName !== 'Customer' && roleName !== 'Client' ? currentUser.client : null
+      seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager'
     };
   }, [currentUser]);
 
   useEffect(() => {
-    let subscription = null;
-    let isMounted = true;
-
-    const initAuth = async () => {
+    const fetchSession = async () => {
       try {
-        // Use Promise.race to prevent infinite hang on Supabase lock deadlock
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 4000));
-        
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
-        
-        if (isMounted) {
-          if (session) {
-            const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
-            const roleName = userData?.roles?.name || 'Customer';
-            setCurrentUser({
-              id: session.user.id,
-              label: userData?.full_name || session.user.email,
-              email: session.user.email,
-              role: roleName,
-              client: userData?.teams?.name || null
-            });
-          } else {
-            const fallback = localStorage.getItem('fallbackUser');
-            if (fallback) {
-              setCurrentUser(JSON.parse(fallback));
-            } else {
-              setCurrentUser(null);
-            }
-          }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
+          const roleName = userData?.roles?.name || 'Customer';
+          setCurrentUser({
+            id: session.user.id,
+            label: userData?.full_name || session.user.email,
+            email: session.user.email,
+            role: roleName,
+            client: userData?.teams?.name || null
+          });
+        } else {
+          setCurrentUser(null);
         }
       } catch (err) {
-        console.error("Auth init error/timeout:", err);
-        // On timeout, still try to load fallback user to avoid getting stuck
-        if (isMounted) {
-          const fallback = localStorage.getItem('fallbackUser');
-          if (fallback) setCurrentUser(JSON.parse(fallback));
-          else setCurrentUser(null);
-        }
+        console.error("Auth init error:", err);
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
+    };
 
-      // ONLY subscribe after initial check completes to avoid lock deadlock
-      if (isMounted) {
-        const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-          if (event === 'SIGNED_OUT' || !session) {
-            setCurrentUser(null);
-          } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
-            const roleName = userData?.roles?.name || 'Customer';
-            setCurrentUser({
-              id: session.user.id,
-              label: userData?.full_name || session.user.email,
-              email: session.user.email,
-              role: roleName,
-              client: userData?.teams?.name || null
-            });
-          }
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setCurrentUser(null);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
+        const roleName = userData?.roles?.name || 'Customer';
+        setCurrentUser({
+          id: session.user.id,
+          label: userData?.full_name || session.user.email,
+          email: session.user.email,
+          role: roleName,
+          client: userData?.teams?.name || null
         });
-        subscription = data.subscription;
       }
-    };
+    });
 
-    initAuth();
-
-    return () => {
-      isMounted = false;
-      if (subscription) subscription.unsubscribe();
-    };
+    return () => subscription?.unsubscribe();
   }, []);
 
   const login = async (username, password) => {
@@ -117,15 +88,13 @@ export function AuthProvider({ children }) {
         // Fallback for development if Supabase is asleep or credentials fail
         if (username.includes('@sifratc.com') || username === 'Account Manager') {
            console.log("Using local fallback login due to Supabase error.");
-           const fallbackUser = {
+           setCurrentUser({
              id: 'local-fallback-id',
              label: username.split('@')[0],
              email: username,
              role: 'Admin',
              client: 'Sifratech'
-           };
-           localStorage.setItem('fallbackUser', JSON.stringify(fallbackUser));
-           setCurrentUser(fallbackUser);
+           });
            return true;
         }
         return false;
@@ -149,15 +118,13 @@ export function AuthProvider({ children }) {
       // Fallback for network timeouts
       if (username.includes('@sifratc.com') || username === 'Account Manager') {
          console.log("Using local fallback login due to network timeout.");
-         const fallbackUser = {
+         setCurrentUser({
            id: 'local-fallback-id',
            label: username.split('@')[0],
            email: username,
            role: 'Admin',
            client: 'Sifratech'
-         };
-         localStorage.setItem('fallbackUser', JSON.stringify(fallbackUser));
-         setCurrentUser(fallbackUser);
+         });
          return true;
       }
     }
@@ -165,7 +132,6 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    localStorage.removeItem('fallbackUser');
     await supabase.auth.signOut();
     setCurrentUser(null);
   };

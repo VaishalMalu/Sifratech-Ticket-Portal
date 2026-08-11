@@ -654,13 +654,7 @@ async function openDetail(id){
 
     ${canUp?`
     <div class="det-section"><h3>Update status</h3>
-      <div class="status-update-lov" style="display:flex;gap:8px;align-items:center;">
-        <select id="statusSel_${t.id}" style="background:#FFFFFF;border:0.5px solid rgba(0,0,0,0.15);border-radius:var(--r);padding:7px 10px;font-size:13px;color:#1A2A3A;font-family:var(--font);min-width:150px;" onchange="document.getElementById('btn_status_${t.id}').disabled=!this.value">
-          <option value="">— Select next status —</option>
-          ${stats.filter(s=>s!==t.status).map(s=>`<option value="${s}">${s}</option>`).join('')}
-        </select>
-        <button id="btn_status_${t.id}" class="btn-p" style="padding:7px 16px;" disabled onclick="updateStatus('${t.id}', document.getElementById('statusSel_${t.id}').value)">Update Status</button>
-      </div>
+      <div class="status-btns">${stats.filter(s=>s!==t.status).map(s=>`<button class="btn-s" onclick="updateStatus('${t.id}','${s}')">${s}</button>`).join('')}</div>
       ${role.canAssign||role.seeAll?`<div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
         <select id="raSel" style="background:#FFFFFF;border:0.5px solid rgba(0,0,0,0.15);border-radius:var(--r);padding:7px 10px;font-size:12px;color:#1A2A3A;font-family:var(--font);">
           <option value="">— reassign to —</option>${TEAM.map(m=>`<option ${t.assignedTo===m.name?'selected':''}>${m.name}</option>`).join('')}
@@ -747,7 +741,6 @@ function applyReply(id){
 
 // ── STATUS / ASSIGNMENT ──
 function updateStatus(id,ns){
-  if (!window.confirm(`Are you sure you want to update the status to "${ns}"?`)) return;
   const t=tickets.find(x=>x.id===id);if(!t) return;
   const role=ROLES[currentRole];const old=t.status;t.status=ns;
   t.auditLog.push({ts:now(),by:role.label,msg:`Status: ${old} → ${ns}.`});

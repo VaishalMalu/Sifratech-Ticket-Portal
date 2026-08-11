@@ -86,32 +86,29 @@ const processUnreadEmails = async () => {
                     
                     // Handle Attachments
                     let attachmentLinks = [];
-                    try {
+                    if (email.hasAttachments) {
                         const attachments = await fetchEmailAttachments(email.id);
-                        if (attachments && attachments.length > 0) {
-                            for (const att of attachments) {
-                                if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
-                                    try {
-                                        const buffer = Buffer.from(att.contentBytes, 'base64');
-                                        const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-                                        const safeName = (att.name || `attachment_${Date.now()}`).replace(/[^\w\.\-\s]/g, '_');
-                                        const path = `${matchedTicket.id}/${Date.now()}_${safeName}`;
-                                        
-                                        const { data, error: uploadError } = await supabase.storage.from('ticket-attachments').upload(path, arrayBuffer, { contentType: att.contentType });
-                                        if (data) {
-                                            const { data: { publicUrl } } = supabase.storage.from('ticket-attachments').getPublicUrl(data.path);
-                                            attachmentLinks.push(`[Attachment: ${safeName}](${publicUrl})`);
-                                        } else {
-                                            console.error('Error uploading reply attachment:', uploadError);
-                                        }
-                                    } catch (err) {
-                                        console.error('Error processing reply attachment:', err);
+                        for (const att of attachments) {
+                            if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
+                                try {
+                                    const buffer = Buffer.from(att.contentBytes, 'base64');
+                                    const safeName = att.name.replace(/[^\w\.\-\s]/g, '_');
+                                    const path = `${matchedTicket.id}/${Date.now()}_${safeName}`;
+                                    
+                                    const arrayBuffer = new Uint8Array(buffer).buffer;
+                                    
+                                    const { data, error: uploadError } = await supabase.storage.from('ticket-attachments').upload(path, arrayBuffer, { contentType: att.contentType });
+                                    if (data) {
+                                        const { data: { publicUrl } } = supabase.storage.from('ticket-attachments').getPublicUrl(data.path);
+                                        attachmentLinks.push(`[Attachment: ${safeName}](${publicUrl})`);
+                                    } else {
+                                        console.error('Error uploading reply attachment:', uploadError);
                                     }
+                                } catch (err) {
+                                    console.error('Error processing reply attachment:', err);
                                 }
                             }
                         }
-                    } catch (err) {
-                        console.error('Error fetching attachments for reply:', err);
                     }
                     
                     if (attachmentLinks.length > 0) {
@@ -152,7 +149,7 @@ const processUnreadEmails = async () => {
             
             // Allow if it matches our template perfectly, OR if the AI says it's a valid ticket
             if (!isTemplate && aiData.is_valid_ticket === false) {
-                console.log(`[DEBUG] AI rejected email "${email.subject}". Skipping ticket creation.`);
+                console.log(`Ignoring email "${email.subject}": AI determined it is not a valid support ticket.`);
                 await markEmailAsRead(email.id);
                 continue;
             }
@@ -182,7 +179,7 @@ const processUnreadEmails = async () => {
                 .limit(1);
 
             if (duplicateTicket && duplicateTicket.length > 0) {
-                console.log(`[DEBUG] Duplicate ticket detected for subject "${email.subject}". Skipping ticket creation.`);
+                console.log(`Duplicate ticket detected for subject "${email.subject}". Skipping...`);
                 await markEmailAsRead(email.id);
                 continue;
             }
@@ -284,47 +281,44 @@ const processUnreadEmails = async () => {
             }
 
             // Handle Attachments
-            try {
+            if (email.hasAttachments) {
                 const attachments = await fetchEmailAttachments(email.id);
                 let attachmentLinks = [];
-                if (attachments && attachments.length > 0) {
-                    for (const att of attachments) {
-                        if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
-                            try {
-                                const buffer = Buffer.from(att.contentBytes, 'base64');
-                                const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-                                const safeName = (att.name || `attachment_${Date.now()}`).replace(/[^\w\.\-\s]/g, '_');
-                                const path = `${createdTicket.id}/${Date.now()}_${safeName}`;
+                for (const att of attachments) {
+                    if (att['@odata.type'] === '#microsoft.graph.fileAttachment') {
+                        try {
+                            const buffer = Buffer.from(att.contentBytes, 'base64');
+                            const safeName = att.name.replace(/[^\w\.\-\s]/g, '_');
+                            const path = `${createdTicket.id}/${Date.now()}_${safeName}`;
+                            
+                            const arrayBuffer = new Uint8Array(buffer).buffer;
+                            
+                            const { data, error: uploadError } = await supabase.storage
+                                .from('ticket-attachments')
+                                .upload(path, arrayBuffer, { contentType: att.contentType });
                                 
-                                const { data, error: uploadError } = await supabase.storage
+                            if (data) {
+                                const { data: { publicUrl } } = supabase.storage
                                     .from('ticket-attachments')
-                                    .upload(path, arrayBuffer, { contentType: att.contentType });
-                                    
-                                if (data) {
-                                    const { data: { publicUrl } } = supabase.storage
-                                        .from('ticket-attachments')
-                                        .getPublicUrl(data.path);
-                                    attachmentLinks.push(`[Attachment: ${safeName}](${publicUrl})`);
-                                } else {
-                                    console.error('Error uploading attachment:', uploadError);
-                                }
-                            } catch (err) {
-                                console.error('Error processing attachment buffer:', err);
+                                    .getPublicUrl(data.path);
+                                attachmentLinks.push(`[Attachment: ${safeName}](${publicUrl})`);
+                            } else {
+                                console.error('Error uploading attachment:', uploadError);
                             }
+                        } catch (err) {
+                            console.error('Error processing attachment buffer:', err);
                         }
                     }
                 }
 
                 if (attachmentLinks.length > 0) {
-                    const newDesc = (createdTicket.description || '') + '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
+                    const newDesc = createdTicket.description + '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
                     await supabase.from('tickets').update({ description: newDesc }).eq('id', createdTicket.id);
                 }
-            } catch (err) {
-                console.error('Error fetching attachments for new ticket:', err);
             }
 
             // 4. Auto-Assign (via AI/Rules)
-            await assignTicket(createdTicket.id, aiData.oracle_module);
+            // await assignTicket(createdTicket.id, aiData.oracle_module || ticketData.oracle_module_name);
             
             // Generate Resolution Suggestion (Background)
             if (aiData.suggested_resolution) {
