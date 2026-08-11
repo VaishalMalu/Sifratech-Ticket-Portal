@@ -212,6 +212,10 @@ export default function TicketDetailModal() {
 
   let descObj = null;
   try {
+    const convertToHtml = (text) => {
+      return text.replace(/\n/g, '<br>').replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #1A5FA8; text-decoration: underline;">$1</a>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    };
+
     if (t && t.longDescription && typeof t.longDescription === 'string' && t.longDescription.startsWith('{')) {
       // Check if there are attachments appended after the JSON closing brace
       let jsonPart = t.longDescription;
@@ -225,7 +229,7 @@ export default function TicketDetailModal() {
       descObj = JSON.parse(jsonPart);
       if (appendedPart) {
         if (descObj.normalized_email_body) descObj.normalized_email_body += appendedPart;
-        if (descObj.original_email_body) descObj.original_email_body += appendedPart.replace(/\n/g, '<br>');
+        if (descObj.original_email_body) descObj.original_email_body += convertToHtml(appendedPart);
       }
     }
   } catch (e) {
@@ -246,9 +250,12 @@ export default function TicketDetailModal() {
           original_email_body: origMatch ? origMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\r/g, '\r') : null,
           normalized_email_body: normMatch ? normMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\r/g, '\r') : null
         };
+        const convertToHtmlFallback = (text) => {
+          return text.replace(/\n/g, '<br>').replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #1A5FA8; text-decoration: underline;">$1</a>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        };
         if (appendedPart) {
           if (descObj.normalized_email_body) descObj.normalized_email_body += appendedPart;
-          if (descObj.original_email_body) descObj.original_email_body += appendedPart.replace(/\n/g, '<br>');
+          if (descObj.original_email_body) descObj.original_email_body += convertToHtmlFallback(appendedPart);
         }
       }
     }

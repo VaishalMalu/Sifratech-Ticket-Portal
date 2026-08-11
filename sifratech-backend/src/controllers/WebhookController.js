@@ -316,7 +316,13 @@ const processUnreadEmails = async () => {
                     try {
                         let descObj = JSON.parse(createdTicket.description);
                         if (descObj.normalized_email_body !== undefined) descObj.normalized_email_body += appendText;
-                        if (descObj.original_email_body !== undefined) descObj.original_email_body += appendText.replace(/\n/g, '<br>');
+                        if (descObj.original_email_body !== undefined) {
+                            const htmlAppend = '<br><br><strong>Attachments:</strong><br>' + attachmentLinks.map(l => {
+                                const m = l.match(/\[Attachment:\s*(.*?)\]\((.*?)\)/);
+                                return m ? `<a href="${m[2]}" target="_blank" style="color: #1A5FA8; text-decoration: underline;">${m[1]}</a>` : l;
+                            }).join('<br>');
+                            descObj.original_email_body += htmlAppend;
+                        }
                         await supabase.from('tickets').update({ description: JSON.stringify(descObj) }).eq('id', createdTicket.id);
                     } catch (e) {
                         const newDesc = createdTicket.description + appendText;
