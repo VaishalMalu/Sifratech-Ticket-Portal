@@ -29,12 +29,20 @@ const processUnreadEmails = async () => {
 
             const cleanHtml = (html) => {
                 if (!html) return '';
-                return html.replace(/<br\s*\/?>/gi, '\n')
+                // First convert lists and tables to basic text formatting
+                let text = html.replace(/<li>/gi, '\n• ')
+                               .replace(/<\/li>/gi, '')
+                               .replace(/<tr>/gi, '\n')
+                               .replace(/<\/td>/gi, ' | ')
+                               .replace(/<\/th>/gi, ' | ');
+                
+                return text.replace(/<br\s*\/?>/gi, '\n')
                            .replace(/<\/div>/gi, '\n')
-                           .replace(/<\/p>/gi, '\n')
+                           .replace(/<\/p>/gi, '\n\n')
                            .replace(/<[^>]+>/g, '') // Strip remaining tags
                            .replace(/&nbsp;/g, ' ')
-                           .replace(/\r\n/g, '\n');
+                           .replace(/\r\n/g, '\n')
+                           .replace(/\n{3,}/g, '\n\n'); // Clean up excessive newlines
             };
 
             let bodyContent = email.bodyPreview || '';
@@ -164,11 +172,12 @@ const processUnreadEmails = async () => {
 
             // Prevent Duplicates by Title/Email within 24 hours
             const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const ticketTitle = aiData.incident_name || extractedData.title || email.subject;
             const { data: duplicateTicket } = await supabase
                 .from('tickets')
                 .select('id')
-                .eq('title', extractedData.title || email.subject)
-                .eq('email_address', email.from.emailAddress.address)
+                .eq('title', ticketTitle)
+                .eq('email_address', aiData.email_address || email.from.emailAddress.address)
                 .gte('created_at', yesterday)
                 .limit(1);
 
@@ -177,25 +186,41 @@ const processUnreadEmails = async () => {
                 await markEmailAsRead(email.id);
                 continue;
             }
+            
+            const finalDescriptionData = {
+                original_email_body: (email.body && email.body.content) ? email.body.content : '',
+                normalized_email_body: aiData.incident_description || extractedData.description || bodyContent,
+                ai_metadata: {
+                    confidence_scores: aiData.confidence_scores || {},
+                    extraction_sources: aiData.extraction_sources || {}
+                }
+            };
+            
+            const safeString = (str, maxLen) => {
+                if (!str) return null;
+                const singleLine = str.split('\n')[0].trim();
+                return singleLine.substring(0, maxLen);
+            };
+
             const ticketData = {
-                title: extractedData.title || email.subject,
-                description: extractedData.description || bodyContent,
+                title: safeString(ticketTitle, 255) || 'Support Request',
+                description: JSON.stringify(finalDescriptionData),
                 oracle_module_name: aiData.oracle_module,
-                ticket_type: aiData.incident_type || extractedData.type || 'Email Inquiry',
+                ticket_type: safeString(aiData.incident_type || extractedData.type || 'Email Inquiry', 50),
                 request_type: 'Inbound Mail',
-                priority: aiData.priority,
-                severity: aiData.severity,
+                priority: safeString(aiData.priority || extractedData.priority || 'Medium', 50),
+                severity: safeString(aiData.severity || 'Moderate', 50),
                 business_impact: aiData.business_impact || extractedData.business_impact,
                 // Add new fields for autonomous processing
-                customer_name: email.from.emailAddress.name,
-                email_address: email.from.emailAddress.address,
-                company: extractedData.company || 'ASM- Oracle Fusion support',
-                phone_number: extractedData.phone_number,
-                source: 'Outlook',
-                email_message_id: email.id,
-                conversation_id: email.conversationId,
+                customer_name: safeString(aiData.customer_name || email.from.emailAddress.name, 255),
+                email_address: safeString(aiData.email_address || email.from.emailAddress.address, 255),
+                company: safeString(aiData.company || extractedData.company || 'ASM- Oracle Fusion support', 255),
+                phone_number: safeString(aiData.phone_number || extractedData.phone_number, 50),
+                source: aiData.is_fallback ? 'Outlook (Fallback)' : 'Outlook',
+                email_message_id: safeString(email.id, 255),
+                conversation_id: safeString(email.conversationId, 255),
                 ticket_number: `TKT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
-                expected_resolution: aiData.suggested_resolution || extractedData.expected_resolution
+                expected_resolution: aiData.expected_resolution || extractedData.expected_resolution
             };
 
             // Calculate Due Date

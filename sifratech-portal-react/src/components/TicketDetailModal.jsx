@@ -58,6 +58,7 @@ export default function TicketDetailModal() {
   const [aiSumBtnLoading, setAiSumBtnLoading] = useState(false);
   const [showAiSummary, setShowAiSummary] = useState(false);
   const [aiSummaryText, setAiSummaryText] = useState('');
+  const [showOriginal, setShowOriginal] = useState(false);
   
   const [selectedStatus, setSelectedStatus] = useState('');
 
@@ -210,8 +211,18 @@ export default function TicketDetailModal() {
     }
   };
 
-  const aAge = age(t.createdAt);
-  const breached = aAge > sla[t.priority];
+  const aAge = age(t?.createdAt);
+  const breached = aAge > sla[t?.priority];
+
+  let descObj = null;
+  try {
+    if (t && t.longDescription && typeof t.longDescription === 'string' && t.longDescription.startsWith('{')) {
+      descObj = JSON.parse(t.longDescription);
+    }
+  } catch (e) {}
+
+  const displayDesc = descObj ? descObj.normalized_email_body : (t?.longDescription || '');
+  const displayHtml = descObj ? descObj.original_email_body : null;
 
   const renderMarkdown = (text) => {
     if (!text) return null;
@@ -360,14 +371,34 @@ export default function TicketDetailModal() {
               </button>
             )}
           </div>
-          <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>
-             {showAiSummary ? aiSummaryText : renderMarkdown(t.longDescription)}
-          </div>
-          {showAiSummary && (
-             <div style={{ marginTop: '8px' }}>
-                <a href="#" onClick={(e) => { e.preventDefault(); setShowAiSummary(false); }} style={{ fontSize: '11px', color: '#1A5FA8' }}>Show original description</a>
+          
+          {descObj && descObj.ai_metadata && descObj.ai_metadata.confidence_scores && Object.keys(descObj.ai_metadata.confidence_scores).length > 0 && (
+             <div style={{ marginBottom: '16px', background: '#F5F8FB', padding: '12px', borderRadius: '4px', border: '0.5px solid rgba(0,0,0,0.15)' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#1A5FA8', fontSize: '12px' }}>AI Extracted Metadata</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', color: '#3A4A5C' }}>
+                   {Object.entries(descObj.ai_metadata.confidence_scores).map(([key, score]) => (
+                      <div key={key}><strong>{key}:</strong> Confidence {score} | Source: {descObj.ai_metadata.extraction_sources?.[key] || 'Unknown'}</div>
+                   ))}
+                </div>
              </div>
           )}
+
+          {showOriginal && displayHtml ? (
+              <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', margin: 0, padding: '12px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px' }} dangerouslySetInnerHTML={{ __html: displayHtml }} />
+          ) : (
+              <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>
+                 {showAiSummary ? aiSummaryText : renderMarkdown(displayDesc)}
+              </div>
+          )}
+          
+          <div style={{ marginTop: '8px', display: 'flex', gap: '16px' }}>
+             {showAiSummary && (
+                <a href="#" onClick={(e) => { e.preventDefault(); setShowAiSummary(false); }} style={{ fontSize: '11px', color: '#1A5FA8' }}>Show original description</a>
+             )}
+             {displayHtml && (
+                <a href="#" onClick={(e) => { e.preventDefault(); setShowOriginal(!showOriginal); }} style={{ fontSize: '11px', color: '#1A5FA8' }}>{showOriginal ? 'Show normalized text description' : 'Show complete HTML email'}</a>
+             )}
+          </div>
         </div>
         )}
         {t.resolution && <div className="det-section"><h3>Resolution</h3><p style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', whiteSpace: 'pre-wrap', margin: 0 }}>{t.resolution}</p></div>}

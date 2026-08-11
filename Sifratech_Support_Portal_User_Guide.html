@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sifratech Support Portal — User Guide</title>
+  <style>
+    /* ===== PRINT / PDF SETUP ===== */
+    @page {
+      size: A4;
+      margin: 18mm 20mm 18mm 20mm;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { font-size: 10.5pt; }
+      .page-break { page-break-before: always; }
+      .avoid-break { page-break-inside: avoid; }
+      a { color: inherit !important; text-decoration: none !important; }
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ===== TYPOGRAPHY ===== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 11pt;
+      color: #1A2A3A;
+      line-height: 1.65;
+      background: #fff;
+    }
+
+    /* ===== COVER PAGE ===== */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 60px 56px;
+      background: #fff;
+      page-break-after: always;
+    }
+    .cover-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .cover-logo-row { display: flex; align-items: center; gap: 14px; }
+    .cover-logo-svg { width: 52px; height: 52px; }
+    .cover-brand { display: flex; flex-direction: column; }
+    .cover-brand .b1 {
+      font-size: 22pt;
+      font-weight: 800;
+      color: #1A2A3A;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .cover-brand .b1 span { color: #1A9FCC; }
+    .cover-brand .b2 {
+      font-size: 8pt;
+      color: #6B7A8D;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      margin-top: 3px;
+    }
+    .cover-doc-type {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #1A9FCC;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      border: 1.5px solid #1A9FCC;
+      padding: 5px 14px;
+      border-radius: 4px;
+    }
+
+    .cover-main { padding: 80px 0 0 0; }
+    .cover-eyebrow {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #1A9FCC;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      margin-bottom: 18px;
+    }
+    .cover-title {
+      font-size: 36pt;
+      font-weight: 800;
+      color: #1A2A3A;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+    }
+    .cover-title span { color: #1A9FCC; }
+    .cover-subtitle {
+      font-size: 14pt;
+      font-weight: 300;
+      color: #4A5A6A;
+      margin-bottom: 40px;
+      line-height: 1.4;
+    }
+    .cover-divider {
+      width: 60px;
+      height: 4px;
+      background: #1A9FCC;
+      border-radius: 2px;
+      margin-bottom: 32px;
+    }
+    .cover-desc {
+      font-size: 11pt;
+      color: #3A4A5C;
+      max-width: 520px;
+      line-height: 1.8;
+    }
+
+    .cover-meta-row {
+      display: flex;
+      gap: 40px;
+      margin-top: 60px;
+      border-top: 1px solid #E1E8EE;
+      padding-top: 28px;
+    }
+    .cover-meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .cover-meta-label {
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #9AA5B4;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .cover-meta-value {
+      font-size: 9.5pt;
+      font-weight: 500;
+      color: #1A2A3A;
+    }
+
+    .cover-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #E1E8EE;
+      padding-top: 20px;
+    }
+    .cover-footer-text {
+      font-size: 8pt;
+      color: #9AA5B4;
+    }
+    .cover-confidential {
+      font-size: 8pt;
+      font-weight: 600;
+      color: #E05252;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border: 1px solid #E05252;
+      padding: 3px 10px;
+      border-radius: 3px;
+    }
+
+    /* ===== PAGE LAYOUT ===== */
+    .page-wrap {
+      padding: 48px 56px;
+      background: #fff;
+    }
+
+    /* ===== SECTION HEADER ===== */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #1A9FCC;
+    }
+    .section-num {
+      width: 36px;
+      height: 36px;
+      background: #1A9FCC;
+      color: #fff;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13pt;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #1A2A3A;
+      letter-spacing: -0.3px;
+    }
+    .section-sub {
+      font-size: 9pt;
+      color: #6B7A8D;
+      margin-top: 2px;
+    }
+
+    /* ===== TOC ===== */
+    .toc-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .toc-table tr { border-bottom: 1px solid #F0F4F8; }
+    .toc-table tr:last-child { border-bottom: none; }
+    .toc-table td { padding: 10px 0; vertical-align: middle; }
+    .toc-num {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #1A9FCC;
+      width: 36px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .toc-label { font-size: 10.5pt; color: #1A2A3A; font-weight: 500; }
+    .toc-dots {
+      flex: 1;
+      border-bottom: 1px dotted #C8D4E0;
+      margin: 0 10px;
+      position: relative;
+      top: -4px;
+    }
+    .toc-row { display: flex; align-items: baseline; gap: 6px; }
+    .toc-desc { font-size: 9pt; color: #6B7A8D; margin-top: 1px; }
+
+    /* ===== CALLOUT BOXES ===== */
+    .callout {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .callout-info { background: #EBF7FD; border-left: 4px solid #1A9FCC; }
+    .callout-warn { background: #FEF6E4; border-left: 4px solid #E09A2B; }
+    .callout-tip  { background: #EBF8F1; border-left: 4px solid #4CAF7D; }
+    .callout-alert{ background: #FEECEC; border-left: 4px solid #E05252; }
+    .callout-icon { font-size: 15pt; flex-shrink: 0; margin-top: 1px; }
+    .callout-body { font-size: 9.5pt; color: #2A3A4A; }
+    .callout-body strong { font-size: 10pt; color: #1A2A3A; display: block; margin-bottom: 3px; }
+
+    /* ===== STEP BLOCKS ===== */
+    .step-list { list-style: none; margin: 16px 0; }
+    .step-item {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 18px;
+      align-items: flex-start;
+    }
+    .step-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #1A2A3A;
+      color: #fff;
+      font-size: 11pt;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-content { flex: 1; }
+    .step-title {
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #1A2A3A;
+      margin-bottom: 3px;
+    }
+    .step-desc { font-size: 9.5pt; color: #3A4A5C; line-height: 1.65; }
+
+    /* ===== FIELD TABLE ===== */
+    .field-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .field-table thead th {
+      background: #1A2A3A;
+      color: #fff;
+      font-size: 8.5pt;
+      font-weight: 600;
+      padding: 10px 14px;
+      text-align: left;
+      letter-spacing: 0.3px;
+    }
+    .field-table thead th:first-child { border-radius: 6px 0 0 0; }
+    .field-table thead th:last-child  { border-radius: 0 6px 0 0; }
+    .field-table tbody tr:nth-child(even) { background: #F8FAFB; }
+    .field-table tbody tr:nth-child(odd)  { background: #FFFFFF; }
+    .field-table tbody td {
+      font-size: 9.5pt;
+      color: #2A3A4A;
+      padding: 9px 14px;
+      border-bottom: 1px solid #EEF2F7;
+      vertical-align: top;
+    }
+    .field-table tbody td:first-child { font-weight: 600; color: #1A2A3A; }
+    .req { color: #E05252; font-size: 10pt; }
+    .opt { color: #6B7A8D; font-size: 8pt; font-weight: 400; }
+
+    /* ===== STATUS BADGES ===== */
+    .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7;
+    }
+    .b-new       { background: #E8F4FD; color: #1A5FA8; }
+    .b-open      { background: #E0F7F6; color: #0D7A7A; }
+    .b-assigned  { background: #E3F2FB; color: #1A9FCC; }
+    .b-progress  { background: #FEF6E4; color: #9A5E00; }
+    .b-awaiting  { background: #FFF0D4; color: #9A5E00; }
+    .b-resolved  { background: #EBF8F1; color: #2E7D32; }
+    .b-closed    { background: #ECEFF1; color: #455A64; }
+    .b-reopened  { background: #FEECEC; color: #C62828; }
+
+    /* ===== PRIORITY BADGES ===== */
+    .p-top       { background: #EDE8FA; color: #4527A0; }
+    .p-high      { background: #FEECEC; color: #C62828; }
+    .p-medium    { background: #FEF6E4; color: #9A5E00; }
+    .p-low       { background: #EBF8F1; color: #2E7D32; }
+    .p-project   { background: #E0F2F1; color: #00695C; }
+
+    /* ===== FLOW DIAGRAM ===== */
+    .flow-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .flow-node {
+      background: #F5F8FB;
+      border: 1.5px solid #C8D4E0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #1A2A3A;
+      text-align: center;
+      min-width: 90px;
+    }
+    .flow-node.active { background: #1A9FCC; border-color: #1A9FCC; color: #fff; }
+    .flow-node.done   { background: #4CAF7D; border-color: #4CAF7D; color: #fff; }
+    .flow-node.warn   { background: #E09A2B; border-color: #E09A2B; color: #fff; }
+    .flow-arrow {
+      font-size: 14pt;
+      color: #9AA5B4;
+      margin: 0 4px;
+    }
+    .flow-sub { font-size: 7pt; font-weight: 400; margin-top: 2px; opacity: 0.85; }
+
+    /* ===== EMAIL TEMPLATE ===== */
+    .email-block {
+      border: 1.5px solid #C8D4E0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      font-size: 9.5pt;
+    }
+    .email-header {
+      background: #1A2A3A;
+      color: #fff;
+      padding: 12px 18px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .email-meta {
+      background: #F5F8FB;
+      padding: 12px 18px;
+      border-bottom: 1px solid #E1E8EE;
+      font-size: 9pt;
+      line-height: 1.9;
+    }
+    .email-meta .lbl { font-weight: 600; color: #1A2A3A; display: inline-block; width: 65px; }
+    .email-body {
+      padding: 18px 20px;
+      line-height: 1.8;
+      color: #2A3A4A;
+      background: #FFFFFF;
+    }
+    .email-highlight {
+      background: #EBF7FD;
+      border: 1px solid #C2E4F5;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 9pt;
+    }
+    .email-highlight .row { display: flex; gap: 8px; margin-bottom: 4px; }
+    .email-highlight .row:last-child { margin-bottom: 0; }
+    .email-highlight .el { font-weight: 600; color: #1A2A3A; min-width: 120px; }
+    .email-highlight .ev { color: #2A3A4A; }
+    .email-sig { border-top: 1px solid #E1E8EE; margin-top: 16px; padding-top: 12px; color: #6B7A8D; font-size: 8.5pt; }
+
+    /* ===== SAMPLE TICKET ===== */
+    .ticket-card {
+      border: 1.5px solid #C8D4E0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px 0;
+      page-break-inside: avoid;
+    }
+    .ticket-card-header {
+      background: #1A2A3A;
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .ticket-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10pt;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+    .ticket-title {
+      font-size: 11pt;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .ticket-body {
+      padding: 18px 20px;
+      background: #fff;
+    }
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 30px;
+      margin-bottom: 16px;
+    }
+    .ticket-field { display: flex; flex-direction: column; gap: 2px; }
+    .ticket-field .tf-lbl { font-size: 7.5pt; font-weight: 600; color: #9AA5B4; text-transform: uppercase; letter-spacing: 1px; }
+    .ticket-field .tf-val { font-size: 9.5pt; color: #1A2A3A; font-weight: 500; }
+    .ticket-desc-block {
+      background: #F5F8FB;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 9pt;
+      color: #2A3A4A;
+      line-height: 1.75;
+      margin-top: 8px;
+    }
+    .ticket-desc-lbl { font-size: 7.5pt; font-weight: 600; color: #9AA5B4; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+
+    /* ===== SLA TABLE ===== */
+    .sla-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 16px 0; }
+    .sla-card {
+      border-radius: 8px;
+      padding: 14px 12px;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+    .sla-card .sc-label { font-size: 9pt; font-weight: 700; margin-bottom: 6px; }
+    .sla-card .sc-time  { font-size: 14pt; font-weight: 800; margin-bottom: 3px; }
+    .sla-card .sc-unit  { font-size: 7.5pt; font-weight: 500; opacity: 0.75; }
+    .sla-top     { background: #EDE8FA; color: #4527A0; }
+    .sla-high    { background: #FEECEC; color: #C62828; }
+    .sla-medium  { background: #FEF6E4; color: #9A5E00; }
+    .sla-low     { background: #EBF8F1; color: #2E7D32; }
+    .sla-project { background: #E0F2F1; color: #00695C; }
+
+    /* ===== ROLE TABLE ===== */
+    .role-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 9pt; }
+    .role-table thead th {
+      background: #1A9FCC;
+      color: #fff;
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 8.5pt;
+      font-weight: 600;
+    }
+    .role-table tbody tr:nth-child(even) { background: #F8FAFB; }
+    .role-table tbody td { padding: 8px 12px; border-bottom: 1px solid #EEF2F7; vertical-align: top; color: #2A3A4A; }
+    .role-table tbody td:first-child { font-weight: 600; color: #1A2A3A; }
+    .check { color: #4CAF7D; font-weight: 700; }
+    .cross { color: #E05252; font-weight: 700; }
+
+    /* ===== CREDENTIAL CARD ===== */
+    .cred-card {
+      background: #1A2A3A;
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin: 20px 0;
+      color: #fff;
+      page-break-inside: avoid;
+    }
+    .cred-card-title {
+      font-size: 8.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #1A9FCC;
+      margin-bottom: 16px;
+    }
+    .cred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .cred-item { display: flex; flex-direction: column; gap: 5px; }
+    .cred-label { font-size: 7.5pt; font-weight: 600; color: #6B7A8D; text-transform: uppercase; letter-spacing: 1.5px; }
+    .cred-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5pt;
+      font-weight: 500;
+      color: #fff;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px;
+      padding: 7px 12px;
+    }
+    .cred-note {
+      font-size: 8.5pt;
+      color: #9AA5B4;
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* ===== NOTICE BOX ===== */
+    .notice-box {
+      border: 1.5px solid #E09A2B;
+      background: #FEF6E4;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-size: 9pt;
+      color: #5A3A00;
+      line-height: 1.7;
+      margin: 16px 0;
+    }
+
+    /* ===== AI FEATURES ===== */
+    .ai-block {
+      border: 1.5px solid #8B7FD4;
+      background: #F3F2FD;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .ai-label {
+      display: inline-block;
+      background: #8B7FD4;
+      color: #fff;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin-bottom: 10px;
+    }
+    .ai-feature { margin-bottom: 10px; font-size: 9.5pt; color: #2A2A4A; }
+    .ai-feature:last-child { margin-bottom: 0; }
+    .ai-feature strong { color: #4527A0; }
+
+    /* ===== FAQ ===== */
+    .faq-item { margin-bottom: 16px; page-break-inside: avoid; }
+    .faq-q {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #1A2A3A;
+      margin-bottom: 5px;
+      padding-left: 14px;
+      border-left: 3px solid #1A9FCC;
+    }
+    .faq-a {
+      font-size: 9.5pt;
+      color: #3A4A5C;
+      line-height: 1.7;
+      padding-left: 17px;
+    }
+
+    /* ===== FOOTER ===== */
+    .doc-footer {
+      margin-top: 40px;
+      padding-top: 18px;
+      border-top: 1px solid #E1E8EE;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8pt;
+      color: #9AA5B4;
+    }
+
+    /* ===== MISC ===== */
+    p { margin-bottom: 10px; }
+    ul { margin: 10px 0 10px 20px; }
+    ul li { margin-bottom: 5px; font-size: 9.5pt; color: #3A4A5C; line-height: 1.6; }
+    h3 { font-size: 12pt; font-weight: 700; color: #1A2A3A; margin: 20px 0 10px 0; }
+    h4 { font-size: 10.5pt; font-weight: 600; color: #1A2A3A; margin: 14px 0 8px 0; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 9pt; background: #F0F4F8; padding: 2px 6px; border-radius: 3px; color: #1A2A3A; }
+    .highlight-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
+    .highlight-card {
+      background: #F5F8FB;
+      border: 1px solid #E1E8EE;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .highlight-card .hc-num { font-size: 20pt; font-weight: 800; color: #1A9FCC; line-height: 1; margin-bottom: 4px; }
+    .highlight-card .hc-lbl { font-size: 8.5pt; color: #6B7A8D; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<!-- ================================================
+     COVER PAGE
+     ================================================ -->
+<div class="cover">
+  <div class="cover-top">
+    <div class="cover-logo-row">
+      <svg class="cover-logo-svg" viewBox="0 0 44 44" fill="none">
+        <circle cx="22" cy="10" r="3.5" fill="#1A9FCC"/>
+        <circle cx="8"  cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+        <circle cx="36" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+        <circle cx="13" cy="34" r="2.5" fill="#35C8E8" opacity=".6"/>
+        <circle cx="31" cy="34" r="2.5" fill="#35C8E8" opacity=".6"/>
+        <circle cx="22" cy="26" r="3.5" fill="#1A9FCC"/>
+        <line x1="22" y1="10" x2="8"  y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="10" x2="36" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="8"  y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="36" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        <line x1="22" y1="26" x2="13" y2="34" stroke="#35C8E8" stroke-width="1.2" opacity=".4"/>
+        <line x1="22" y1="26" x2="31" y2="34" stroke="#35C8E8" stroke-width="1.2" opacity=".4"/>
+        <line x1="8"  y1="22" x2="13" y2="34" stroke="#35C8E8" stroke-width="1"   opacity=".3"/>
+        <line x1="36" y1="22" x2="31" y2="34" stroke="#35C8E8" stroke-width="1"   opacity=".3"/>
+      </svg>
+      <div class="cover-brand">
+        <div class="b1">SIFRA<span>TECH</span></div>
+        <div class="b2">A Alt-S Group Company</div>
+      </div>
+    </div>
+    <div class="cover-doc-type">User Guide</div>
+  </div>
+
+  <div class="cover-main">
+    <div class="cover-eyebrow">Support Portal Documentation</div>
+    <div class="cover-title">Support Portal<br><span>User Guide</span></div>
+    <div class="cover-subtitle">Complete end-to-end guide for raising,<br>tracking, and resolving support tickets.</div>
+    <div class="cover-divider"></div>
+    <div class="cover-desc">
+      This document provides a step-by-step walkthrough of the Sifratech Support Portal for all users. It covers portal access, ticket creation, status tracking, SLA commitments, role-specific capabilities, automated notifications, and the full ticket lifecycle from submission to closure.
+    </div>
+
+    <div class="cover-meta-row">
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Document Version</span>
+        <span class="cover-meta-value">1.0 — Initial Release</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Prepared By</span>
+        <span class="cover-meta-value">Sifratech Technology Pvt Ltd</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Date Issued</span>
+        <span class="cover-meta-value">June 2026</span>
+      </div>
+      <div class="cover-meta-item">
+        <span class="cover-meta-label">Audience</span>
+        <span class="cover-meta-value">All Portal Users</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <span class="cover-footer-text">© 2026 Sifratech Technology Pvt Ltd — All rights reserved</span>
+    <span class="cover-confidential">Proprietary &amp; Confidential</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     TABLE OF CONTENTS
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num" style="background:#1A2A3A;">&#9776;</div>
+    <div>
+      <div class="section-title">Table of Contents</div>
+      <div class="section-sub">Quick reference to all sections in this guide</div>
+    </div>
+  </div>
+
+  <table class="toc-table">
+    <tr>
+      <td class="toc-num">01</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Portal Overview &amp; Key Features</span></div>
+        <div class="toc-desc">What the portal does and who uses it</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">02</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Portal Access &amp; Login Credentials</span></div>
+        <div class="toc-desc">How to log in and who to contact for access</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">03</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">User Roles &amp; Permissions</span></div>
+        <div class="toc-desc">What each role can see and do within the system</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">04</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Creating a New Ticket — Step by Step</span></div>
+        <div class="toc-desc">Field-by-field walkthrough of the ticket submission form</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">05</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Sample Ticket — Filled Example</span></div>
+        <div class="toc-desc">A real-world example showing how a ticket looks when submitted</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">06</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Email Notifications — What to Expect</span></div>
+        <div class="toc-desc">Automated emails sent at each stage of the ticket lifecycle</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">07</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Ticket Lifecycle &amp; Status Flow</span></div>
+        <div class="toc-desc">All ticket statuses and how they transition from creation to closure</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">08</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Service Level Agreement (SLA) Commitments</span></div>
+        <div class="toc-desc">Response and resolution timelines by priority level</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">09</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Dashboard &amp; Reporting</span></div>
+        <div class="toc-desc">How to read the live dashboard and interpret ticket analytics</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">10</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">AI-Powered Features</span></div>
+        <div class="toc-desc">Smart assistance built into the portal to speed up resolution</div>
+      </td>
+    </tr>
+    <tr>
+      <td class="toc-num">11</td>
+      <td>
+        <div class="toc-row"><span class="toc-label">Frequently Asked Questions</span></div>
+        <div class="toc-desc">Common queries and answers for new and returning users</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>© 2026 Sifratech Technology Pvt Ltd</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 01 — PORTAL OVERVIEW
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">Portal Overview &amp; Key Features</div>
+      <div class="section-sub">What the Sifratech Support Portal does and how it serves you</div>
+    </div>
+  </div>
+
+  <p>The Sifratech Support Portal is a dedicated, enterprise-grade help desk platform that manages all support interactions between your organisation and the Sifratech team. Every request, question, bug report, or change requirement is logged as a structured ticket, ensuring nothing is missed, every commitment is tracked, and all communication is documented in one central location.</p>
+
+  <div class="highlight-row">
+    <div class="highlight-card avoid-break">
+      <div class="hc-num">100%</div>
+      <div class="hc-lbl">Transparent — every action is logged with a full audit trail</div>
+    </div>
+    <div class="highlight-card avoid-break">
+      <div class="hc-num">24/7</div>
+      <div class="hc-lbl">Always accessible — raise tickets at any time from any browser</div>
+    </div>
+    <div class="highlight-card avoid-break">
+      <div class="hc-num">Live</div>
+      <div class="hc-lbl">Real-time dashboard — your ticket data updates instantly</div>
+    </div>
+  </div>
+
+  <h3>What You Can Do in the Portal</h3>
+  <ul>
+    <li><strong>Raise support tickets</strong> — log any issue, bug, data request, enhancement, or training need directly through the portal form.</li>
+    <li><strong>Track progress in real time</strong> — see exactly who is working on your ticket, what status it is in, and how long it has been open.</li>
+    <li><strong>Communicate with the support team</strong> — add comments directly on a ticket and attach screenshots, log files, or supporting documents.</li>
+    <li><strong>Review your history</strong> — access all past and present tickets for your organisation in the Tickets section.</li>
+    <li><strong>Monitor SLA compliance</strong> — the dashboard clearly shows whether tickets are being resolved within the agreed timeframes.</li>
+    <li><strong>Receive automated email updates</strong> — get notified by email whenever a ticket is created, assigned, updated, or resolved without needing to log in.</li>
+    <li><strong>Accept or reopen resolutions</strong> — when a ticket is marked Resolved, you may close it formally or reopen it if the issue persists.</li>
+  </ul>
+
+  <h3>Supported Modules</h3>
+  <p>The portal is pre-configured to handle tickets across the following functional areas of your ERP system:</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;">
+    <span class="badge b-assigned">Financials</span>
+    <span class="badge b-assigned">HRMS</span>
+    <span class="badge b-assigned">SCM</span>
+    <span class="badge b-assigned">PPM</span>
+    <span class="badge b-assigned">Sourcing</span>
+    <span class="badge b-assigned">Inventory</span>
+    <span class="badge b-assigned">Payroll</span>
+    <span class="badge b-assigned">Other</span>
+  </div>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 1 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 02 — LOGIN & CREDENTIALS
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">Portal Access &amp; Login Credentials</div>
+      <div class="section-sub">How to access the portal and sign in for the first time</div>
+    </div>
+  </div>
+
+  <h3>Step 1 — Open the Portal</h3>
+  <p>Open any modern web browser (Google Chrome, Microsoft Edge, or Mozilla Firefox are recommended) and navigate to the portal URL provided by your Sifratech account manager. No software installation is required.</p>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">&#9432;</div>
+    <div class="callout-body">
+      <strong>Portal URL</strong>
+      The portal URL will be shared with you directly by your Sifratech account manager via email. Please bookmark the address once you have received it.
+    </div>
+  </div>
+
+  <h3>Step 2 — Enter Your Credentials</h3>
+  <p>On the login screen, enter your assigned username and password. These credentials are unique to you and should not be shared with other individuals.</p>
+
+  <div class="cred-card avoid-break">
+    <div class="cred-card-title">Sample Login Credentials</div>
+    <div class="cred-grid">
+      <div class="cred-item">
+        <span class="cred-label">Username</span>
+        <span class="cred-value">your.name@yourcompany.com</span>
+      </div>
+      <div class="cred-item">
+        <span class="cred-label">Password</span>
+        <span class="cred-value">Assigned by Sifratech Admin</span>
+      </div>
+      <div class="cred-item">
+        <span class="cred-label">Role</span>
+        <span class="cred-value">Customer / Support / Admin</span>
+      </div>
+      <div class="cred-item">
+        <span class="cred-label">Organisation</span>
+        <span class="cred-value">Your Company Name</span>
+      </div>
+    </div>
+    <div class="cred-note">
+      Your credentials will be issued by the Sifratech system administrator. If you have not received them or need a password reset, please contact support@sifratech.com with your name and organisation.
+    </div>
+  </div>
+
+  <h3>Step 3 — Sign In</h3>
+  <p>Click the <strong>Sign in</strong> button or press <strong>Enter</strong>. The system will validate your credentials and redirect you to the Dashboard. If your credentials are incorrect, an error message will appear on screen.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-icon">&#9888;</div>
+    <div class="callout-body">
+      <strong>Security Notice</strong>
+      The portal displays "Authorised Access Only" on the login screen. Access is restricted to accounts provisioned by Sifratech. If you believe you should have access but cannot log in, contact your Sifratech account manager.
+    </div>
+  </div>
+
+  <h3>Step 4 — Logging Out</h3>
+  <p>Always sign out when you have finished using the portal, particularly on shared or public computers. Click the <strong>sign-out icon</strong> located in the top-right corner of the navigation bar to securely end your session.</p>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 2 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 03 — ROLES & PERMISSIONS
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">User Roles &amp; Permissions</div>
+      <div class="section-sub">Understanding what each role can access and perform within the portal</div>
+    </div>
+  </div>
+
+  <p>The portal operates on a Role-Based Access Control (RBAC) model. Each user is assigned a role that determines what they can see and what actions they can perform. There are four primary roles:</p>
+
+  <table class="role-table avoid-break">
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>Create Ticket</th>
+        <th>View Tickets</th>
+        <th>Assign Engineer</th>
+        <th>Update Status</th>
+        <th>Close / Reopen</th>
+        <th>Admin Settings</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Customer</td>
+        <td class="check">Yes</td>
+        <td>Own org only</td>
+        <td class="cross">No</td>
+        <td>Close / Reopen only</td>
+        <td class="check">Yes</td>
+        <td class="cross">No</td>
+      </tr>
+      <tr>
+        <td>Support Engineer</td>
+        <td class="check">Yes</td>
+        <td>All assigned</td>
+        <td class="cross">No</td>
+        <td>Assigned / In Progress / Resolved / Awaiting</td>
+        <td class="cross">No</td>
+        <td class="cross">No</td>
+      </tr>
+      <tr>
+        <td>Account / Delivery Manager</td>
+        <td class="check">Yes</td>
+        <td>All tickets</td>
+        <td class="check">Yes</td>
+        <td>Full control</td>
+        <td class="check">Yes</td>
+        <td class="cross">No</td>
+      </tr>
+      <tr>
+        <td>Administrator</td>
+        <td class="check">Yes</td>
+        <td>All tickets</td>
+        <td class="check">Yes</td>
+        <td>Full control</td>
+        <td class="check">Yes</td>
+        <td class="check">Yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-tip">
+    <div class="callout-icon">&#10003;</div>
+    <div class="callout-body">
+      <strong>What This Means for You as a Customer</strong>
+      As a customer user, you can create tickets freely, monitor their progress, add comments and attachments, and make the final decision to either formally close a resolved ticket or reopen it if the issue has not been fully addressed. You do not need to assign engineers — that is managed by the Sifratech team.
+    </div>
+  </div>
+
+  <h3>Navigation Menu by Role</h3>
+  <p>After logging in, the top navigation bar will display the sections available to your role:</p>
+  <table class="role-table avoid-break">
+    <thead>
+      <tr>
+        <th>Navigation Item</th>
+        <th>Customer</th>
+        <th>Support Engineer</th>
+        <th>Manager / Admin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Dashboard</td>
+        <td class="check">Visible</td>
+        <td class="check">Visible</td>
+        <td class="check">Visible</td>
+      </tr>
+      <tr>
+        <td>Tickets</td>
+        <td class="check">Visible</td>
+        <td class="check">Visible</td>
+        <td class="check">Visible</td>
+      </tr>
+      <tr>
+        <td>Team</td>
+        <td class="cross">Hidden</td>
+        <td class="cross">Hidden</td>
+        <td class="check">Visible (Admin only)</td>
+      </tr>
+      <tr>
+        <td>Settings</td>
+        <td class="cross">Hidden</td>
+        <td class="cross">Hidden</td>
+        <td class="check">Visible (Admin only)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 3 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 04 — CREATING A TICKET
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">4</div>
+    <div>
+      <div class="section-title">Creating a New Ticket — Step by Step</div>
+      <div class="section-sub">How to log a support request from start to submission</div>
+    </div>
+  </div>
+
+  <p>To raise a new support ticket, navigate to the <strong>Tickets</strong> section using the top navigation bar, then click the <strong>New Ticket</strong> button in the upper-right corner. A form will appear on screen. Complete all required fields as described below.</p>
+
+  <ol class="step-list">
+    <li class="step-item">
+      <div class="step-circle">1</div>
+      <div class="step-content">
+        <div class="step-title">Navigate to Tickets</div>
+        <div class="step-desc">Click <strong>Tickets</strong> in the top navigation bar. The ticket list for your organisation will be displayed.</div>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-circle">2</div>
+      <div class="step-content">
+        <div class="step-title">Click "New Ticket"</div>
+        <div class="step-desc">Press the <strong>New Ticket</strong> button at the top right. The ticket creation form will open as an overlay panel.</div>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-circle">3</div>
+      <div class="step-content">
+        <div class="step-title">Complete the Form</div>
+        <div class="step-desc">Fill in all required fields marked with a red asterisk (<span style="color:#E05252;font-weight:700;">*</span>). Optional fields help provide additional context and are encouraged where applicable.</div>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-circle">4</div>
+      <div class="step-content">
+        <div class="step-title">Review AI Suggestions (Optional)</div>
+        <div class="step-desc">As you type the incident title, the system's AI assistant may suggest a priority level, module, and ticket type. You may apply these suggestions or continue with your own selections.</div>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-circle">5</div>
+      <div class="step-content">
+        <div class="step-title">Click "Create Ticket"</div>
+        <div class="step-desc">Press the <strong>Create Ticket</strong> button. Your ticket is immediately logged in the system and you will receive an email confirmation.</div>
+      </div>
+    </li>
+  </ol>
+
+  <h3>Ticket Form Fields</h3>
+  <table class="field-table avoid-break">
+    <thead>
+      <tr>
+        <th style="width:160px;">Field</th>
+        <th style="width:80px;">Required</th>
+        <th>Description &amp; Guidance</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Project <span class="req">*</span></td>
+        <td>Yes</td>
+        <td>The name of your ERP project or system. Pre-filled as <em>Oracle EBS R12</em> by default. Adjust if your organisation runs a different project identifier.</td>
+      </tr>
+      <tr>
+        <td>Detected Date</td>
+        <td><span class="opt">Auto</span></td>
+        <td>Automatically set to today's date. This records when the issue was first identified.</td>
+      </tr>
+      <tr>
+        <td>Incident Title <span class="req">*</span></td>
+        <td>Yes</td>
+        <td>A concise, descriptive title for the issue. Keep it to one clear sentence. Example: <em>Invoice approval workflow not sending notifications.</em></td>
+      </tr>
+      <tr>
+        <td>Incident Summary</td>
+        <td><span class="opt">Optional</span></td>
+        <td>A single-line description of the error or issue to supplement the title.</td>
+      </tr>
+      <tr>
+        <td>Incident Type <span class="req">*</span></td>
+        <td>Yes</td>
+        <td>Select the category that best describes your request. See the type definitions below.</td>
+      </tr>
+      <tr>
+        <td>Module <span class="req">*</span></td>
+        <td>Yes</td>
+        <td>The functional area of the system affected (e.g. Financials, HRMS, Payroll).</td>
+      </tr>
+      <tr>
+        <td>Priority</td>
+        <td><span class="opt">Optional</span></td>
+        <td>Your assessment of the urgency. Defaults to Medium. The Sifratech team may adjust this based on business impact.</td>
+      </tr>
+      <tr>
+        <td>Environment</td>
+        <td><span class="opt">Optional</span></td>
+        <td>The system environment where the issue was found — Development, Patching, Testing, or Production.</td>
+      </tr>
+      <tr>
+        <td>Detected By</td>
+        <td><span class="opt">Auto</span></td>
+        <td>Automatically populated with your name based on your login. This is not editable.</td>
+      </tr>
+      <tr>
+        <td>Mobile No.</td>
+        <td><span class="opt">Optional</span></td>
+        <td>Your mobile number in case the support team needs to reach you directly for urgent issues.</td>
+      </tr>
+      <tr>
+        <td>Extension No.</td>
+        <td><span class="opt">Optional</span></td>
+        <td>Your office phone extension number.</td>
+      </tr>
+      <tr>
+        <td>CC Mail</td>
+        <td><span class="opt">Optional</span></td>
+        <td>Additional email addresses (comma-separated) to copy on all notifications related to this ticket. Useful for keeping managers or colleagues informed.</td>
+      </tr>
+      <tr>
+        <td>Long Description <span class="req">*</span></td>
+        <td>Yes</td>
+        <td>A detailed description of the issue. Include: steps to reproduce the problem, error messages displayed, expected behaviour versus actual behaviour, and any screenshots or logs you have available (can be attached via comments after submission).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 4 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 04 cont. — INCIDENT TYPES
+     ================================================ -->
+<div class="page-wrap page-break">
+
+  <h3>Incident Type Definitions</h3>
+  <p>Select the type that most accurately describes your request. Choosing the correct type helps the Sifratech team route your ticket to the right specialist and respond faster.</p>
+
+  <table class="field-table avoid-break">
+    <thead>
+      <tr>
+        <th style="width:200px;">Incident Type</th>
+        <th>When to Use</th>
+        <th>Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Bug</td>
+        <td>The system is not working as expected due to a software defect.</td>
+        <td>Journal posting fails with an error message.</td>
+      </tr>
+      <tr>
+        <td>Data Fix</td>
+        <td>Incorrect data exists in the system and needs to be corrected.</td>
+        <td>An employee's salary figure was entered incorrectly and needs amendment.</td>
+      </tr>
+      <tr>
+        <td>Enhancement</td>
+        <td>A request to improve or extend existing system functionality.</td>
+        <td>Add a new field to the purchase order form.</td>
+      </tr>
+      <tr>
+        <td>New Requirement</td>
+        <td>A completely new feature or workflow that does not currently exist.</td>
+        <td>Build a monthly financial consolidation report.</td>
+      </tr>
+      <tr>
+        <td>Reports</td>
+        <td>A request for a new report or modification to an existing report.</td>
+        <td>Produce an aged payables report by vendor category.</td>
+      </tr>
+      <tr>
+        <td>New Setup Request</td>
+        <td>A configuration or setup task in the system.</td>
+        <td>Set up a new cost centre and chart of accounts entry.</td>
+      </tr>
+      <tr>
+        <td>Training Request</td>
+        <td>A request for end-user training on a module or process.</td>
+        <td>Training session required for new Payroll team members.</td>
+      </tr>
+      <tr>
+        <td>Data Extract</td>
+        <td>A request to export or extract data from the system.</td>
+        <td>Extract all active employee records to Excel.</td>
+      </tr>
+      <tr>
+        <td>Responsibility Assignment</td>
+        <td>A request to grant, modify, or revoke system access or responsibilities.</td>
+        <td>Assign the AP Invoice Entry responsibility to a new user.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-tip">
+    <div class="callout-icon">&#10003;</div>
+    <div class="callout-body">
+      <strong>Writing a Good Long Description</strong>
+      The more detail you provide, the faster the team can resolve your ticket. A good description answers: <em>What were you trying to do? What exactly happened? What did you expect to happen? What error message appeared (if any)? Which users or records are affected?</em>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 4 of 11 (continued)</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 05 — SAMPLE TICKET
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">5</div>
+    <div>
+      <div class="section-title">Sample Ticket — Filled Example</div>
+      <div class="section-sub">A realistic example of a correctly completed ticket submission</div>
+    </div>
+  </div>
+
+  <p>The following example illustrates how a well-structured ticket should look when submitted through the portal. Use this as a reference for your own submissions.</p>
+
+  <div class="ticket-card avoid-break">
+    <div class="ticket-card-header">
+      <div>
+        <div class="ticket-id">TKT-2026-0042</div>
+        <div class="ticket-title">Invoice approval workflow not triggering email notifications to approvers</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge b-open"><span class="dot"></span> Open</span>
+        <span class="badge p-high"><span class="dot"></span> High</span>
+      </div>
+    </div>
+    <div class="ticket-body">
+      <div class="ticket-grid">
+        <div class="ticket-field">
+          <span class="tf-lbl">Project</span>
+          <span class="tf-val">Oracle EBS R12</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Detected Date</span>
+          <span class="tf-val">28 June 2026</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Incident Type</span>
+          <span class="tf-val">Bug</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Module</span>
+          <span class="tf-val">Financials</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Priority</span>
+          <span class="tf-val">High</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Environment</span>
+          <span class="tf-val">Production</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Raised By</span>
+          <span class="tf-val">Ahmed Al Rashidi</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Status</span>
+          <span class="tf-val">Open — Awaiting assignment</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">Mobile No.</span>
+          <span class="tf-val">+971 50 123 4567</span>
+        </div>
+        <div class="ticket-field">
+          <span class="tf-lbl">CC Mail</span>
+          <span class="tf-val">manager@yourcompany.com</span>
+        </div>
+      </div>
+      <div>
+        <div class="ticket-desc-lbl">Long Description</div>
+        <div class="ticket-desc-block">
+          Since the morning of 28 June 2026, the AP invoice approval workflow in Oracle EBS R12 (Production) is not sending email notifications to designated approvers when invoices are submitted for approval.<br><br>
+          <strong>Steps to Reproduce:</strong><br>
+          1. Log in to Oracle EBS as an AP Invoice entry user.<br>
+          2. Enter a new AP invoice and submit it for approval.<br>
+          3. The invoice status changes to "Pending Approval" correctly in the system.<br>
+          4. However, the designated first-level approver does not receive the standard approval notification email.<br><br>
+          <strong>Expected Behaviour:</strong> The approver should receive an automated email notification with the invoice details and an approval link.<br><br>
+          <strong>Actual Behaviour:</strong> No email is received. The approver only discovers pending invoices by manually logging in and checking their worklist.<br><br>
+          <strong>Business Impact:</strong> Invoice approvals are delayed, causing payment processing to stall. Approximately 15 invoices are currently pending unnoticed. This is impacting vendor relationships and cash flow management.<br><br>
+          <strong>Affected Users:</strong> All AP users across Finance department. Approver: Mohammed Al Seer (Finance Manager).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-icon">&#9432;</div>
+    <div class="callout-body">
+      <strong>After Submission</strong>
+      Once you click "Create Ticket", you will immediately receive a confirmation email. The ticket ID is automatically generated and will appear in the subject line of all future correspondence about this issue.
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 5 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 06 — EMAIL NOTIFICATIONS
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">6</div>
+    <div>
+      <div class="section-title">Email Notifications — What to Expect</div>
+      <div class="section-sub">Automated emails you will receive at each stage of your ticket's journey</div>
+    </div>
+  </div>
+
+  <p>The portal automatically sends email notifications at critical points in the ticket lifecycle. You do not need to stay logged in to the portal to receive updates. All notification emails originate from <span class="mono">support@sifratech.com</span>.</p>
+
+  <!-- EMAIL 1: TICKET CREATED -->
+  <h3>Email 1 — Ticket Created</h3>
+  <p>Sent immediately upon ticket submission to confirm your request has been logged.</p>
+  <div class="email-block avoid-break">
+    <div class="email-header">Email Notification Preview — Ticket Created</div>
+    <div class="email-meta">
+      <span class="lbl">From:</span> support@sifratech.com<br>
+      <span class="lbl">To:</span> ahmed.alrashidi@yourcompany.com<br>
+      <span class="lbl">CC:</span> manager@yourcompany.com<br>
+      <span class="lbl">Subject:</span> [TKT-2026-0042] Ticket Created — Invoice approval workflow not triggering email notifications
+    </div>
+    <div class="email-body">
+      Dear Ahmed Al Rashidi,<br><br>
+      Your support request has been successfully received and logged in the Sifratech Support Portal. A member of our team will review and assign your ticket promptly in accordance with the priority level assigned.<br><br>
+      <div class="email-highlight">
+        <div class="row"><span class="el">Ticket Number:</span><span class="ev">TKT-2026-0042</span></div>
+        <div class="row"><span class="el">Priority:</span><span class="ev">High</span></div>
+        <div class="row"><span class="el">Module:</span><span class="ev">Financials</span></div>
+        <div class="row"><span class="el">SLA Commitment:</span><span class="ev">8 hours</span></div>
+        <div class="row"><span class="el">Date Raised:</span><span class="ev">28 June 2026 — 09:42 AM</span></div>
+      </div>
+      You will receive a further notification when this ticket has been assigned to a support engineer. You may track the live status of your ticket at any time by logging into the portal.<br><br>
+      <div class="email-sig">
+        Regards,<br>
+        <strong>Sifratech Support Team</strong><br>
+        support@sifratech.com<br>
+        © 2026 Sifratech Technology Pvt Ltd
+      </div>
+    </div>
+  </div>
+
+  <!-- EMAIL 2: IN PROGRESS -->
+  <h3>Email 2 — Ticket In Progress</h3>
+  <p>Sent when a support engineer begins actively working on your ticket and posts their first update.</p>
+  <div class="email-block avoid-break">
+    <div class="email-header">Email Notification Preview — Ticket In Progress</div>
+    <div class="email-meta">
+      <span class="lbl">From:</span> support@sifratech.com<br>
+      <span class="lbl">To:</span> ahmed.alrashidi@yourcompany.com<br>
+      <span class="lbl">Subject:</span> [TKT-2026-0042] Update — Your ticket is now In Progress
+    </div>
+    <div class="email-body">
+      Dear Ahmed Al Rashidi,<br><br>
+      We would like to inform you that your support ticket has been picked up by our engineering team and is currently being investigated. We will keep you updated as the work progresses.<br><br>
+      <div class="email-highlight">
+        <div class="row"><span class="el">Ticket Number:</span><span class="ev">TKT-2026-0042</span></div>
+        <div class="row"><span class="el">Current Status:</span><span class="ev">In Progress</span></div>
+        <div class="row"><span class="el">Assigned Engineer:</span><span class="ev">Sifratech Support Team</span></div>
+      </div>
+      If you have additional information that may assist with the investigation, please log in to the portal and add a comment on the ticket. You may also attach relevant files or screenshots directly to the ticket.<br><br>
+      <div class="email-sig">
+        Regards,<br>
+        <strong>Sifratech Support Team</strong><br>
+        support@sifratech.com
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 6 of 11</span>
+  </div>
+</div>
+
+<div class="page-wrap page-break">
+  <!-- EMAIL 3: RESOLVED -->
+  <h3>Email 3 — Ticket Resolved</h3>
+  <p>Sent when the support team has completed work and marked the ticket as Resolved. You are required to confirm whether the issue has been fully addressed.</p>
+  <div class="email-block avoid-break">
+    <div class="email-header">Email Notification Preview — Ticket Resolved</div>
+    <div class="email-meta">
+      <span class="lbl">From:</span> support@sifratech.com<br>
+      <span class="lbl">To:</span> ahmed.alrashidi@yourcompany.com<br>
+      <span class="lbl">Subject:</span> [TKT-2026-0042] Resolved — Invoice approval workflow not triggering email notifications
+    </div>
+    <div class="email-body">
+      Dear Ahmed Al Rashidi,<br><br>
+      We are pleased to inform you that the issue reported on your ticket has been resolved. Please find the resolution summary below.<br><br>
+      <div class="email-highlight">
+        <div class="row"><span class="el">Ticket Number:</span><span class="ev">TKT-2026-0042</span></div>
+        <div class="row"><span class="el">Resolution:</span><span class="ev">The SMTP relay configuration for the AP workflow notification server was found to be misconfigured following a recent system patch. The relay settings have been corrected and tested. Email notifications are now being delivered to all designated approvers.</span></div>
+        <div class="row"><span class="el">Resolved On:</span><span class="ev">29 June 2026 — 02:15 PM</span></div>
+      </div>
+      We kindly ask that you verify the resolution on your end and take one of the following actions by logging into the portal:<br><br>
+      <ul style="margin-left:16px;margin-top:6px;">
+        <li style="margin-bottom:6px;font-size:9pt;"><strong>Close the ticket</strong> — if the issue has been fully resolved to your satisfaction.</li>
+        <li style="font-size:9pt;"><strong>Reopen the ticket</strong> — if the issue persists or the resolution is incomplete, so that our team can continue to assist you.</li>
+      </ul>
+      <div class="email-sig">
+        Regards,<br>
+        <strong>Sifratech Support Team</strong><br>
+        support@sifratech.com
+      </div>
+    </div>
+  </div>
+
+  <h3>Summary of Notification Triggers</h3>
+  <table class="field-table avoid-break">
+    <thead>
+      <tr>
+        <th>Trigger Event</th>
+        <th>Email Sent To</th>
+        <th>Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Ticket Created</td>
+        <td>Ticket raiser + CC recipients</td>
+        <td>Confirms the request has been logged and provides ticket reference</td>
+      </tr>
+      <tr>
+        <td>Ticket Assigned</td>
+        <td>Assigned engineer</td>
+        <td>Notifies the engineer that a ticket has been allocated to them</td>
+      </tr>
+      <tr>
+        <td>Ticket In Progress</td>
+        <td>Ticket raiser</td>
+        <td>Confirms the team has begun active investigation</td>
+      </tr>
+      <tr>
+        <td>Ticket Resolved</td>
+        <td>Ticket raiser + CC recipients</td>
+        <td>Delivers the resolution summary and requests confirmation</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 6 of 11 (continued)</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 07 — TICKET LIFECYCLE
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">7</div>
+    <div>
+      <div class="section-title">Ticket Lifecycle &amp; Status Flow</div>
+      <div class="section-sub">Understanding all ticket statuses and how they progress from creation to closure</div>
+    </div>
+  </div>
+
+  <p>Every ticket follows a defined lifecycle. The current status of a ticket tells you exactly where it sits in the resolution process. Below is the full flow a ticket can follow from the moment it is created.</p>
+
+  <h3>Standard Ticket Flow</h3>
+  <div class="flow-wrap avoid-break">
+    <div class="flow-node active">New<div class="flow-sub">Submitted</div></div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node active">Open<div class="flow-sub">Awaiting assignment</div></div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node warn">Assigned<div class="flow-sub">Engineer allocated</div></div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node warn">In Progress<div class="flow-sub">Being worked on</div></div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node done">Resolved<div class="flow-sub">Fix applied</div></div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node done">Closed<div class="flow-sub">Confirmed</div></div>
+  </div>
+
+  <h3>All Ticket Statuses Explained</h3>
+  <table class="field-table avoid-break">
+    <thead>
+      <tr>
+        <th style="width:140px;">Status</th>
+        <th>What It Means</th>
+        <th style="width:160px;">Who Can Change It</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge b-new"><span class="dot"></span> New</span></td>
+        <td>The ticket has just been submitted and is pending initial review by the Sifratech team.</td>
+        <td>System (automatic)</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-open"><span class="dot"></span> Open</span></td>
+        <td>The ticket has been reviewed and is awaiting allocation to a support engineer.</td>
+        <td>Manager / Admin</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-assigned"><span class="dot"></span> Assigned</span></td>
+        <td>A support engineer has been allocated to investigate and resolve the ticket.</td>
+        <td>Manager / Admin</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-progress"><span class="dot"></span> In Progress</span></td>
+        <td>The assigned engineer is actively working on the ticket. Investigation and resolution activities are underway.</td>
+        <td>Support Engineer</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-awaiting"><span class="dot"></span> Awaiting Customer</span></td>
+        <td>The support team has a question or requires additional information from you. Action on your side is needed to proceed.</td>
+        <td>Support Engineer</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-resolved"><span class="dot"></span> Resolved</span></td>
+        <td>The support team believes the issue has been fixed. The resolution notes are provided for your review. You must confirm or reopen.</td>
+        <td>Support Engineer</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-closed"><span class="dot"></span> Closed</span></td>
+        <td>The issue has been confirmed as resolved and the ticket is formally closed. No further action is required.</td>
+        <td>Customer / Manager</td>
+      </tr>
+      <tr>
+        <td><span class="badge b-reopened"><span class="dot"></span> Reopened</span></td>
+        <td>The issue has recurred or the previous resolution was insufficient. The ticket re-enters the active queue for further investigation.</td>
+        <td>Customer / Manager</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn avoid-break">
+    <div class="callout-icon">&#9888;</div>
+    <div class="callout-body">
+      <strong>Awaiting Customer — Action Required</strong>
+      When a ticket reaches "Awaiting Customer" status, your input is required for work to continue. Please log in to the portal and add your response as a comment on the ticket at the earliest opportunity. Delays in responding may impact the SLA resolution timeline.
+    </div>
+  </div>
+
+  <h3>Your Actions at Resolved Status</h3>
+  <p>When a ticket is marked Resolved, you have two options available to you within the ticket detail view:</p>
+  <ul>
+    <li><strong>Close the Ticket</strong> — Select this if the issue has been completely resolved and you are satisfied with the outcome. The ticket will be archived.</li>
+    <li><strong>Reopen the Ticket</strong> — Select this if the problem persists or the resolution has not addressed the root cause. The ticket returns to the active queue and the support team is notified immediately.</li>
+  </ul>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 7 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 08 — SLA
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">8</div>
+    <div>
+      <div class="section-title">Service Level Agreement (SLA) Commitments</div>
+      <div class="section-sub">Response and resolution timeframes for each priority level</div>
+    </div>
+  </div>
+
+  <p>Every ticket submitted through the portal is automatically assigned a Service Level Agreement (SLA) target based on its priority level. The SLA defines the maximum number of hours within which the Sifratech team commits to respond and provide a resolution. SLA timers begin from the moment a ticket is created.</p>
+
+  <h3>SLA Targets by Priority</h3>
+  <div class="sla-grid avoid-break">
+    <div class="sla-card sla-top">
+      <div class="sc-label">Top</div>
+      <div class="sc-time">4</div>
+      <div class="sc-unit">Hours</div>
+    </div>
+    <div class="sla-card sla-high">
+      <div class="sc-label">High</div>
+      <div class="sc-time">8</div>
+      <div class="sc-unit">Hours</div>
+    </div>
+    <div class="sla-card sla-medium">
+      <div class="sc-label">Medium</div>
+      <div class="sc-time">24</div>
+      <div class="sc-unit">Hours</div>
+    </div>
+    <div class="sla-card sla-low">
+      <div class="sc-label">Low</div>
+      <div class="sc-time">72</div>
+      <div class="sc-unit">Hours</div>
+    </div>
+    <div class="sla-card sla-project">
+      <div class="sc-label">Project</div>
+      <div class="sc-time">120</div>
+      <div class="sc-unit">Hours</div>
+    </div>
+  </div>
+
+  <h3>Priority Level Definitions</h3>
+  <table class="field-table avoid-break">
+    <thead>
+      <tr>
+        <th style="width:100px;">Priority</th>
+        <th>Definition</th>
+        <th>Examples</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge p-top">Top</span></td>
+        <td>A critical system failure that is completely preventing business operations. The system is down or core financial processing is halted.</td>
+        <td>System inaccessible for all users; payroll unable to process; financial period close blocked.</td>
+      </tr>
+      <tr>
+        <td><span class="badge p-high">High</span></td>
+        <td>A significant defect that is severely impacting daily operations. A workaround may exist but is unsatisfactory for continued use.</td>
+        <td>Invoice approval emails not being sent; reports producing incorrect figures; key workflow failing.</td>
+      </tr>
+      <tr>
+        <td><span class="badge p-medium">Medium</span></td>
+        <td>An issue that affects functionality but does not prevent core business operations. A reasonable workaround is available.</td>
+        <td>A non-critical field displaying incorrect data; minor UI display error; single user access issue.</td>
+      </tr>
+      <tr>
+        <td><span class="badge p-low">Low</span></td>
+        <td>A minor issue, cosmetic defect, or general query with no significant operational impact.</td>
+        <td>Label alignment issue; request for general guidance; non-urgent enhancement query.</td>
+      </tr>
+      <tr>
+        <td><span class="badge p-project">Project</span></td>
+        <td>A new requirement, large enhancement, or project-level deliverable requiring detailed scoping and planning.</td>
+        <td>Build a new consolidated reporting framework; implement a new workflow module.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-alert avoid-break">
+    <div class="callout-icon">&#9888;</div>
+    <div class="callout-body">
+      <strong>SLA Breach Monitoring</strong>
+      The portal dashboard prominently displays any tickets that have exceeded their SLA target. If your ticket has breached its SLA, the Sifratech management team is automatically alerted and will escalate the matter internally. You do not need to follow up separately for SLA-breached tickets.
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 8 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 09 — DASHBOARD
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">9</div>
+    <div>
+      <div class="section-title">Dashboard &amp; Reporting</div>
+      <div class="section-sub">How to interpret the live dashboard and use the ticket list view</div>
+    </div>
+  </div>
+
+  <p>The Dashboard is the first screen you see after logging in. It provides a real-time overview of all support activity for your organisation. All figures update live — there is no need to refresh the page.</p>
+
+  <h3>Summary Cards (KPI Strip)</h3>
+  <p>Across the top of the dashboard, you will find six summary cards:</p>
+  <table class="field-table avoid-break">
+    <thead>
+      <tr>
+        <th style="width:160px;">Card</th>
+        <th>What It Shows</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Total</td>
+        <td>The total number of tickets raised by your organisation across all statuses.</td>
+      </tr>
+      <tr>
+        <td>Open</td>
+        <td>Tickets that have been logged but are not yet assigned to an engineer.</td>
+      </tr>
+      <tr>
+        <td>In Progress</td>
+        <td>Tickets currently being actively worked on by the support team.</td>
+      </tr>
+      <tr>
+        <td>Resolved / Closed</td>
+        <td>Tickets that have been resolved and formally closed.</td>
+      </tr>
+      <tr>
+        <td>SLA Breached</td>
+        <td>Tickets that are still open but have exceeded their agreed SLA timeframe. Displayed in red when greater than zero — these require immediate attention.</td>
+      </tr>
+      <tr>
+        <td>Ageing &gt;3 Days</td>
+        <td>Open tickets that have been unresolved for more than 72 hours. Displayed in red when greater than zero.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Charts &amp; Visual Reports</h3>
+  <p>Below the summary cards, the dashboard displays several visual reports:</p>
+  <ul>
+    <li><strong>Tickets by Status</strong> — A donut chart showing the distribution of tickets across all current statuses.</li>
+    <li><strong>Priority Breakdown</strong> — A donut chart showing how many tickets exist at each priority level.</li>
+    <li><strong>By Module</strong> — A bar chart showing which ERP modules have the highest ticket volumes, helping identify areas of concern.</li>
+    <li><strong>Tickets by Type</strong> — A horizontal bar chart showing the breakdown by request type (Bug, Enhancement, Data Fix, etc.).</li>
+    <li><strong>SLA Compliance</strong> — A bar chart showing the percentage of tickets meeting their SLA target for each priority level.</li>
+    <li><strong>Ageing Tickets Table</strong> — A detailed list of all open tickets older than 3 days, showing the ticket number, summary, assigned engineer, age in days, and current status.</li>
+  </ul>
+
+  <h3>Using the Ticket List View</h3>
+  <p>Navigate to the <strong>Tickets</strong> section to view a full list of all tickets for your organisation. This view includes the following tools:</p>
+  <ul>
+    <li><strong>Search</strong> — Type any keyword or ticket number into the search bar to filter the list instantly.</li>
+    <li><strong>Filter by Status</strong> — Use the dropdown to show only tickets matching a specific status (Open, In Progress, Resolved, Closed).</li>
+    <li><strong>Click any row</strong> — Click on any ticket row to open the full ticket detail view, which includes the description, comments, resolution notes, status history, and audit log.</li>
+  </ul>
+
+  <div class="callout callout-info avoid-break">
+    <div class="callout-icon">&#9432;</div>
+    <div class="callout-body">
+      <strong>Audit Log</strong>
+      Every ticket maintains a complete, timestamped audit log of all actions taken — who changed a status, when, and any notes added. This provides a fully transparent record of the support process. The audit log is visible at the bottom of the ticket detail view.
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 9 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 10 — AI FEATURES
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">10</div>
+    <div>
+      <div class="section-title">AI-Powered Features</div>
+      <div class="section-sub">Intelligent assistance built into the portal to enhance speed and accuracy</div>
+    </div>
+  </div>
+
+  <p>The Sifratech Support Portal incorporates an integrated AI assistant that operates in the background to improve the quality and speed of support. These features are designed to assist both the person raising the ticket and the support engineers working on it.</p>
+
+  <div class="ai-block avoid-break">
+    <div class="ai-label">AI Features</div>
+    <div class="ai-feature">
+      <strong>Smart Triage on Ticket Creation</strong><br>
+      As you type the incident title, the AI assistant analyses the keywords in real time and suggests the most appropriate priority level, module, incident type, and even a recommended engineer. You may choose to apply these suggestions with a single click or ignore them and enter your own values. This helps ensure tickets are routed correctly from the very first moment.
+    </div>
+    <div class="ai-feature">
+      <strong>Ticket Analysis and Sentiment Detection</strong><br>
+      When viewing a ticket's detail page, the AI automatically analyses the content of the ticket description and assesses the likely urgency and the sentiment expressed. It then recommends the next action for the support team, helping prioritise workload and identify tickets that may need faster attention.
+    </div>
+    <div class="ai-feature">
+      <strong>AI Reply Suggestion for Resolutions</strong><br>
+      When the support team is ready to mark a ticket as Resolved, the AI can generate a professionally worded resolution reply addressed to the ticket raiser. The engineer can use this suggested text directly or modify it before saving. This ensures consistent, clear communication in every resolution.
+    </div>
+  </div>
+
+  <div class="callout callout-tip avoid-break">
+    <div class="callout-icon">&#10003;</div>
+    <div class="callout-body">
+      <strong>AI Suggestions Are Guidance Only</strong>
+      All AI-generated suggestions can be reviewed and overridden at any point. The final values for priority, module, type, and all other fields are always confirmed by a human before submission. The AI is a productivity tool, not an automated decision-maker.
+    </div>
+  </div>
+
+  <h3>File Attachments</h3>
+  <p>You can attach files to any ticket at any time using the comment section within the ticket detail view. Supported file types include images, PDFs, Word documents, Excel spreadsheets, and ZIP archives. Files are securely stored in the cloud and are accessible only to authorised users within the portal.</p>
+  <p>To attach a file, open the ticket, locate the comments section, click the paperclip icon, select your file, then post the comment. The attachment link will appear embedded in the comment.</p>
+
+  <div class="doc-footer">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 10 of 11</span>
+  </div>
+</div>
+
+
+<!-- ================================================
+     SECTION 11 — FAQ
+     ================================================ -->
+<div class="page-wrap page-break">
+  <div class="section-head">
+    <div class="section-num">11</div>
+    <div>
+      <div class="section-title">Frequently Asked Questions</div>
+      <div class="section-sub">Answers to common queries from portal users</div>
+    </div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">I submitted a ticket but have not received a confirmation email. What should I do?</div>
+    <div class="faq-a">Check your spam or junk folder first — automated emails can occasionally be filtered. If the email is not there, log in to the portal and check whether the ticket appears in your Tickets list. If the ticket is visible in the portal, it has been successfully submitted. If you still have concerns, contact support@sifratech.com.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">Can I update or edit a ticket after it has been submitted?</div>
+    <div class="faq-a">Ticket fields cannot be edited after submission to preserve the integrity of the audit trail. However, you can add additional information, corrections, or context at any time by posting a comment on the ticket. The support team reviews all comments and will update the ticket accordingly.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">The priority I selected does not seem right. Can it be changed?</div>
+    <div class="faq-a">Yes. The Sifratech account manager or team manager may adjust the priority level of a ticket based on the assessed business impact. If you believe a ticket requires a higher priority, please add a comment on the ticket explaining the urgency and business impact, and the team will review it promptly.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">What happens if I receive an "Awaiting Customer" status on my ticket?</div>
+    <div class="faq-a">This status means the support team requires additional information or action from you before they can continue. Log in to the portal, open the ticket, read the latest comment from the engineer, and respond with the requested information by posting your own comment. Once you respond, the team will resume work on the ticket.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">I marked a ticket as closed but the issue has come back. What can I do?</div>
+    <div class="faq-a">If an issue recurs after closure, please create a new ticket and reference the original ticket number in the long description. This ensures the history is maintained while treating the recurrence as a new incident for tracking and SLA purposes.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">Can I see tickets raised by my colleagues in the same organisation?</div>
+    <div class="faq-a">Yes. All tickets raised by users within your organisation are visible to all users from that same organisation. This enables your team to stay informed about the status of all active support requests without duplicating submissions.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">How do I request access for a new user in my organisation?</div>
+    <div class="faq-a">New user accounts are provisioned by the Sifratech system administrator. Please send an email to support@sifratech.com with the new user's full name, email address, job title, and the level of access required (customer access is standard). The team will confirm once the account has been created.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">My password has expired or I cannot remember it. How do I reset it?</div>
+    <div class="faq-a">Password resets are handled by the Sifratech administrator. Contact support@sifratech.com from your registered email address with your username and a request for a password reset. Your new credentials will be issued securely.</div>
+  </div>
+
+  <div class="faq-item avoid-break">
+    <div class="faq-q">Can I use the portal on a mobile phone or tablet?</div>
+    <div class="faq-a">Yes. The portal is designed to be fully responsive and works on smartphones and tablets using any modern browser. No separate mobile application is required.</div>
+  </div>
+
+  <!-- FINAL CONTACT SECTION -->
+  <div style="margin-top:36px;border-top:2px solid #1A9FCC;padding-top:24px;" class="avoid-break">
+    <h3 style="margin-top:0;">Contact Sifratech Support</h3>
+    <p>For any queries not covered in this guide, or for urgent escalations, please use one of the following channels:</p>
+    <table class="field-table">
+      <thead>
+        <tr>
+          <th>Channel</th>
+          <th>Details</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Support Portal</td>
+          <td>URL provided by your account manager</td>
+          <td>All standard requests — recommended primary channel</td>
+        </tr>
+        <tr>
+          <td>Email</td>
+          <td>support@sifratech.com</td>
+          <td>Account queries, password resets, user provisioning</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- DOCUMENT FOOTER -->
+  <div style="margin-top:48px;border-top:2px solid #1A2A3A;padding-top:20px;display:flex;justify-content:space-between;align-items:center;" class="avoid-break">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <svg width="24" height="24" viewBox="0 0 44 44" fill="none">
+          <circle cx="22" cy="10" r="3.5" fill="#1A9FCC"/>
+          <circle cx="8" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+          <circle cx="36" cy="22" r="2.8" fill="#1A9FCC" opacity=".7"/>
+          <circle cx="22" cy="26" r="3.5" fill="#1A9FCC"/>
+          <line x1="22" y1="10" x2="8" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+          <line x1="22" y1="10" x2="36" y2="22" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+          <line x1="8" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+          <line x1="36" y1="22" x2="22" y2="26" stroke="#1A9FCC" stroke-width="1.2" opacity=".5"/>
+        </svg>
+        <div>
+          <div style="font-size:12pt;font-weight:800;color:#1A2A3A;letter-spacing:-0.3px;">SIFRA<span style="color:#1A9FCC;">TECH</span></div>
+          <div style="font-size:7.5pt;color:#6B7A8D;">A Alt-S Group Company</div>
+        </div>
+      </div>
+      <div style="font-size:8pt;color:#9AA5B4;line-height:1.6;">
+        Sifratech Technology Pvt Ltd<br>
+        © 2026 — All rights reserved<br>
+        Document Version 1.0 — June 2026
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:8pt;font-weight:600;color:#E05252;text-transform:uppercase;letter-spacing:1.5px;border:1px solid #E05252;padding:4px 12px;border-radius:3px;display:inline-block;margin-bottom:8px;">Proprietary &amp; Confidential</div>
+      <div style="font-size:8pt;color:#9AA5B4;">Support Portal User Guide<br>For authorised recipients only</div>
+    </div>
+  </div>
+
+  <div class="doc-footer" style="margin-top:20px;">
+    <span>Sifratech Support Portal — User Guide v1.0</span>
+    <span>Section 11 of 11 — End of Document</span>
+  </div>
+</div>
+
+</body>
+</html>

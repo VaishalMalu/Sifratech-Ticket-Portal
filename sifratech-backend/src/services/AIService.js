@@ -17,12 +17,31 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
 
     const prompt = `
     You are an enterprise helpdesk AI assistant for Sifratech.
-    Analyze the following email and extracted data. 
+    Analyze the following email and any pre-extracted template data. 
     Determine if the email represents a legitimate IT support request/issue.
-    CRITICAL INSTRUCTION: You MUST strictly audit the email content. Return "is_valid_ticket": false if the email is an advertisement, a marketing newsletter, a system alert (e.g., 'free trial', 'subscription update'), a bounce message like 'undeliverable' or 'delivery status notification', an 'out of office' reply, 'action required' system alerts, 'automatic reply', Microsoft Teams or SharePoint notifications ('you have been added to a team'), a personal email, general office chatter, or anything that is NOT a genuine, human-written request for helpdesk support.
+    CRITICAL INSTRUCTION: You MUST strictly audit the email content. Return "is_valid_ticket": false if the email is an advertisement, a marketing newsletter, a system alert, a bounce message, an 'out of office' reply, 'action required' system alerts, 'automatic reply', Microsoft Teams or SharePoint notifications, a personal email, general office chatter, or anything that is NOT a genuine, human-written request for helpdesk support.
 
-    Provide your classification as a JSON object with these keys: 
-    "is_valid_ticket" (boolean), "project", "environment", "incident_type", "oracle_module", "priority", "severity", "business_impact", "sentiment", "suggested_resolution", "estimated_resolution_time_hours", "confidence_score".
+    Extract the information from the email and map it STRICTLY to the existing SifraTech ticket template fields. 
+    If a field is not available in the email, use null. Do not hallucinate values.
+    
+    Provide your classification as a JSON object with these keys:
+    "is_valid_ticket" (boolean),
+    "incident_name" (string, inferred from subject or body),
+    "incident_description" (string, the complete meaningful problem description),
+    "oracle_module" (string),
+    "incident_type" (string),
+    "priority" (string),
+    "severity" (string),
+    "environment" (string),
+    "customer_name" (string),
+    "email_address" (string),
+    "phone_number" (string),
+    "company" (string),
+    "business_impact" (string),
+    "expected_resolution" (string),
+    "additional_notes" (string),
+    "confidence_scores" (object mapping each of the above string field keys to a float 0.0-1.0 indicating extraction confidence),
+    "extraction_sources" (object mapping each string field key to a string e.g., 'Subject', 'Body', 'Pre-extracted Data').
 
     Email Subject: ${emailSubject}
     Email Body: ${emailBody}
@@ -33,7 +52,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
     Valid Environments: Development, Patching, Testing, Production.
     Valid Incident Types: ${validIncidentTypes}.
     
-    If the project is unknown, default to "ASM- Oracle Fusion support".
+    If the project or company is unknown, default to "ASM- Oracle Fusion support".
     If the environment is unknown, default to "Production".
     
     Respond ONLY with valid JSON.
@@ -83,21 +102,26 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
             }
         }
 
-        // Final Fallback
-        const hasExtractedData = extractedData && Object.values(extractedData).some(v => v !== null);
+        // Final Fallback (Deterministic mapping when AI fails)
         return {
             is_valid_ticket: true, // Default to true in fallback so we never drop emails when APIs are down
-            project: 'ASM- Oracle Fusion support',
-            environment: 'Production',
-            incident_type: extractedData.type || 'Email Inquiry',
-            oracle_module: extractedData.oracle_module || 'Unknown',
-            priority: extractedData.priority || 'Medium',
-            severity: 'Moderate',
-            business_impact: 'Unknown',
-            sentiment: 'Neutral',
-            suggested_resolution: 'Investigate issue',
-            estimated_resolution_time_hours: 24,
-            confidence_score: 0.5
+            is_fallback: true,
+            incident_name: extractedData?.title || null,
+            incident_description: extractedData?.description || null,
+            environment: extractedData?.environment || null,
+            incident_type: extractedData?.type || null,
+            oracle_module: extractedData?.oracle_module || null,
+            priority: extractedData?.priority || null,
+            severity: null,
+            business_impact: extractedData?.business_impact || null,
+            customer_name: extractedData?.customer_name || null,
+            email_address: extractedData?.email_address || null,
+            phone_number: extractedData?.phone_number || null,
+            company: extractedData?.company || null,
+            expected_resolution: extractedData?.expected_resolution || null,
+            additional_notes: extractedData?.additional_notes || null,
+            confidence_scores: {},
+            extraction_sources: {}
         };
     }
 };

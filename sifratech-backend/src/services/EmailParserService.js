@@ -3,13 +3,15 @@ const parseEmailBody = (bodyText) => {
     const data = {
         title: extractField(bodyText, 'Incident Name'),
         description: extractField(bodyText, 'Incident Description'),
-        oracle_module: extractField(bodyText, 'Oracle Module'),
+        oracle_module: extractField(bodyText, 'Oracle Module') || extractField(bodyText, 'Module'),
+        type: extractField(bodyText, 'Incident Type') || extractField(bodyText, 'Type'),
+        project: extractField(bodyText, 'Project'),
         priority: extractField(bodyText, 'Priority') || 'Medium',
         environment: extractField(bodyText, 'Environment'),
         customer_name: extractField(bodyText, 'Customer Name'),
         company: extractField(bodyText, 'Company'),
         email_address: extractField(bodyText, 'Email Address'),
-        phone_number: extractField(bodyText, 'Phone Number'),
+        phone_number: extractField(bodyText, 'Phone Number') || extractField(bodyText, 'Mobile'),
         business_impact: extractField(bodyText, 'Business Impact'),
         expected_resolution: extractField(bodyText, 'Expected Resolution'),
         additional_notes: extractField(bodyText, 'Additional Notes')
@@ -18,8 +20,9 @@ const parseEmailBody = (bodyText) => {
 };
 
 const extractField = (text, fieldName) => {
-    // Looks for "FieldName: Value" and captures multi-line content until the next field label or end of string
-    const regex = new RegExp(`${fieldName}\\s*:\\s*([\\s\\S]*?)(?=\\n[\\w\\s]+:|$)`, 'i');
+    // Looks for "FieldName: Value" and captures multi-line content until a known field label or end of string
+    const knownFields = 'Incident Name|Incident Description|Oracle Module|Module|Type|Project|Priority|Environment|Customer Name|Company|Email Address|Phone Number|Mobile|Business Impact|Expected Resolution|Additional Notes';
+    const regex = new RegExp(`${fieldName}\\s*:\\s*([\\s\\S]*?)(?=\\n(?:${knownFields})\\s*:|\\n\\*\\*Contact\\*\\*|\\n\\*Contact\\*|$)`, 'i');
     const match = text.match(regex);
     return match ? match[1].trim() : null;
 };
