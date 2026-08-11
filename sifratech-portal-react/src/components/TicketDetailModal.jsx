@@ -377,16 +377,7 @@ export default function TicketDetailModal() {
             )}
           </div>
           
-          {descObj && descObj.ai_metadata && descObj.ai_metadata.confidence_scores && Object.keys(descObj.ai_metadata.confidence_scores).length > 0 && (
-             <div style={{ marginBottom: '16px', background: '#F5F8FB', padding: '12px', borderRadius: '4px', border: '0.5px solid rgba(0,0,0,0.15)' }}>
-                <h4 style={{ margin: '0 0 8px 0', color: '#1A5FA8', fontSize: '12px' }}>AI Extracted Metadata</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', color: '#3A4A5C' }}>
-                   {Object.entries(descObj.ai_metadata.confidence_scores).map(([key, score]) => (
-                      <div key={key}><strong>{key}:</strong> Confidence {score} | Source: {descObj.ai_metadata.extraction_sources?.[key] || 'Unknown'}</div>
-                   ))}
-                </div>
-             </div>
-          )}
+
 
           {showOriginal && displayHtml ? (
               <div style={{ fontSize: '13px', lineHeight: 1.7, color: '#3A4A5C', margin: 0, padding: '12px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '4px' }} dangerouslySetInnerHTML={{ __html: displayHtml }} />
