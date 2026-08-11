@@ -213,18 +213,43 @@ export default function TicketDetailModal() {
   let descObj = null;
   try {
     if (t && t.longDescription && typeof t.longDescription === 'string' && t.longDescription.startsWith('{')) {
-      descObj = JSON.parse(t.longDescription);
+      // Check if there are attachments appended after the JSON closing brace
+      let jsonPart = t.longDescription;
+      let appendedPart = '';
+      const lastBraceIndex = t.longDescription.lastIndexOf('}');
+      if (lastBraceIndex !== -1 && lastBraceIndex < t.longDescription.length - 1) {
+        jsonPart = t.longDescription.substring(0, lastBraceIndex + 1);
+        appendedPart = t.longDescription.substring(lastBraceIndex + 1);
+      }
+      
+      descObj = JSON.parse(jsonPart);
+      if (appendedPart) {
+        if (descObj.normalized_email_body) descObj.normalized_email_body += appendedPart;
+        if (descObj.original_email_body) descObj.original_email_body += appendedPart.replace(/\n/g, '<br>');
+      }
     }
   } catch (e) {
     // Fallback for malformed JSON strings that might be in the database
-    if (t.longDescription) {
+    if (t && t.longDescription) {
       let origMatch = t.longDescription.match(/"original_email_body"\s*:\s*"(.*?)"\s*,\s*"normalized_email_body"/s);
       let normMatch = t.longDescription.match(/"normalized_email_body"\s*:\s*"(.*?)"\s*,\s*"ai_metadata"/s);
+      
+      // Look for appended attachments at the end of the string
+      let appendedPart = '';
+      const attachMatch = t.longDescription.match(/\n\n\*\*Attachments:\*\*.*$/s);
+      if (attachMatch) {
+         appendedPart = attachMatch[0];
+      }
+
       if (origMatch || normMatch) {
         descObj = {
           original_email_body: origMatch ? origMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\r/g, '\r') : null,
           normalized_email_body: normMatch ? normMatch[1].replace(/\\"/g, '"').replace(/\\n/g, '\n').replace(/\\r/g, '\r') : null
         };
+        if (appendedPart) {
+          if (descObj.normalized_email_body) descObj.normalized_email_body += appendedPart;
+          if (descObj.original_email_body) descObj.original_email_body += appendedPart.replace(/\n/g, '<br>');
+        }
       }
     }
   }

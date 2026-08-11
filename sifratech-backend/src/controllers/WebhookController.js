@@ -312,8 +312,16 @@ const processUnreadEmails = async () => {
                 }
 
                 if (attachmentLinks.length > 0) {
-                    const newDesc = createdTicket.description + '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
-                    await supabase.from('tickets').update({ description: newDesc }).eq('id', createdTicket.id);
+                    const appendText = '\n\n**Attachments:**\n' + attachmentLinks.join('\n');
+                    try {
+                        let descObj = JSON.parse(createdTicket.description);
+                        if (descObj.normalized_email_body !== undefined) descObj.normalized_email_body += appendText;
+                        if (descObj.original_email_body !== undefined) descObj.original_email_body += appendText.replace(/\n/g, '<br>');
+                        await supabase.from('tickets').update({ description: JSON.stringify(descObj) }).eq('id', createdTicket.id);
+                    } catch (e) {
+                        const newDesc = createdTicket.description + appendText;
+                        await supabase.from('tickets').update({ description: newDesc }).eq('id', createdTicket.id);
+                    }
                 }
             }
 
