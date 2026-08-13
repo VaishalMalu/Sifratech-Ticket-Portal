@@ -85,18 +85,6 @@ export function AuthProvider({ children }) {
       
       if (error) {
         console.error("Login failed:", error.message);
-        // Fallback for development if Supabase is asleep or credentials fail
-        if (username.includes('@sifratc.com') || username === 'Account Manager') {
-           console.log("Using local fallback login due to Supabase error.");
-           setCurrentUser({
-             id: 'local-fallback-id',
-             label: username.split('@')[0],
-             email: username,
-             role: 'Admin',
-             client: 'Sifratech'
-           });
-           return true;
-        }
         return false;
       }
       
@@ -115,18 +103,7 @@ export function AuthProvider({ children }) {
       }
     } catch (e) {
       console.error("Network error during login:", e);
-      // Fallback for network timeouts
-      if (username.includes('@sifratc.com') || username === 'Account Manager') {
-         console.log("Using local fallback login due to network timeout.");
-         setCurrentUser({
-           id: 'local-fallback-id',
-           label: username.split('@')[0],
-           email: username,
-           role: 'Admin',
-           client: 'Sifratech'
-         });
-         return true;
-      }
+      return false;
     }
     return false;
   };
