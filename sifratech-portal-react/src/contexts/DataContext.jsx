@@ -797,7 +797,16 @@ export function DataProvider({ children }) {
       return;
     }
 
-    const assignedUser = usersList.find(u => u.full_name === assignedToName);
+    let assignedUser = usersList.find(u => u.full_name === assignedToName);
+    
+    if (!assignedUser && assignedToName) {
+      const searchStr = assignedToName.toLowerCase();
+      assignedUser = usersList.find(u => 
+        u.full_name?.toLowerCase().includes(searchStr + 'team') ||
+        u.full_name?.toLowerCase().includes(searchStr + ' team') ||
+        u.email?.toLowerCase().includes(searchStr + 'team')
+      );
+    }
     
     if (assignedUser) {
       const { error } = await supabase
