@@ -37,12 +37,11 @@ export function DataProvider({ children }) {
     });
     
     if (response.status === 401) {
-        toast.error('Session expired. Please log in again.');
-        // We do not have direct access to logout here without getting it from useAuth,
-        // but wait! DataContext destructures currentUser from useAuth.
-        // Let's rely on the AuthContext's onAuthStateChange for automatic logout if the token is completely invalid.
-        // But if we want to force logout here, we can dispatch an event or call supabase.auth.signOut().
-        supabase.auth.signOut();
+        const errorText = await response.clone().text();
+        console.error("401 Unauthorized received in apiFetch. URL:", url, "Response:", errorText);
+        toast.error(`Session error: ${errorText}`);
+        // Temporarily disable immediate signOut to debug
+        // supabase.auth.signOut();
     }
     return response;
   };
