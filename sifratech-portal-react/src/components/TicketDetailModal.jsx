@@ -343,7 +343,7 @@ export default function TicketDetailModal() {
         <div className="det-section" style={{ marginTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
              <h3 style={{ margin: 0 }}>Ticket details</h3>
-             {(role.role === 'Account Manager' || role.isAdmin) && (
+             {role.canAssign && (
                  <button className="btn-s" onClick={() => setIsEditing(!isEditing)} disabled={savingEdit}>
                      {isEditing ? 'Cancel Edit' : 'Edit Ticket'}
                  </button>
@@ -460,7 +460,7 @@ export default function TicketDetailModal() {
           </div>
         )}
 
-        {(role.role === 'Account Manager' || role.isAdmin) && (
+        {role.canAssign && (
           <div className="det-section"><h3>Ticket Assignment</h3>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <select value={assignSel} onChange={e => setAssignSel(e.target.value)} style={{ background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '7px 10px', fontSize: '12px', color: '#1A2A3A', fontFamily: 'var(--font)' }}>

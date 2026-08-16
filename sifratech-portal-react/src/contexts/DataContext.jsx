@@ -222,7 +222,9 @@ export function DataProvider({ children }) {
           return {
             ts: h.created_at,
             by: by,
-            msg: msg
+            msg: msg,
+            oldStatus: h.old_status,
+            newStatus: h.new_status
           };
         }) : []
         };
@@ -337,7 +339,7 @@ export function DataProvider({ children }) {
                               msg = msg.substring(cb + 1).trim();
                            }
                         }
-                        return { ts: h.created_at, by: by, msg: msg };
+                        return { ts: h.created_at, by: by, msg: msg, oldStatus: h.old_status, newStatus: h.new_status };
                       }) : []
                   };
 

@@ -59,7 +59,7 @@ export default function Tickets() {
       'Priority': t.priority,
       'Status': t.status,
       'Assigned To': t.assignedTo || '—',
-      'Age (Days)': Math.max(0, Math.round(age(t.createdAt) / 24)),
+      'Age (Days)': Math.max(0, Math.round(age(t) / 24)),
       'Raised By': t.raisedBy,
       'Email': t.email || '—',
       'Start Date': t.createdAt ? new Date(t.createdAt).toLocaleString('en-GB') : '',
@@ -132,7 +132,7 @@ export default function Tickets() {
                 <td data-label="Priority"><span className={`badge ${bc(t.priority, 'p')}`}>{t.priority}</span></td>
                 <td data-label="Status"><span className={`badge ${bc(t.status, 's')}`}>{t.status}</span></td>
                 <td data-label="Assigned to" style={{ color: '#4A5A6A' }}>{t.assignedTo || '—'}</td>
-                <td data-label="Age (Days)" className={age(t.createdAt) > 24 ? 'ageing-warn' : ''}>{Math.max(0, Math.round(age(t.createdAt) / 24))}</td>
+                <td data-label="Age (Days)" className={age(t) > 24 ? 'ageing-warn' : ''}>{Math.max(0, Math.round(age(t) / 24))}</td>
                 <td data-label="Start Date" style={{ color: '#4A5A6A' }}>{fmt(t.createdAt)}</td>
                 <td data-label="Close Date" style={{ color: '#4A5A6A' }}>{(t.resolvedAt || t.closedAt) ? fmt(t.resolvedAt || t.closedAt) : '—'}</td>
                 <td data-label="Raised by" style={{ color: '#4A5A6A' }}>{t.raisedBy}</td>

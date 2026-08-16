@@ -55,11 +55,83 @@ export function seedTickets() {
   return tickets;
 }
 
-export function age(createdAtStr) {
-  if (!createdAtStr) return 0;
-  const d = new Date(createdAtStr);
+export function age(t) {
+  if (!t) return 0;
+  
+  // Backwards compatibility for cases where only createdAt string is passed
+  if (typeof t === 'string') {
+    const d = new Date(t);
+    if (isNaN(d.getTime())) return 0;
+    return Math.round((now() - d) / 36e5);
+  }
+
+  // Active age calculation based on status history
+  const createdAt = t.createdAt || t.created_at;
+  if (!createdAt) return 0;
+
+  const d = new Date(createdAt);
   if (isNaN(d.getTime())) return 0;
-  return Math.round((now() - d) / 36e5);
+
+  if (!t.auditLog || t.auditLog.length === 0) {
+    // No history, just compute from creation to now, unless currently in paused status
+    const pausedStatuses = ['Awaiting Customer', 'Resolved', 'Closed'];
+    if (pausedStatuses.includes(t.status)) {
+       // We can't know when it entered this status without auditLog, so assume 0 active hours for safety or just total time. 
+       // In a real system, there should be audit log.
+       return 0;
+    }
+    return Math.round((now() - d) / 36e5);
+  }
+
+  const pausedStatuses = ['Awaiting Customer', 'Resolved', 'Closed'];
+  
+  let totalActiveMs = 0;
+  let lastActiveTimestamp = d.getTime();
+  let isCurrentlyActive = true; // Tickets start as active (New/Open)
+
+  // Sort logs chronologically
+  const sortedLogs = [...t.auditLog].sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+
+  for (const log of sortedLogs) {
+    // If we don't have newStatus, try to infer from msg
+    let status = log.newStatus;
+    if (!status && log.msg) {
+        if (log.msg.includes('Status updated to')) {
+            status = log.msg.split('Status updated to')[1].trim();
+        } else if (log.msg.includes('Status changed from')) {
+            status = log.msg.split('to')[1].trim();
+        } else if (log.msg.includes('Resolution:')) {
+            status = 'Resolved';
+        } else if (log.msg.includes('Ticket unassigned')) {
+            status = 'Open';
+        }
+    }
+
+    if (status && status !== 'Any') {
+       const isPausedStatus = pausedStatuses.includes(status);
+       const logTime = new Date(log.ts).getTime();
+
+       if (isCurrentlyActive && isPausedStatus) {
+           // Transitioning to Paused: accumulate time since last active
+           totalActiveMs += (logTime - lastActiveTimestamp);
+           isCurrentlyActive = false;
+       } else if (!isCurrentlyActive && !isPausedStatus) {
+           // Transitioning to Active: start clock again
+           lastActiveTimestamp = logTime;
+           isCurrentlyActive = true;
+       }
+    }
+  }
+
+  if (isCurrentlyActive) {
+      // Accumulate time from last active timestamp to now
+      totalActiveMs += (now().getTime() - lastActiveTimestamp);
+  }
+
+  // Handle case where timestamps might be weird
+  if (totalActiveMs < 0) totalActiveMs = 0;
+  
+  return Math.round(totalActiveMs / 36e5);
 }
 
 export function fmt(dStr) {
