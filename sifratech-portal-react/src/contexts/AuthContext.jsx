@@ -118,12 +118,42 @@ export function AuthProvider({ children }) {
     console.warn("Role switching is disabled in proper auth mode.");
   };
 
+  const resetPassword = async (email) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/settings', // Or a dedicated reset page
+      });
+      if (error) {
+        console.error("Reset password error:", error.message);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("Network error during password reset:", e);
+      return { success: false, error: e.message };
+    }
+  };
+
+  const updatePassword = async (newPassword) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        console.error("Update password error:", error.message);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("Network error during password update:", e);
+      return { success: false, error: e.message };
+    }
+  };
+
   if (loading) {
     return <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', fontFamily: 'var(--font)', color: '#6B7A8D' }}>Loading secure portal...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ currentUser: activeUser, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ currentUser: activeUser, login, logout, switchRole, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );
