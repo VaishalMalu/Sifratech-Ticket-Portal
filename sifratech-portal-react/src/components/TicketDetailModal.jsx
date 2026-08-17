@@ -207,6 +207,43 @@ export default function TicketDetailModal() {
     }
   };
 
+  const calculateActiveAgeDays = (ticket) => {
+    if (!ticket || !ticket.createdAt) return 0;
+    let totalMs = 0;
+    const createdAt = new Date(ticket.createdAt).getTime();
+    
+    if (!ticket.auditLog || ticket.auditLog.length === 0) {
+      if (['Awaiting Customer', 'Resolved', 'Closed', 'Pending Approval'].includes(ticket.status)) {
+        return 0; // If it's already closed/paused and no history, we can't reliably know active time.
+      }
+      totalMs = Date.now() - createdAt;
+      return Math.max(0, Math.round(totalMs / (1000 * 60 * 60 * 24)));
+    }
+    
+    const logs = [...ticket.auditLog].sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+    let lastTime = createdAt;
+    let isActive = true;
+    
+    const isPausedStatus = (s) => ['Awaiting Customer', 'Resolved', 'Closed', 'Pending Approval'].includes(s);
+
+    logs.forEach(log => {
+      const logTime = new Date(log.ts).getTime();
+      if (isActive) {
+        totalMs += Math.max(0, logTime - lastTime);
+      }
+      if (log.newStatus && log.newStatus !== 'Any') {
+         isActive = !isPausedStatus(log.newStatus);
+      }
+      lastTime = Math.max(lastTime, logTime);
+    });
+
+    if (isActive && !isPausedStatus(ticket.status)) {
+      totalMs += Math.max(0, Date.now() - lastTime);
+    }
+    
+    return Math.max(0, Math.round(totalMs / (1000 * 60 * 60 * 24)));
+  };
+
   const aAge = age(t?.createdAt);
   const breached = aAge > sla[t?.priority];
 
@@ -394,6 +431,7 @@ export default function TicketDetailModal() {
               <div className="det-row"><span className="lbl">Team</span><span>{t.assignedTeam}</span></div>
               {t.closedAt && <div className="det-row"><span className="lbl">Closed</span><span>{fmt(t.closedAt)}</span></div>}
               <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''}>{Math.max(0, Math.round(aAge / 24))} days</span></div>
+              <div className="det-row"><span className="lbl">Active Age</span><span>{calculateActiveAgeDays(t)} days</span></div>
             </div>
           )}
         </div>

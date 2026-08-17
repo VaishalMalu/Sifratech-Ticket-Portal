@@ -25,9 +25,9 @@ export function AuthProvider({ children }) {
       isAdmin: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager',
       isSupport: roleName !== 'Customer' && roleName !== 'Client',
       canCreate: true,
-      canAssign: roleName === 'Admin' || roleName === 'Manager' || roleName === 'Delivery Manager' || roleName === 'Account Manager' || roleName === 'Technical Team' || roleName === 'Support' || roleName === 'Support Engineer' || roleName === 'Engineer',
+      canAssign: roleName === 'Admin' || roleName === 'Manager' || roleName === 'Delivery Manager' || roleName === 'Account Manager' || roleName === 'Technical Team' || roleName === 'Support' || roleName === 'Support Engineer' || roleName === 'Engineer' || currentUser.label?.toLowerCase().includes('technical team'),
       canClose: roleName !== 'Customer' && roleName !== 'Client',
-      seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager' || roleName === 'Engineer'
+      seeAll: roleName === 'Admin' || roleName === 'Account Manager' || roleName === 'Delivery Manager' || roleName === 'Manager' || roleName === 'Engineer' || roleName === 'Technical Team' || currentUser.label?.toLowerCase().includes('technical team')
     };
   }, [currentUser]);
 

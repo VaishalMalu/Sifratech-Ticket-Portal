@@ -352,6 +352,37 @@ export function DataProvider({ children }) {
            }
         }, Math.random() * 2000);
       })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ticket_comments' }, payload => {
+        const ticketId = payload.new?.ticket_id;
+        if (!ticketId) return;
+        setTimeout(async () => {
+          const { data: t, error } = await supabase
+            .from('tickets')
+            .select(`
+              ticket_comments (comment_text, created_at, source)
+            `)
+            .eq('id', ticketId)
+            .single();
+            
+          if (t && !error) {
+            setTickets(prev => {
+              const mappedComments = t.ticket_comments ? t.ticket_comments.map(c => {
+                let by = 'System';
+                let msg = c.comment_text;
+                if (msg && msg.startsWith('[')) {
+                   const cb = msg.indexOf(']');
+                   if (cb !== -1) {
+                      by = msg.substring(1, cb);
+                      msg = msg.substring(cb + 1).trim();
+                   }
+                }
+                return { ts: c.created_at, by: by, msg: msg };
+              }) : [];
+              return prev.map(x => x.id === ticketId ? { ...x, comments: mappedComments } : x);
+            });
+          }
+        }, Math.random() * 2000);
+      })
       .subscribe();
 
     return () => {
