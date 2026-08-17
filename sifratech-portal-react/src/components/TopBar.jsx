@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { IconChartBar, IconTicket, IconUsers, IconSettings, IconLogout, IconKey } from '@tabler/icons-react';
+import { IconChartBar, IconTicket, IconUsers, IconSettings, IconLogout, IconShieldLock } from '@tabler/icons-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 
@@ -93,7 +93,7 @@ export default function TopBar() {
         <div className="tb-right">
           <div className="avatar">{currentUser?.initials || '??'}</div>
           <button className="btn-s" onClick={() => { setShowPasswordModal(true); setNewPassword(''); setPasswordMsg(''); setPasswordErr(''); setShowNewPassword(false); }} title="Change Password" style={{ marginRight: '8px' }}>
-            <IconKey size={16} />
+            <IconShieldLock size={16} />
           </button>
           <button className="btn-s" onClick={handleLogout} title="Sign out">
             <IconLogout size={16} />
