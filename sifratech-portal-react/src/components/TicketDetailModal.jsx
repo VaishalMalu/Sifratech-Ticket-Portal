@@ -7,28 +7,35 @@ import { IconSparkles } from '@tabler/icons-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
-const STATUS_COLORS = { 'Open': '#3ECDC2', 'In Progress': '#E09A2B', 'Awaiting Customer': '#E09A2B', 'Resolved': '#4CAF7D', 'Closed': '#3A4A5C', 'Reopened': '#E05252', 'Assigned': '#1A9FCC' };
+const STATUS_COLORS = { 'New': '#3ECDC2', 'Open': '#3ECDC2', 'In Progress': '#E09A2B', 'Awaiting Customer': '#E09A2B', 'Resolved': '#4CAF7D', 'Closed': '#3A4A5C', 'Reopened': '#E05252', 'Assigned': '#1A9FCC', 'Pending Approval': '#9C27B0' };
 
 const ADMIN_TRANSITIONS = {
-  'Open': ['Assigned', 'Closed'],
-  'Assigned': ['In Progress', 'Awaiting Customer', 'Closed', 'Open'],
-  'In Progress': ['Resolved', 'Awaiting Customer', 'Closed'],
+  'New': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed', 'Open'],
+  'Open': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
+  'Pending Approval': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
+  'Assigned': ['In Progress', 'Awaiting Customer', 'Closed', 'Open', 'Resolved'],
+  'In Progress': ['Resolved', 'Awaiting Customer', 'Closed', 'Assigned'],
   'Awaiting Customer': ['In Progress', 'Resolved', 'Closed'],
-  'Resolved': ['Closed', 'Reopened'],
+  'Resolved': ['Closed', 'Reopened', 'In Progress'],
   'Closed': ['Reopened'],
-  'default': ['Open', 'Closed']
+  'default': ['Open', 'Assigned', 'In Progress', 'Awaiting Customer', 'Resolved', 'Closed']
 };
 
 const SUPPORT_TRANSITIONS = {
-  'Open': ['Assigned'],
-  'Assigned': ['In Progress', 'Awaiting Customer'],
-  'In Progress': ['Resolved', 'Awaiting Customer'],
-  'Awaiting Customer': ['In Progress', 'Resolved'],
-  'default': []
+  'New': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
+  'Open': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
+  'Pending Approval': ['Assigned', 'In Progress', 'Awaiting Customer'],
+  'Assigned': ['In Progress', 'Awaiting Customer', 'Resolved', 'Closed'],
+  'In Progress': ['Resolved', 'Awaiting Customer', 'Closed', 'Assigned'],
+  'Awaiting Customer': ['In Progress', 'Resolved', 'Closed'],
+  'Resolved': ['Closed', 'Reopened', 'In Progress'],
+  'Closed': ['Reopened'],
+  'default': ['Open', 'Assigned', 'In Progress', 'Awaiting Customer', 'Resolved', 'Closed']
 };
 
 const CLIENT_TRANSITIONS = {
   'Resolved': ['Closed', 'Reopened'],
+  'Closed': ['Reopened'],
   'default': []
 };
 
@@ -117,8 +124,8 @@ export default function TicketDetailModal() {
     stats = CLIENT_TRANSITIONS[t.status] || CLIENT_TRANSITIONS['default'];
   }
 
-  // Prevent moving to working/closed states if nobody is assigned
-  if (!t.assignedTo || t.assignedTo === 'Unassigned') {
+  // For client/customer users, prevent moving to working states if nobody is assigned
+  if (!role.isSupport && !role.isAdmin && (!t.assignedTo || t.assignedTo === 'Unassigned')) {
     stats = stats.filter(s => s !== 'In Progress' && s !== 'Resolved' && s !== 'Closed' && s !== 'Awaiting Customer');
   }
 
