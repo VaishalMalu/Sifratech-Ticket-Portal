@@ -353,3 +353,40 @@ table.dt tbody tr.row-closed:hover td{background:#F0F4F8;}
   .user-info { min-width: calc(100% - 60px); }
   .sla-row { grid-template-columns: 80px 80px 1fr; gap: 8px; }
 }
+
+/* ── PRINT & PDF EXPORT STYLES ── */
+@media print {
+  body, html, #appShell, .main, .reports-page, .wsr-preview-container, .case-study-container {
+    background: #FFFFFF !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+    box-shadow: none !important;
+  }
+  .topbar, .no-print, .modal-backdrop, .page-header {
+    display: none !important;
+  }
+  .printable-doc {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .report-section-block, .chart-card, .kpi-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    box-shadow: none !important;
+    border: 1px solid #E2E8F0 !important;
+  }
+  @page {
+    margin: 1.2cm;
+    size: A4 portrait;
+  }
+}

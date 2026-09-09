@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { IconChartBar, IconTicket, IconUsers, IconSettings, IconLogout, IconKey } from '@tabler/icons-react';
+import { IconChartBar, IconTicket, IconUsers, IconSettings, IconLogout, IconKey, IconFileAnalytics } from '@tabler/icons-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 
@@ -78,6 +78,13 @@ export default function TopBar() {
             <button onClick={() => navigate('/tickets')} className={location.pathname.includes('tickets') ? 'active' : ''}>
               <IconTicket size={16} /> Tickets
             </button>
+            {(currentUser?.role?.trim()?.toLowerCase() === 'account manager' || 
+              currentUser?.email?.toLowerCase() === 'account_manager@sifratc.com' || 
+              currentUser?.email?.toLowerCase() === 'account_manager@sifratech.com') && (
+              <button onClick={() => navigate('/reports')} className={location.pathname.includes('reports') ? 'active' : ''}>
+                <IconFileAnalytics size={16} /> Account Reports
+              </button>
+            )}
             {currentUser?.isAdmin && (
               <>
                 <button onClick={() => navigate('/team')} className={location.pathname.includes('team') ? 'active' : ''}>

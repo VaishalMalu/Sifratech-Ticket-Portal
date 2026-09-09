@@ -29,6 +29,10 @@ app.use(express.json());
 const usersRoute = require('./routes/users');
 app.use('/api/users', usersRoute);
 
+const reportsRoute = require('./routes/reports');
+app.use('/api/reports', reportsRoute);
+
+
 app.get('/api/public/lookup', async (req, res) => {
     try {
         const { supabase } = require('./config/supabaseClient');

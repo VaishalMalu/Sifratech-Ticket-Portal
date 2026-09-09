@@ -60,7 +60,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-1.5-flash',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
@@ -83,7 +83,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile', // recommended model on groq for JSON formatting
+                        model: 'openai/gpt-oss-120b',
                         messages: [
                             { role: 'user', content: prompt }
                         ],
@@ -139,46 +139,32 @@ Engineer's Draft Notes: ${draftNotes || 'The issue has been resolved successfull
 
 Provide ONLY the polished text, nothing else.`;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        return response.text;
-    } catch (error) {
-        console.error('Error generating AI reply with Gemini:', error.message || error);
-        
-        // Fallback to Groq API
-        if (process.env.GROQ_API_KEY) {
-            console.log('Attempting fallback to Groq Cloud API for reply generation...');
-            try {
-                const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
-                        messages: [
-                            { role: 'user', content: prompt }
-                        ]
-                    })
-                });
-                
-                if (groqResponse.ok) {
-                    const groqData = await groqResponse.json();
-                    return groqData.choices[0].message.content;
-                } else {
-                    console.error('Groq API error:', await groqResponse.text());
-                }
-            } catch (groqError) {
-                console.error('Error with Groq API fallback:', groqError.message || groqError);
+    if (process.env.GROQ_API_KEY) {
+        try {
+            const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'openai/gpt-oss-120b',
+                    messages: [
+                        { role: 'user', content: prompt }
+                    ]
+                })
+            });
+            
+            if (groqResponse.ok) {
+                const groqData = await groqResponse.json();
+                return (groqData.choices[0].message.content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
             }
+        } catch (groqError) {
+            console.error('Error with Groq API for reply:', groqError.message || groqError);
         }
+    }
         
         return draftNotes || 'The issue has been resolved successfully.';
-    }
 };
 
 const summarizeTicketDescription = async (description) => {
@@ -235,47 +221,238 @@ Summary:`;
         }
     }
 
+    // Groq API primary
+    if (process.env.GROQ_API_KEY) {
+        try {
+            const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'openai/gpt-oss-120b',
+                    messages: [
+                        { role: 'user', content: textPrompt }
+                    ]
+                })
+            });
+            
+            if (groqResponse.ok) {
+                const groqData = await groqResponse.json();
+                return (groqData.choices[0].message.content || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+            }
+        } catch (groqError) {
+            console.error('Error with Groq API:', groqError.message || groqError);
+        }
+    }
+
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.6-flash',
             contents: finalParts,
         });
         return response.text;
     } catch (error) {
-        console.error('Error generating AI summary with Gemini:', error.message || error);
-        
-        // Fallback to Groq API
-        if (process.env.GROQ_API_KEY) {
-            try {
-                const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
-                        messages: [
-                            { role: 'user', content: textPrompt }
-                        ]
-                    })
-                });
-                
-                if (groqResponse.ok) {
-                    const groqData = await groqResponse.json();
-                    return groqData.choices[0].message.content;
-                }
-            } catch (groqError) {
-                console.error('Error with Groq API fallback:', groqError.message || groqError);
-            }
-        }
-        
-        return "Could not generate summary.";
+        console.error('Gemini fallback error:', error.message || error);
     }
+    
+    return "Could not generate summary.";
+};
+
+const generateWSRSummary = async (metrics) => {
+    const prompt = `You are a senior IT Account Manager preparing an executive Periodic Status Report (PSR) summary for executive management and stakeholders.
+Based on the following periodic operational metrics, write a concise, professional, bulleted executive summary highlighting support health, ticket resolution velocity, backlog risks, and module/priority distribution.
+
+Periodic Operational Metrics:
+${JSON.stringify(metrics, null, 2)}
+
+Provide a structured, executive-level summary with sections:
+1. Periodic Operations Overview
+2. Key Highlights & Achievements
+3. Risks & Areas of Focus
+
+Keep it objective, concise, and professional without generic greetings.`;
+
+    // 1. Try Groq Cloud API with openai/gpt-oss-120b or qwen/qwen3.6-27b
+    if (process.env.GROQ_API_KEY) {
+        try {
+            const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'openai/gpt-oss-120b',
+                    messages: [
+                        { role: 'user', content: prompt }
+                    ]
+                })
+            });
+
+            if (groqResponse.ok) {
+                const groqData = await groqResponse.json();
+                let output = groqData.choices?.[0]?.message?.content || '';
+                // Clean any thinking tags if present
+                output = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+                if (output) return output;
+            }
+        } catch (groqError) {
+            console.error('Groq AI error in WSR summary:', groqError.message || groqError);
+        }
+    }
+
+    // 2. Fallback to Gemini
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-3.6-flash',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error('Gemini AI fallback error:', error.message || error);
+    }
+
+    return "Weekly support operations proceeded according to standard SLA metrics. Ticket intake and resolution rates remained stable across assigned modules.";
+};
+
+const generateBCSContent = async (liveData) => {
+    const { account_name, project_name, tickets, modules, teams, dateRange } = liveData;
+
+    // Detailed real-time ticket logs & comment threads from DB
+    const ticketDetailsList = tickets.slice(0, 30).map(t => {
+        let entry = `[${t.ticket_number || 'TKT'}] Title: "${t.title || 'Support Issue'}" | Module: ${t.module} | Status: ${t.status} | Priority: ${t.priority}`;
+        if (t.description) {
+            entry += `\n   Initial Problem Description: ${t.description.substring(0, 200)}`;
+        }
+        if (t.comments && t.comments.length > 0) {
+            entry += `\n   Actual DB Comments & Resolutions:\n` + t.comments.slice(0, 3).map(c => `     • ${c.substring(0, 250)}`).join('\n');
+        }
+        return entry;
+    }).join('\n\n');
+
+    const prompt = `You are a senior IT Account Manager at Sifratech writing a formal Business Case Study document for the client "${account_name}" on the project "${project_name}".
+
+Based on this REAL-TIME operational ticket data and actual ticket comments/resolutions from the database, generate tangible, highly specific, data-driven content for each section. Directly quote and reference actual ticket numbers, issue titles, comments, project references (e.g., YS-543/2025.146.01), markup changes, module details, and resolutions.
+
+Client: ${account_name}
+Project Track: ${project_name}
+Reporting Period: ${dateRange}
+Total Tickets: ${tickets.length}
+Oracle Modules Covered: ${modules.join(', ') || 'General'}
+Support Teams: ${teams.join(', ') || 'Sifratech Support'}
+
+Detailed Real-Time Ticket Data & Database Comments:
+${ticketDetailsList}
+
+Return a JSON object with EXACTLY these keys (no extra text, pure JSON):
+{
+  "current_situation": "2-3 sentences about the current IT landscape and systems in scope referencing actual ticket volume, modules and real support activity",
+  "operational_challenges": "Specific operational and support challenges observed directly from actual ticket titles, descriptions, and comments in database",
+  "existing_process": "Description of the existing support process and modules covered based on real ticket activity",
+  "existing_workflow": "How tickets flow from submission to resolution referencing actual statuses, teams, and audit comments",
+  "support_approach": "Sifratech support structure and tier SLA models for ${account_name}",
+  "process_improvements": "Standardized incident types, escalation paths, and automated triage models",
+  "ticketing_workflow": "Lifecycle states from ticket submission to verification and closure",
+  "automation_used": "AI email ingestion, auto-assignment, instant notifications, and resolution reply suggestions used",
+  "improvements_achieved": "Key tangible improvements and resolution outcomes achieved referencing specific ticket numbers, comments, and fixes applied",
+  "operational_benefits": "Operational benefits delivered to ${account_name} based on ticket comments and resolution velocity",
+  "visibility_improvements": "How the Sifratech portal provided real-time visibility into ticket status and comments for ${account_name}",
+  "efficiency_improvements": "Efficiency improvements across response times, module coverage, and issue resolution",
+  "major_observations": "Key observations from ticket data and comment threads — recurring issues, hotspot modules, team response",
+  "lessons_learned": "Lessons learned and best practices identified from actual ticket resolution comments",
+  "recommended_improvements": "Short-term recommended improvements based on ticket patterns and gaps identified in comments",
+  "automation_opportunities": "Automation and process optimization opportunities identified from ticket workflows",
+  "further_enhancements": "Long-term enhancement roadmap recommendations for ${account_name}"
+}`;
+
+    // 1. Try Groq
+    if (process.env.GROQ_API_KEY) {
+        try {
+            const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.1-8b-instant',
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.6,
+                    max_tokens: 3000,
+                    response_format: { type: 'json_object' }
+                })
+            });
+
+            if (groqResponse.ok) {
+                const data = await groqResponse.json();
+                const text = data.choices?.[0]?.message?.content?.trim();
+                if (text) return JSON.parse(text);
+            } else {
+                console.error('Groq BCS HTTP Error:', groqResponse.status, await groqResponse.text());
+            }
+        } catch (err) {
+            console.error('Groq BCS generation error:', err.message);
+        }
+    }
+
+    // 2. Fallback: Gemini
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-3.6-flash',
+                contents: prompt,
+                config: { responseMimeType: 'application/json' }
+            });
+            const text = response.text?.trim();
+            if (text) return JSON.parse(text);
+        } catch (err) {
+            console.error('Gemini BCS fallback error:', err.message);
+        }
+    }
+
+    // 3. Real-time DB Data Fallback incorporating actual ticket comments & descriptions
+    const modulesStr = modules.length > 0 ? modules.join(', ') : 'Oracle Core Modules';
+    const teamsStr = teams.length > 0 ? teams.join(', ') : 'Sifratech Support Team';
+    const totalCount = tickets.length;
+    const resolvedCount = tickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
+
+    // Collect tangible real ticket comment excerpts
+    const realCommentExcerpts = tickets
+        .filter(t => t.comments && t.comments.length > 0)
+        .slice(0, 5)
+        .map(t => `• [${t.ticket_number}] ${t.title}: "${t.comments[0].substring(0, 150)}${t.comments[0].length > 150 ? '...' : ''}"`)
+        .join('\n');
+
+    const realTicketSummary = tickets.slice(0, 4).map(t => `• [${t.ticket_number}] ${t.title} (${t.module}) - Status: ${t.status}`).join('\n');
+
+    return {
+        current_situation: `${account_name} operates an enterprise ${project_name} environment encompassing ${modulesStr}. Sifratech provides structured operational and technical support across ${totalCount} recorded incident tickets during ${dateRange}.`,
+        operational_challenges: realTicketSummary ? `Key operational tickets logged in database:\n${realTicketSummary}` : `Management of ticket volume and SLA timelines across ${modulesStr}.`,
+        existing_process: `Support requests for ${modulesStr} are logged and triaged into the Sifratech portal and assigned to ${teamsStr}.`,
+        existing_workflow: `Tickets progress through standard lifecycle states: New → In Progress → Awaiting Customer / Pending Approval → Resolved → Closed. All engineer actions and resolution notes are recorded in real-time ticket comments.`,
+        support_approach: `Sifratech's dedicated support structure providing specialized functional & technical coverage across ${modulesStr}.`,
+        process_improvements: `Standardized incident tagging, automated triage workflows, and SLA timer monitoring.`,
+        ticketing_workflow: `Lifecycle states (New → In Progress → Awaiting → Resolved → Closed) with real-time customer and engineer comments.`,
+        automation_used: `AI email ingestion, automated team assignment, and instant client notification loops.`,
+        improvements_achieved: realCommentExcerpts ? `Tangible resolutions and activity logged in database:\n${realCommentExcerpts}` : `• Successfully processed ${resolvedCount} resolved/closed tickets for ${account_name}.\n• Streamlined ticket routing to ${teamsStr}.\n• Established consistent SLA tracking for all incident types.`,
+        operational_benefits: `Delivered reliable business continuity, minimized system downtime for ${project_name}, and provided dedicated expert escalation pathways for critical issues.`,
+        visibility_improvements: `The Sifratech Service Portal provides real-time transparency into ticket status, comment history, assigned engineers, and resolution updates for ${account_name}.`,
+        efficiency_improvements: `Enhanced resolution velocity and reduced triage overhead through structured module categorization and dedicated engineer assignments.`,
+        major_observations: `Ticket telemetry indicates active support around ${modulesStr}. Detailed comments and clear reproduction steps in ticket threads significantly accelerate resolution times.`,
+        lessons_learned: `Establishing clear issue classification and recording resolution details in ticket comments improves initial response times and prevents repeat issues.`,
+        recommended_improvements: `• Conduct periodic refresher training for key system users.\n• Implement standardized template checklists for complex module support requests.\n• Maintain proactive patch and environment health checks.`,
+        automation_opportunities: `Explore automated email ticket creation, AI-assisted ticket triage, and automated resolution verification notifications.`,
+        further_enhancements: `Evaluate strategic cloud upgrades, additional module rollouts, and enhanced integration monitoring for ${account_name}.`
+    };
 };
 
 module.exports = {
     analyzeTicketData,
     generateResolutionReply,
-    summarizeTicketDescription
+    summarizeTicketDescription,
+    generateWSRSummary,
+    generateBCSContent
 };
+

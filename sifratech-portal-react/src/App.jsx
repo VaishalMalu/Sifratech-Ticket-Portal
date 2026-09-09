@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import Tickets from './pages/Tickets';
 import Team from './pages/Team';
 import Settings from './pages/Settings';
+import Reports from './pages/Reports';
 import NotFound from './pages/NotFound';
 
 // A simple protected route component
@@ -22,6 +23,25 @@ function ProtectedRoute({ children }) {
   
   if (!currentUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return children;
+}
+
+// Account Manager only route component
+function AccountManagerRoute({ children }) {
+  const { currentUser } = useAuth();
+  const location = useLocation();
+  
+  if (!currentUser) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  const isAM = currentUser?.role?.trim()?.toLowerCase() === 'account manager' || 
+               currentUser?.email?.toLowerCase() === 'account_manager@sifratc.com' ||
+               currentUser?.email?.toLowerCase() === 'account_manager@sifratech.com';
+
+  if (!isAM) {
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 }
@@ -45,6 +65,11 @@ export default function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="tickets" element={<Tickets />} />
+              <Route path="reports" element={
+                <AccountManagerRoute>
+                  <Reports />
+                </AccountManagerRoute>
+              } />
               <Route path="team" element={<Team />} />
               <Route path="settings" element={<Settings />} />
             </Route>
