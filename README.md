@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Sifratech Ticket Portal is a comprehensive, enterprise-grade Help Desk and IT Service Management (ITSM) system designed to streamline communication between clients and support teams. The portal provides an intuitive interface for clients to raise issues, and a robust backend for engineers and managers to track, assign, and resolve tickets while adhering to Service Level Agreements (SLAs).
+The Sifratech Ticket Portal is a comprehensive, enterprise-grade Help Desk, IT Service Management (ITSM), and Account Management system designed to streamline communication between clients and support teams. The portal provides an intuitive interface for clients to raise issues, a robust workspace for engineers to triage and resolve tickets, and advanced business reporting tools for Account Managers to generate Periodic Status Reports (PSR) and Strategic Business Case Studies.
 
 The system is built as a modern, decoupled web application featuring a React-based frontend and an Express/Node.js backend, powered by a Supabase PostgreSQL database.
 
@@ -10,43 +10,81 @@ The system is built as a modern, decoupled web application featuring a React-bas
 
 The project is structured as a monorepo containing both the frontend and backend applications:
 
-- **sifratech-portal-react**: The frontend user interface built with React, Vite, and modern CSS practices.
-- **sifratech-backend**: The backend REST API server built with Node.js and Express, handling scheduled jobs, email notifications, and integrations.
-- **Database**: Supabase PostgreSQL with Row Level Security (RLS) for robust data access control and real-time event broadcasting.
+- **sifratech-portal-react**: The frontend user interface built with React 18, Vite, Tabler Icons, and modern CSS principles.
+- **sifratech-backend**: The backend REST API server built with Express.js, featuring modular controllers, role-based middlewares, scheduled jobs, Graph API email listeners, and AI ingestion pipelines.
+- **Database Layer**: Supabase PostgreSQL with Row Level Security (RLS) policies and dedicated migration tables (`reports_business_cases`, `reports_wsr_drafts`, `tickets`, `ticket_comments`).
+- **AI & Token Optimization Layer**: Hybrid intelligence layer connecting Groq Cloud API, Google Generative AI (Gemini 3.6 Flash), and a deterministic real-time DB data synthesis fallback engine for zero-downtime, token-efficient content generation.
+
+### High-Level System Architecture Diagram
+
+```
++-----------------------------------------------------------------------------+
+|                            SIFRATECH REACT PORTAL                           |
+|  [ Dashboard ]  [ Tickets ]  [ Account Reports ]  [ Team ]  [ Settings ]    |
++------------------------------------+----------------------------------------+
+                                     |  HTTP REST / Bearer JWT
+                                     v
++-----------------------------------------------------------------------------+
+|                            EXPRESS BACKEND API                              |
+|  - AuthMiddleware (JWT verification)                                        |
+|  - AccountManagerMiddleware (RBAC for Account Managers & Admins)            |
+|  - WebhookController (Microsoft Graph Mailbox Ingestion)                   |
+|  - ReportsController (/api/reports/cases, /api/reports/bcs-generate)        |
++-------------------+=+-----------------------------------+-------------------+
+                    | |                                   |
+     SQL Queries /  | | RLS                               | AI Telemetry Data
+     Realtime Sync  v v                                   v
++-----------------------------------+   +-------------------------------------+
+|        SUPABASE POSTGRESQL        |   |       HYBRID AI ENGINE (AIService)   |
+|  - tickets & ticket_comments      |   |  1. Groq Cloud API                  |
+|  - reports_business_cases         |   |  2. Google Gemini 3.6 Flash         |
+|  - reports_wsr_drafts             |   |  3. Real-Time DB Fallback Synthesizer|
++-----------------------------------+   +-------------------------------------+
+```
 
 ## Key Features
 
-- **Role-Based Access Control (RBAC)**: Distinct interfaces and permissions for Customers, Support Engineers, Managers, and Administrators.
-- **Client Segregation**: Multi-tenant architecture ensuring clients only have access to their respective organizational data.
-- **SLA Management**: Automated Service Level Agreement tracking with dynamic breach calculations based on ticket priority.
-- **Real-time Synchronization**: Live updates to the ticket dashboard utilizing PostgreSQL replication and Supabase Realtime channels.
-- **Automated Email Notifications**: SMTP-based email dispatch for critical events (Ticket Creation, Assignment, Resolution, and Escalation).
-- **AI-Powered Insights**: Integrated AI features for ticket sentiment analysis, urgency detection, and automated resolution reply suggestions.
-- **Secure File Attachments**: Cloud-based object storage for secure uploading and sharing of diagnostic files, logs, and screenshots.
+- **Role-Based Access Control (RBAC)**: Enforced interfaces for Customers, Support Engineers, Account Managers, and Administrators.
+- **Account Reports & Executive Business Documentation**:
+  - **Periodic Status Reports (PSR)**: Automated weekly/periodic operational status telemetry (New, Resolved, Closed, Backlog, AI Executive Summary).
+  - **Strategic Business Case Studies**: 6-section enterprise document generator (Current Situation & Challenges, Existing Landscape & Modules, Solution, Business Impact & Operational Results, Observations & Lessons Learned, Future Recommendations & Optimization Roadmap).
+- **Real-Time DB & Token-Efficient AI Auto-fill**:
+  - Automatically queries actual ticket descriptions, ticket numbers (e.g., `TKT-2026-876733`), project references (e.g., `YS-543/2025.146.01`), and engineer comments from Supabase.
+  - Generates tangible, factual executive content while minimizing AI API token usage.
+  - 100% editable form editor with print-ready PDF export views.
+- **Client Segregation & SLA Management**: Multi-tenant architecture ensuring client data isolation with dynamic SLA breach timers.
+- **Automated Email Ingestion & Reply Suggestions**: Microsoft Graph API integration for mailbox monitoring and AI-assisted customer reply drafts.
 
 ## Technical Stack
 
 ### Frontend
 - **Framework**: React 18
 - **Build Tool**: Vite
+- **Icons & UI Components**: `@tabler/icons-react`, `react-hot-toast`
 - **Routing**: React Router DOM v6
-- **State Management & Authentication**: React Context API, Supabase Auth
-- **Styling**: Pure CSS with responsive design principles
+- **State & Context**: React Context API, Supabase Auth
 
 ### Backend
-- **Runtime**: Node.js
+- **Runtime**: Node.js v18+ / v24+
 - **Server Framework**: Express.js
 - **Database**: PostgreSQL (hosted on Supabase)
-- **Integrations**: Azure MSAL (Microsoft Graph API for Emails), Google Generative AI
+- **Integrations**: Microsoft Graph API, Groq Cloud API, Google Generative AI (`@google/genai`)
+
+## Security Audit & Compliance
+
+- **Role-Based Middleware Protection**: All report endpoints (`/api/reports/*`) are guarded by `authMiddleware` and `accountManagerMiddleware`, ensuring unauthorized roles cannot view or edit business case studies or account drafts.
+- **Parameterized Database Queries**: All Supabase client interactions use parameterized query builders, preventing SQL injection vulnerabilities.
+- **Secure Token & Key Storage**: Sensitive credentials (`SUPABASE_SERVICE_KEY`, `GROQ_API_KEY`, `GEMINI_API_KEY`) are managed strictly via server-side environment variables (`.env`).
+- **Resilient Fallback Design**: Token consumption is controlled with concise prompt structuring and a zero-token real-time DB fallback engine to prevent outage risks during credit limits or API service degradation.
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher recommended)
-- NPM or Yarn package manager
-- A Supabase Project (Database, Auth, and Storage)
+- NPM package manager
+- A Supabase Project (Database, Auth, Storage)
 
-### Installation
+### Installation & Local Setup
 
 1. **Clone the repository**
    ```bash
@@ -55,70 +93,20 @@ The project is structured as a monorepo containing both the frontend and backend
    ```
 
 2. **Frontend Setup**
-   Navigate to the frontend directory and install dependencies:
    ```bash
    cd sifratech-portal-react
    npm install
+   npm run dev
    ```
 
 3. **Backend Setup**
-   Navigate to the backend directory and install dependencies:
    ```bash
    cd ../sifratech-backend
    npm install
+   npm start
    ```
 
-### Environment Configuration
+## Support & Deployment
 
-Before running the application, you must configure the environment variables. 
-Create a `.env` file in both the frontend and backend directories based on the required configurations.
-
-**Frontend (`sifratech-portal-react/.env`)**
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_BACKEND_URL=http://localhost:3000
-```
-
-**Backend (`sifratech-backend/.env`)**
-```env
-PORT=3000
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-# Additional variables for Email Providers and AI Services as required by the backend
-```
-
-### Running the Application Locally
-
-To start the development environment, you will need to run both servers concurrently.
-
-**Start the Backend Server:**
-```bash
-cd sifratech-backend
-npm run start
-```
-The backend API will be available at `http://localhost:3000`.
-
-**Start the Frontend Application:**
-```bash
-cd sifratech-portal-react
-npm run dev
-```
-The web portal will be accessible at `http://localhost:5173`.
-
-## Deployment
-
-The application is designed to be cloud-native and can be deployed to standard platform-as-a-service (PaaS) providers.
-
-- **Frontend**: Can be statically built (`npm run build`) and hosted on platforms like Vercel, Netlify, or Azure Static Web Apps.
-- **Backend**: Can be containerized or hosted directly on platforms like Heroku, Render, or Azure App Service. Ensure environment variables are securely injected via the hosting provider's configuration panel.
-
-## Security and Privacy
-
-- **Authentication**: Managed via Supabase Auth (JWT-based).
-- **Authorization**: Row Level Security (RLS) is strictly enforced on the PostgreSQL database to prevent unauthorized data access across tenants.
-- **Sensitive Data**: Environment variables, raw database dumps, and internal knowledge base files are strictly excluded from version control via `.gitignore`. 
-
-## Support
-
-For technical inquiries or deployment assistance, please refer to the internal documentation or contact the system administrator.
+- **Frontend Deployment**: Can be statically built (`npm run build`) and hosted on Vercel, Netlify, or Azure Static Web Apps.
+- **Backend Deployment**: Cloud-native Node.js service compatible with Render, Heroku, or Azure App Service.
