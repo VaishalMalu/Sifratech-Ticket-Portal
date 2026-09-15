@@ -41,45 +41,69 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
+        const trimmedEmail = email.trim().toLowerCase();
+
         // 1. Create user in Supabase Auth
+        let userId;
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-            email,
-            password,
+            email: trimmedEmail,
+            password: password,
             email_confirm: true
         });
 
         if (authError) {
-            console.error('Supabase Auth Error:', authError);
-            return res.status(400).json({ error: authError.message });
+            if (authError.message.includes('already exists') || authError.message.includes('already registered')) {
+                const { data: listData } = await supabase.auth.admin.listUsers();
+                const existing = listData?.users?.find(u => u.email.toLowerCase() === trimmedEmail);
+                if (existing) {
+                    userId = existing.id;
+                    await supabase.auth.admin.updateUserById(userId, { password });
+                } else {
+                    return res.status(400).json({ error: authError.message });
+                }
+            } else {
+                console.error('Supabase Auth Error:', authError);
+                return res.status(400).json({ error: authError.message });
+            }
+        } else {
+            userId = authUser.user.id;
         }
 
-        // 2. Insert into public.users table
-        const { data: user, error: dbError } = await supabase.from('users').insert([{
-            id: authUser.user.id,
-            email,
-            full_name,
+        // 2. Upsert into public.users table
+        const { data: user, error: dbError } = await supabase.from('users').upsert({
+            id: userId,
+            email: trimmedEmail,
+            full_name: full_name || trimmedEmail.split('@')[0],
             role_id: role_id || null,
-            team_id: team_id || null
-        }]).select().maybeSingle();
+            team_id: team_id || null,
+            is_active: true
+        }).select().maybeSingle();
 
         if (dbError) {
             console.error('DB Error inserting user:', dbError);
-            // Optionally, delete auth user here to rollback
-            await supabase.auth.admin.deleteUser(authUser.user.id);
             return res.status(400).json({ error: dbError.message });
         }
 
         // 3. Store in managed_credentials
-        await supabase.from('managed_credentials').insert([{
-            user_id: authUser.user.id,
-            email,
-            plain_password: password
-        }]);
+        const { data: existingCred } = await supabase.from('managed_credentials').select('id').eq('user_id', userId).maybeSingle();
+        if (existingCred) {
+            await supabase.from('managed_credentials').update({
+                email: trimmedEmail,
+                plain_password: password,
+                updated_at: new Date().toISOString()
+            }).eq('id', existingCred.id);
+        } else {
+            await supabase.from('managed_credentials').insert([{
+                user_id: userId,
+                email: trimmedEmail,
+                plain_password: password
+            }]);
+        }
 
         res.status(201).json(user);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to create user' });
+        res.status(500).json({ error: 'Failed to create user: ' + err.message });
     }
 });
 
@@ -89,9 +113,8 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         const { id } = req.params;
         const { full_name, role_id, team_id, email, password } = req.body;
 
-        // Optional: Update auth user (e.g. email or password)
         const authUpdates = {};
-        if (email) authUpdates.email = email;
+        if (email) authUpdates.email = email.trim().toLowerCase();
         if (password) authUpdates.password = password;
         
         if (Object.keys(authUpdates).length > 0) {
@@ -99,16 +122,12 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
             if (authError) return res.status(400).json({ error: authError.message });
         }
 
-        // Update public.users
-        const dbUpdates = { full_name, role_id: role_id || null, team_id: team_id || null };
-        if (email) dbUpdates.email = email;
-
-        // If password is changed, update managed_credentials
-        if (password) {
-            await supabase.from('managed_credentials')
-                .update({ plain_password: password, updated_at: new Date().toISOString() })
-                .eq('user_id', id);
-        }
+        const dbUpdates = { 
+            full_name, 
+            role_id: role_id || null, 
+            team_id: team_id || null 
+        };
+        if (email) dbUpdates.email = email.trim().toLowerCase();
 
         const { data: user, error: dbError } = await supabase.from('users')
             .update(dbUpdates)
@@ -117,10 +136,28 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
             .maybeSingle();
 
         if (dbError) throw dbError;
+
+        // If password or email changed, update managed_credentials
+        if (password || email) {
+            const { data: existingCred } = await supabase.from('managed_credentials').select('id').eq('user_id', id).maybeSingle();
+            if (existingCred) {
+                const credUpdates = { updated_at: new Date().toISOString() };
+                if (password) credUpdates.plain_password = password;
+                if (email) credUpdates.email = email.trim().toLowerCase();
+                await supabase.from('managed_credentials').update(credUpdates).eq('id', existingCred.id);
+            } else if (password) {
+                await supabase.from('managed_credentials').insert([{
+                    user_id: id,
+                    email: email ? email.trim().toLowerCase() : user.email,
+                    plain_password: password
+                }]);
+            }
+        }
+
         res.json(user);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to update user' });
+        res.status(500).json({ error: 'Failed to update user: ' + err.message });
     }
 });
 
@@ -128,21 +165,23 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        // Deleting from auth.users will cascade to public.users because of the ON DELETE CASCADE constraint
-        const { error } = await supabase.auth.admin.deleteUser(id);
-        
-        if (error && !error.message.includes('User not found')) {
-            console.error('Auth deletion error:', error);
-            return res.status(400).json({ error: error.message });
-        }
-        
-        // Also force delete from public.users just in case it was an orphaned record
+
+        // 1. Delete from managed_credentials
+        await supabase.from('managed_credentials').delete().eq('user_id', id);
+
+        // 2. Delete from public.users
         await supabase.from('users').delete().eq('id', id);
 
-        res.json({ success: true, message: 'User deleted' });
+        // 3. Delete from Supabase Auth
+        const { error } = await supabase.auth.admin.deleteUser(id);
+        if (error && !error.message.includes('User not found')) {
+            console.error('Auth deletion warning:', error.message);
+        }
+
+        res.json({ success: true, message: 'User and credentials deleted successfully' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to delete user' });
+        res.status(500).json({ error: 'Failed to delete user: ' + err.message });
     }
 });
 

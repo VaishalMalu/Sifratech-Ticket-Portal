@@ -44,7 +44,8 @@ const adminMiddleware = async (req, res, next) => {
         }
 
         const roleName = userData.roles?.name;
-        if (roleName !== 'Admin') {
+        const allowedRoles = ['Admin', 'Manager', 'Account Manager', 'Delivery Manager', 'Super User'];
+        if (!roleName || !allowedRoles.includes(roleName)) {
             return res.status(403).json({ error: 'Forbidden: Admin access required' });
         }
 
