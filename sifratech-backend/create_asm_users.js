@@ -1,136 +1,199 @@
 require('dotenv').config();
+
 const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
-const USERS_TO_CREATE = [
-  {
-    name: 'Jessica',
-    email: 'jessica@alseermarine.com',
-    role: 'Manager',
-    team: 'Supply Chain Team',
-    password: 'Welcome@2026'
-  },
-  {
-    name: 'Simon Joseph',
-    email: 'simon.joseph@alseermarine.com',
-    role: 'Manager',
-    team: 'Supply Chain Team',
-    password: 'Welcome@2026'
-  },
-  {
-    name: 'Veronica',
-    email: 'veronica@alseermarine.com',
-    role: 'Manager',
-    team: 'Supply Chain Team',
-    password: 'Welcome@2026'
+// Existing Veronica account
+const OLD_EMAIL = 'veronica@alseermarine.com';
+
+// New email required
+const NEW_EMAIL = 'veronica@asmyachts.com';
+
+// Existing/default password
+const PASSWORD = 'Welcome@2026';
+
+async function updateVeronica() {
+  console.log('\n========================================');
+  console.log('VERONICA ACCOUNT UPDATE');
+  console.log('========================================');
+
+  console.log(`Old Email: ${OLD_EMAIL}`);
+  console.log(`New Email: ${NEW_EMAIL}`);
+
+  // --------------------------------------------------
+  // 1. Fetch existing Auth users
+  // --------------------------------------------------
+  console.log('\n[1/4] Searching for existing Auth user...');
+
+  const { data: authList, error: listError } =
+    await supabase.auth.admin.listUsers();
+
+  if (listError) {
+    console.error('Failed to fetch Auth users:', listError.message);
+    process.exit(1);
   }
-];
 
-async function createASMUsers() {
-  console.log("Fetching roles and teams...");
-  const { data: roles, error: rolesError } = await supabase.from('roles').select('*');
-  const { data: teams, error: teamsError } = await supabase.from('teams').select('*');
+  const authUser = authList?.users?.find(
+    user =>
+      user.email &&
+      user.email.toLowerCase() === OLD_EMAIL.toLowerCase()
+  );
 
-  if (rolesError) console.error("Roles error:", rolesError);
-  if (teamsError) console.error("Teams error:", teamsError);
+  if (!authUser) {
+    console.error(`\nERROR: User not found with email: ${OLD_EMAIL}`);
+    console.error(
+      'No changes were made. Check the existing email in Supabase Auth.'
+    );
+    process.exit(1);
+  }
 
-  const managerRole = roles?.find(r => r.name === 'Manager')?.id;
-  const scmTeam = teams?.find(t => t.name === 'Supply Chain Team')?.id;
+  const userId = authUser.id;
 
-  const results = [];
+  console.log('Existing Auth user found.');
+  console.log(`User ID: ${userId}`);
+  console.log(`Current Email: ${authUser.email}`);
 
-  for (const userConfig of USERS_TO_CREATE) {
-    console.log(`\nProcessing user: ${userConfig.name} (${userConfig.email})...`);
+  // --------------------------------------------------
+  // 2. Update Supabase Auth
+  // --------------------------------------------------
+  console.log('\n[2/4] Updating Supabase Auth...');
 
-    // 1. Get or create auth user
-    const { data: authList, error: listError } = await supabase.auth.admin.listUsers();
-    let authUser = authList?.users?.find(u => u.email.toLowerCase() === userConfig.email.toLowerCase());
-
-    let userId;
-    if (!authUser) {
-      console.log(`Creating user in Auth: ${userConfig.email}`);
-      const { data: createdAuth, error: authError } = await supabase.auth.admin.createUser({
-        email: userConfig.email,
-        password: userConfig.password,
-        email_confirm: true
-      });
-
-      if (authError) {
-        console.error(`Error creating auth user ${userConfig.email}:`, authError.message);
-        continue;
-      }
-      userId = createdAuth.user.id;
-      console.log(`Created Auth user with ID: ${userId}`);
-    } else {
-      userId = authUser.id;
-      console.log(`User already exists in Auth with ID: ${userId}. Updating password...`);
-      const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
-        password: userConfig.password
-      });
-      if (updateError) console.error(`Error updating password for ${userConfig.email}:`, updateError.message);
-    }
-
-    // 2. Upsert public.users
-    const roleId = managerRole;
-    const teamId = scmTeam;
-
-    const { data: dbUser, error: dbError } = await supabase.from('users').upsert({
-      id: userId,
-      email: userConfig.email,
-      full_name: userConfig.name,
-      role_id: roleId,
-      team_id: teamId,
-      is_active: true
-    }).select().single();
-
-    if (dbError) {
-      console.error(`Error upserting public.users for ${userConfig.email}:`, dbError.message);
-    } else {
-      console.log(`Successfully updated public.users for ${userConfig.email}`);
-    }
-
-    // 3. Save managed_credentials
-    const { data: existingCred } = await supabase.from('managed_credentials').select('id').eq('user_id', userId).maybeSingle();
-    
-    if (existingCred) {
-      const { error: credError } = await supabase.from('managed_credentials').update({
-        email: userConfig.email,
-        plain_password: userConfig.password,
-        updated_at: new Date().toISOString()
-      }).eq('id', existingCred.id);
-
-      if (credError) {
-        console.error(`Error updating managed_credentials for ${userConfig.email}:`, credError.message);
-      } else {
-        console.log(`Successfully updated managed credentials for ${userConfig.email}`);
-      }
-    } else {
-      const { error: credError } = await supabase.from('managed_credentials').insert({
-        user_id: userId,
-        email: userConfig.email,
-        plain_password: userConfig.password
-      });
-
-      if (credError) {
-        console.error(`Error inserting managed_credentials for ${userConfig.email}:`, credError.message);
-      } else {
-        console.log(`Successfully inserted managed credentials for ${userConfig.email}`);
-      }
-    }
-
-    results.push({
-      name: userConfig.name,
-      email: userConfig.email,
-      role: 'Manager (Super User)',
-      team: 'Supply Chain / Procurement',
-      password: userConfig.password,
-      userId: userId
+  const { error: authError } =
+    await supabase.auth.admin.updateUserById(userId, {
+      email: NEW_EMAIL,
+      email_confirm: true,
+      password: PASSWORD
     });
+
+  if (authError) {
+    console.error(
+      'Failed to update Supabase Auth:',
+      authError.message
+    );
+    process.exit(1);
   }
 
-  console.log("\n=== CREATED USERS SUMMARY ===");
-  console.table(results);
+  console.log('Supabase Auth updated successfully.');
+  console.log(`New Auth Email: ${NEW_EMAIL}`);
+
+  // --------------------------------------------------
+  // 3. Update public.users
+  // --------------------------------------------------
+  console.log('\n[3/4] Updating public.users...');
+
+  const { error: usersError } =
+    await supabase
+      .from('users')
+      .update({
+        email: NEW_EMAIL,
+        full_name: 'Veronica',
+        is_active: true
+      })
+      .eq('id', userId);
+
+  if (usersError) {
+    console.error(
+      'Failed to update public.users:',
+      usersError.message
+    );
+    process.exit(1);
+  }
+
+  console.log('public.users updated successfully.');
+
+  // --------------------------------------------------
+  // 4. Update managed_credentials
+  // --------------------------------------------------
+  console.log('\n[4/4] Updating managed_credentials...');
+
+  const { data: existingCredential, error: credentialFindError } =
+    await supabase
+      .from('managed_credentials')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+  if (credentialFindError) {
+    console.error(
+      'Failed to find managed credentials:',
+      credentialFindError.message
+    );
+    process.exit(1);
+  }
+
+  if (existingCredential) {
+    const { error: credentialUpdateError } =
+      await supabase
+        .from('managed_credentials')
+        .update({
+          email: NEW_EMAIL,
+          plain_password: PASSWORD,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingCredential.id);
+
+    if (credentialUpdateError) {
+      console.error(
+        'Failed to update managed_credentials:',
+        credentialUpdateError.message
+      );
+      process.exit(1);
+    }
+
+    console.log('managed_credentials updated successfully.');
+  } else {
+    console.log(
+      'No existing managed_credentials record found.'
+    );
+
+    console.log('Creating managed_credentials record...');
+
+    const { error: credentialInsertError } =
+      await supabase
+        .from('managed_credentials')
+        .insert({
+          user_id: userId,
+          email: NEW_EMAIL,
+          plain_password: PASSWORD
+        });
+
+    if (credentialInsertError) {
+      console.error(
+        'Failed to create managed_credentials:',
+        credentialInsertError.message
+      );
+      process.exit(1);
+    }
+
+    console.log(
+      'managed_credentials created successfully.'
+    );
+  }
+
+  // --------------------------------------------------
+  // Final verification
+  // --------------------------------------------------
+  console.log('\n========================================');
+  console.log('UPDATE COMPLETED SUCCESSFULLY');
+  console.log('========================================');
+
+  console.log(`User ID   : ${userId}`);
+  console.log(`Old Email : ${OLD_EMAIL}`);
+  console.log(`New Email : ${NEW_EMAIL}`);
+  console.log(`Name      : Veronica`);
+  console.log(`Role      : Manager`);
+  console.log(`Team      : Supply Chain Team`);
+
+  console.log('========================================');
+  console.log('IMPORTANT: Existing UUID was preserved.');
+  console.log('========================================\n');
 }
 
-createASMUsers().catch(console.error);
+updateVeronica().catch(error => {
+  console.error('\nUnexpected error:', error);
+  process.exit(1);
+});
