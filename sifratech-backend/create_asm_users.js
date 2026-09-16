@@ -40,11 +40,12 @@ async function updateVeronica() {
   const authUser = authList?.users?.find(
     user =>
       user.email &&
-      user.email.toLowerCase() === OLD_EMAIL.toLowerCase()
+      (user.email.toLowerCase() === OLD_EMAIL.toLowerCase() ||
+       user.email.toLowerCase() === NEW_EMAIL.toLowerCase())
   );
 
   if (!authUser) {
-    console.error(`\nERROR: User not found with email: ${OLD_EMAIL}`);
+    console.error(`\nERROR: User not found with email ${OLD_EMAIL} or ${NEW_EMAIL}`);
     console.error(
       'No changes were made. Check the existing email in Supabase Auth.'
     );
@@ -52,10 +53,14 @@ async function updateVeronica() {
   }
 
   const userId = authUser.id;
+  const isAlreadyMigrated = authUser.email.toLowerCase() === NEW_EMAIL.toLowerCase();
 
   console.log('Existing Auth user found.');
   console.log(`User ID: ${userId}`);
   console.log(`Current Email: ${authUser.email}`);
+  if (isAlreadyMigrated) {
+    console.log(`Note: User is already updated to new email (${NEW_EMAIL}). Ensuring database sync...`);
+  }
 
   // --------------------------------------------------
   // 2. Update Supabase Auth
