@@ -55,83 +55,102 @@ export function seedTickets() {
   return tickets;
 }
 
-export function age(t) {
-  if (!t) return 0;
-  
+export function isOnHoldStatus(status) {
+  return typeof status === 'string' && status.trim().toUpperCase() === 'ON HOLD';
+}
+
+export function isPausedStatus(status) {
+  if (!status) return false;
+  const s = status.trim();
+  return isOnHoldStatus(s) || ['Awaiting Customer', 'Resolved', 'Closed'].includes(s);
+}
+
+export function calculateTicketAging(t, referenceTime = new Date()) {
+  if (!t) return { agingHours: 0, agingDays: 0, isOnHold: false };
+
   // Backwards compatibility for cases where only createdAt string is passed
   if (typeof t === 'string') {
     const d = new Date(t);
-    if (isNaN(d.getTime())) return 0;
-    return Math.round((now() - d) / 36e5);
+    if (isNaN(d.getTime())) return { agingHours: 0, agingDays: 0, isOnHold: false };
+    const ref = new Date(referenceTime).getTime();
+    const hours = Math.max(0, Math.round((ref - d.getTime()) / 36e5));
+    return { agingHours: hours, agingDays: Math.max(0, Math.round(hours / 24)), isOnHold: false };
   }
 
-  // Active age calculation based on status history
+  // If currently ON HOLD, aging is strictly 0 and stops aging
+  if (isOnHoldStatus(t.status)) {
+    return { agingHours: 0, agingDays: 0, isOnHold: true };
+  }
+
   const createdAt = t.createdAt || t.created_at;
-  if (!createdAt) return 0;
+  if (!createdAt) return { agingHours: 0, agingDays: 0, isOnHold: false };
 
   const d = new Date(createdAt);
-  if (isNaN(d.getTime())) return 0;
+  if (isNaN(d.getTime())) return { agingHours: 0, agingDays: 0, isOnHold: false };
 
-  if (!t.auditLog || t.auditLog.length === 0) {
-    // No history, just compute from creation to now, unless currently in paused status
-    const pausedStatuses = ['Awaiting Customer', 'Resolved', 'Closed'];
-    if (pausedStatuses.includes(t.status)) {
-       // We can't know when it entered this status without auditLog, so assume 0 active hours for safety or just total time. 
-       // In a real system, there should be audit log.
-       return 0;
+  const refTime = new Date(referenceTime).getTime();
+  const auditLogs = t.auditLog || t.ticket_status_history || [];
+
+  if (auditLogs.length === 0) {
+    if (isPausedStatus(t.status)) {
+      return { agingHours: 0, agingDays: 0, isOnHold: false };
     }
-    return Math.round((now() - d) / 36e5);
+    const hours = Math.max(0, Math.round((refTime - d.getTime()) / 36e5));
+    return { agingHours: hours, agingDays: Math.max(0, Math.round(hours / 24)), isOnHold: false };
   }
 
-  const pausedStatuses = ['Awaiting Customer', 'Resolved', 'Closed'];
-  
   let totalActiveMs = 0;
   let lastActiveTimestamp = d.getTime();
   let isCurrentlyActive = true; // Tickets start as active (New/Open)
 
   // Sort logs chronologically
-  const sortedLogs = [...t.auditLog].sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+  const sortedLogs = [...auditLogs].sort((a, b) => new Date(a.created_at || a.ts).getTime() - new Date(b.created_at || b.ts).getTime());
 
   for (const log of sortedLogs) {
-    // If we don't have newStatus, try to infer from msg
-    let status = log.newStatus;
-    if (!status && log.msg) {
-        if (log.msg.includes('Status updated to')) {
-            status = log.msg.split('Status updated to')[1].trim();
-        } else if (log.msg.includes('Status changed from')) {
-            status = log.msg.split('to')[1].trim();
-        } else if (log.msg.includes('Resolution:')) {
-            status = 'Resolved';
-        } else if (log.msg.includes('Ticket unassigned')) {
-            status = 'Open';
-        }
+    let status = log.newStatus || log.new_status;
+    if (!status && (log.msg || log.comments)) {
+      const msg = log.msg || log.comments;
+      if (msg.includes('Status updated to')) {
+        status = msg.split('Status updated to')[1].trim();
+      } else if (msg.includes('Status changed from')) {
+        status = msg.split('to')[1].trim();
+      } else if (msg.includes('Resolution:')) {
+        status = 'Resolved';
+      } else if (msg.includes('Ticket unassigned')) {
+        status = 'Open';
+      }
     }
 
     if (status && status !== 'Any') {
-       const isPausedStatus = pausedStatuses.includes(status);
-       const logTime = new Date(log.ts).getTime();
+      const logPaused = isPausedStatus(status);
+      const logTime = new Date(log.created_at || log.ts).getTime();
+      if (isNaN(logTime)) continue;
 
-       if (isCurrentlyActive && isPausedStatus) {
-           // Transitioning to Paused: accumulate time since last active
-           totalActiveMs += (logTime - lastActiveTimestamp);
-           isCurrentlyActive = false;
-       } else if (!isCurrentlyActive && !isPausedStatus) {
-           // Transitioning to Active: start clock again
-           lastActiveTimestamp = logTime;
-           isCurrentlyActive = true;
-       }
+      if (isCurrentlyActive && logPaused) {
+        // Transitioning to Paused/ON HOLD: accumulate time since last active
+        totalActiveMs += Math.max(0, logTime - lastActiveTimestamp);
+        isCurrentlyActive = false;
+      } else if (!isCurrentlyActive && !logPaused) {
+        // Transitioning to Active (Resume): start clock from this log
+        lastActiveTimestamp = logTime;
+        isCurrentlyActive = true;
+      }
     }
   }
 
   if (isCurrentlyActive) {
-      // Accumulate time from last active timestamp to now
-      totalActiveMs += (now().getTime() - lastActiveTimestamp);
+    totalActiveMs += Math.max(0, refTime - lastActiveTimestamp);
   }
 
-  // Handle case where timestamps might be weird
   if (totalActiveMs < 0) totalActiveMs = 0;
-  
-  return Math.round(totalActiveMs / 36e5);
+  const agingHours = Math.round(totalActiveMs / 36e5);
+  const agingDays = Math.max(0, Math.round(agingHours / 24));
+
+  return { agingHours, agingDays, isOnHold: false };
+}
+
+export function age(t, referenceTime = new Date()) {
+  return calculateTicketAging(t, referenceTime).agingHours;
 }
 
 export function fmt(dStr) {
@@ -139,7 +158,19 @@ export function fmt(dStr) {
 }
 
 export function bc(v, t) {
-  if (t === 's') { return { New: 'b-open', Open: 'b-open', 'In Progress': 'b-inprogress', 'Awaiting Customer': 'b-medium', Resolved: 'b-resolved', Closed: 'b-closed', Reopened: 'b-reopened' }[v] || 'b-open'; }
+  if (t === 's') { 
+    return { 
+      New: 'b-open', 
+      Open: 'b-open', 
+      'In Progress': 'b-inprogress', 
+      'Awaiting Customer': 'b-medium', 
+      Resolved: 'b-resolved', 
+      Closed: 'b-closed', 
+      Reopened: 'b-reopened',
+      'On Hold': 'b-onhold',
+      'ON HOLD': 'b-onhold'
+    }[v] || (isOnHoldStatus(v) ? 'b-onhold' : 'b-open'); 
+  }
   if (t === 'p') { return { High: 'b-high', Medium: 'b-medium', Low: 'b-low', Top: 'b-top', Project: 'b-project' }[v] || 'b-medium'; }
   return '';
 }

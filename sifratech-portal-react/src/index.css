@@ -152,6 +152,7 @@ table.dt tbody tr.row-closed:hover td{background:#F0F4F8;}
 .b-low{background:rgba(76,175,125,.15);color:#4CAF7D;}
 .b-top{background:rgba(139,127,212,.15);color:#8B7FD4;}
 .b-project{background:rgba(58,74,92,.12);color:#3A4A5C;}
+.b-onhold{background:rgba(139,127,212,.15);color:#8B7FD4;}
 
 /* ── BUTTONS ── */
 .btn-p{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:8px 16px;font-size:13px;cursor:pointer;font-family:var(--font);font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}

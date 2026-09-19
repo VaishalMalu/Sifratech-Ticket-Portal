@@ -2,35 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { useModal } from '../contexts/ModalContext';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
-import { bc, age, fmt } from '../data/mockData';
+import { bc, age, fmt, isOnHoldStatus, calculateTicketAging } from '../data/mockData';
 import { IconSparkles } from '@tabler/icons-react';
 import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
-const STATUS_COLORS = { 'New': '#3ECDC2', 'Open': '#3ECDC2', 'In Progress': '#E09A2B', 'Awaiting Customer': '#E09A2B', 'Resolved': '#4CAF7D', 'Closed': '#3A4A5C', 'Reopened': '#E05252', 'Assigned': '#1A9FCC', 'Pending Approval': '#9C27B0' };
+const STATUS_COLORS = { 'New': '#3ECDC2', 'Open': '#3ECDC2', 'In Progress': '#E09A2B', 'Awaiting Customer': '#E09A2B', 'Resolved': '#4CAF7D', 'Closed': '#3A4A5C', 'Reopened': '#E05252', 'Assigned': '#1A9FCC', 'Pending Approval': '#9C27B0', 'On Hold': '#8B7FD4', 'ON HOLD': '#8B7FD4' };
 
 const ADMIN_TRANSITIONS = {
-  'New': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed', 'Open'],
-  'Open': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
-  'Pending Approval': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
-  'Assigned': ['In Progress', 'Awaiting Customer', 'Closed', 'Open', 'Resolved'],
-  'In Progress': ['Resolved', 'Awaiting Customer', 'Closed', 'Assigned'],
-  'Awaiting Customer': ['In Progress', 'Resolved', 'Closed'],
+  'New': ['Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Closed', 'Open'],
+  'Open': ['Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Closed'],
+  'Pending Approval': ['Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Closed'],
+  'Assigned': ['In Progress', 'Awaiting Customer', 'On Hold', 'Closed', 'Open', 'Resolved'],
+  'In Progress': ['Resolved', 'Awaiting Customer', 'On Hold', 'Closed', 'Assigned'],
+  'Awaiting Customer': ['In Progress', 'On Hold', 'Resolved', 'Closed'],
+  'On Hold': ['In Progress', 'Open', 'Assigned', 'Awaiting Customer', 'Resolved', 'Closed'],
   'Resolved': ['Closed', 'Reopened', 'In Progress'],
   'Closed': ['Reopened'],
-  'default': ['Open', 'Assigned', 'In Progress', 'Awaiting Customer', 'Resolved', 'Closed']
+  'default': ['Open', 'Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Resolved', 'Closed']
 };
 
 const SUPPORT_TRANSITIONS = {
-  'New': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
-  'Open': ['Assigned', 'In Progress', 'Awaiting Customer', 'Closed'],
-  'Pending Approval': ['Assigned', 'In Progress', 'Awaiting Customer'],
-  'Assigned': ['In Progress', 'Awaiting Customer', 'Resolved', 'Closed'],
-  'In Progress': ['Resolved', 'Awaiting Customer', 'Closed', 'Assigned'],
-  'Awaiting Customer': ['In Progress', 'Resolved', 'Closed'],
+  'New': ['Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Closed'],
+  'Open': ['Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Closed'],
+  'Pending Approval': ['Assigned', 'In Progress', 'Awaiting Customer', 'On Hold'],
+  'Assigned': ['In Progress', 'Awaiting Customer', 'On Hold', 'Resolved', 'Closed'],
+  'In Progress': ['Resolved', 'Awaiting Customer', 'On Hold', 'Closed', 'Assigned'],
+  'Awaiting Customer': ['In Progress', 'On Hold', 'Resolved', 'Closed'],
+  'On Hold': ['In Progress', 'Open', 'Assigned', 'Awaiting Customer', 'Resolved', 'Closed'],
   'Resolved': ['Closed', 'Reopened', 'In Progress'],
   'Closed': ['Reopened'],
-  'default': ['Open', 'Assigned', 'In Progress', 'Awaiting Customer', 'Resolved', 'Closed']
+  'default': ['Open', 'Assigned', 'In Progress', 'Awaiting Customer', 'On Hold', 'Resolved', 'Closed']
 };
 
 const CLIENT_TRANSITIONS = {
@@ -214,45 +216,10 @@ export default function TicketDetailModal() {
     }
   };
 
-  const calculateActiveAgeDays = (ticket) => {
-    if (!ticket || !ticket.createdAt) return 0;
-    let totalMs = 0;
-    const createdAt = new Date(ticket.createdAt).getTime();
-    
-    if (!ticket.auditLog || ticket.auditLog.length === 0) {
-      if (['Awaiting Customer', 'Resolved', 'Closed', 'Pending Approval'].includes(ticket.status)) {
-        return 0; // If it's already closed/paused and no history, we can't reliably know active time.
-      }
-      totalMs = Date.now() - createdAt;
-      return Math.max(0, Math.round(totalMs / (1000 * 60 * 60 * 24)));
-    }
-    
-    const logs = [...ticket.auditLog].sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
-    let lastTime = createdAt;
-    let isActive = true;
-    
-    const isPausedStatus = (s) => ['Awaiting Customer', 'Resolved', 'Closed', 'Pending Approval'].includes(s);
+  const { agingDays, isOnHold: ticketIsOnHold } = calculateTicketAging(t);
 
-    logs.forEach(log => {
-      const logTime = new Date(log.ts).getTime();
-      if (isActive) {
-        totalMs += Math.max(0, logTime - lastTime);
-      }
-      if (log.newStatus && log.newStatus !== 'Any') {
-         isActive = !isPausedStatus(log.newStatus);
-      }
-      lastTime = Math.max(lastTime, logTime);
-    });
-
-    if (isActive && !isPausedStatus(ticket.status)) {
-      totalMs += Math.max(0, Date.now() - lastTime);
-    }
-    
-    return Math.max(0, Math.round(totalMs / (1000 * 60 * 60 * 24)));
-  };
-
-  const aAge = age(t?.createdAt);
-  const breached = aAge > sla[t?.priority];
+  const aAge = age(t);
+  const breached = !isOnHoldStatus(t?.status) && aAge > sla[t?.priority];
 
   let descObj = null;
   try {
@@ -437,8 +404,7 @@ export default function TicketDetailModal() {
               <div className="det-row"><span className="lbl">Assigned to</span><span>{t.assignedTo || 'Unassigned'}</span></div>
               <div className="det-row"><span className="lbl">Team</span><span>{t.assignedTeam}</span></div>
               {t.closedAt && <div className="det-row"><span className="lbl">Closed</span><span>{fmt(t.closedAt)}</span></div>}
-              <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''}>{Math.max(0, Math.round(aAge / 24))} days</span></div>
-              <div className="det-row"><span className="lbl">Active Age</span><span>{calculateActiveAgeDays(t)} days</span></div>
+              <div className="det-row"><span className="lbl">Ticket Age</span><span className={breached ? 'ageing-warn' : ''} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>{agingDays} days{ticketIsOnHold && <span className="badge b-onhold" style={{ fontSize: '10px', padding: '1px 6px' }}>⏸ On Hold</span>}</span></div>
             </div>
           )}
         </div>

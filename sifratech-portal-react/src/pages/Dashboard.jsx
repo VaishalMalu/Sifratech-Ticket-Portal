@@ -25,12 +25,14 @@ export default function Dashboard() {
       slaMap['Top'] = 4; slaMap['High'] = 8; slaMap['Medium'] = 24; slaMap['Low'] = 72; slaMap['Project'] = 168;
   }
 
-  const breach = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > slaMap[t.priority]).length;
-  const aged = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > 72).length;
+  const breach = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t) > slaMap[t.priority]).length;
+  const aged = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t) > 72).length;
+  const onHold = tickets.filter(t => t.status === 'On Hold' || t.status === 'ON HOLD').length;
 
   const statusData = [
     { name: 'Open', value: open, color: '#1A9FCC' },
     { name: 'In Progress', value: inProgress, color: '#E09A2B' },
+    { name: 'On Hold', value: onHold, color: '#8B7FD4' },
     { name: 'Resolved', value: tickets.filter(t => t.status === 'Resolved').length, color: '#4CAF7D' },
     { name: 'Closed', value: tickets.filter(t => t.status === 'Closed').length, color: '#3A7A9F' },
     { name: 'Reopened', value: tickets.filter(t => t.status === 'Reopened').length, color: '#E05252' },
@@ -64,7 +66,7 @@ export default function Dashboard() {
       const p = s.priority;
       const hours = s.resolution_hours;
       const subset = tickets.filter(t => t.priority === p);
-      const compliant = subset.filter(t => age(t.createdAt) <= hours).length;
+      const compliant = subset.filter(t => age(t) <= hours).length;
       return {
           name: p,
           color: priColors[p] || '#1A9FCC',
@@ -72,7 +74,7 @@ export default function Dashboard() {
       };
   });
 
-  const ageingTickets = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t.createdAt) > 72).sort((a, b) => age(b.createdAt) - age(a.createdAt));
+  const ageingTickets = tickets.filter(t => ['Open', 'In Progress', 'Reopened'].includes(t.status) && age(t) > 72).sort((a, b) => age(b) - age(a));
 
   const activeClient = getActiveClient();
 
@@ -92,6 +94,7 @@ export default function Dashboard() {
         <div className="kpi-card brand"><div className="kpi-lbl">Total</div><div className="kpi-val">{total}</div><div className="kpi-delta up">All tickets</div></div>
         <div className="kpi-card brand"><div className="kpi-lbl">Open</div><div className="kpi-val">{open}</div><div className="kpi-delta">Awaiting action</div></div>
         <div className="kpi-card warn"><div className="kpi-lbl">In progress</div><div className="kpi-val">{inProgress}</div><div className="kpi-delta">Being worked</div></div>
+        <div className="kpi-card" style={{ borderLeft: '3px solid #8B7FD4' }}><div className="kpi-lbl">On Hold</div><div className="kpi-val" style={{ color: '#8B7FD4' }}>{onHold}</div><div className="kpi-delta" style={{ color: '#8B7FD4' }}>{onHold > 0 ? 'Paused — aging stopped' : 'None paused'}</div></div>
         <div className="kpi-card ok"><div className="kpi-lbl">Resolved / closed</div><div className="kpi-val">{resolved}</div><div className="kpi-delta up">Completed</div></div>
         <div className={`kpi-card ${breach > 0 ? 'alert' : 'ok'}`}><div className="kpi-lbl">SLA breached</div><div className="kpi-val">{breach}</div><div className={`kpi-delta ${breach > 0 ? 'dn' : 'up'}`}>{breach > 0 ? 'Needs attention' : 'All within SLA'}</div></div>
         <div className={`kpi-card ${aged > 0 ? 'alert' : 'ok'}`}><div className="kpi-lbl">Ageing &gt;3 Days</div><div className="kpi-val">{aged}</div><div className={`kpi-delta ${aged > 0 ? 'dn' : 'up'}`}>{aged > 0 ? 'Review needed' : 'Clear'}</div></div>
@@ -212,7 +215,7 @@ export default function Dashboard() {
                   <td>{t.summary}</td>
                   <td><span className={`badge ${bc(t.priority, 'p')}`}>{t.priority}</span></td>
                   <td style={{ color: '#4A5A6A' }}>{t.assignedTo || '—'}</td>
-                  <td style={{ fontWeight: 500 }}>{Math.max(0, Math.round(age(t.createdAt) / 24))}</td>
+                  <td style={{ fontWeight: 500 }}>{Math.max(0, Math.round(age(t) / 24))}</td>
                   <td><span className={`badge ${bc(t.status, 's')}`}>{t.status}</span></td>
                 </tr>
               ))}

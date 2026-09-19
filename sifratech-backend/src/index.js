@@ -32,6 +32,9 @@ app.use('/api/users', usersRoute);
 const reportsRoute = require('./routes/reports');
 app.use('/api/reports', reportsRoute);
 
+const ticketsRoute = require('./routes/tickets');
+app.use('/api/tickets', ticketsRoute);
+
 
 app.get('/api/public/lookup', async (req, res) => {
     try {
