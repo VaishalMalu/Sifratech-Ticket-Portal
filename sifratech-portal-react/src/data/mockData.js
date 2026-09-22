@@ -19,7 +19,7 @@ export const uid = () => 'TKT-' + nextId++;
 export function seedTickets() {
   const tickets = [];
   const types = ['Access Issue', 'Bug', 'Data Entry Issue', 'Enhancements', 'New Requirements', 'Operational Issue', 'Webform Issue', 'Standard Functionality', 'Training'];
-  const mods = ['Financials', 'HRMS', 'SCM', 'PPM', 'Sourcing', 'Inventory', 'Payroll', 'Other'];
+  const mods = ['Financials', 'HRMS', 'SCM', 'PPM', 'Sourcing', 'Inventory', 'Payroll', 'Webform-Technical', 'Other'];
   const pris = ['High', 'Medium', 'Low', 'Top', 'Project'];
   const stats = ['Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
   const envs = ['Development', 'Patching', 'Testing', 'Production'];

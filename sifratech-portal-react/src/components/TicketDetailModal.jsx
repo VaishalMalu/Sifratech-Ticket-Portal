@@ -488,6 +488,7 @@ export default function TicketDetailModal() {
                 <option value="PPM">PPM</option>
                 <option value="Finance">Finance</option>
                 <option value="Technical">Technical</option>
+                <option value="Webform-Technical">Webform-Technical</option>
                 <option value="HCM">HCM</option>
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>

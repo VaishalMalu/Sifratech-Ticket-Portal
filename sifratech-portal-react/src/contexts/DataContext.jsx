@@ -834,9 +834,11 @@ export function DataProvider({ children }) {
     if (!assignedUser && assignedToName) {
       const searchStr = assignedToName.toLowerCase();
       assignedUser = usersList.find(u => 
+        u.full_name?.toLowerCase() === assignedToName.toLowerCase() ||
         u.full_name?.toLowerCase().includes(searchStr + 'team') ||
         u.full_name?.toLowerCase().includes(searchStr + ' team') ||
-        u.email?.toLowerCase().includes(searchStr + 'team')
+        u.email?.toLowerCase().includes(searchStr + 'team') ||
+        u.email?.toLowerCase().includes(searchStr.replace(/[^a-z0-9]/g, '') + 'team')
       );
     }
     

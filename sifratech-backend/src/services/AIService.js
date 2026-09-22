@@ -47,7 +47,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
     Email Body: ${emailBody}
     Pre-extracted Data: ${JSON.stringify(extractedData)}
     
-    Valid Oracle Modules: Financials, HRMS, SCM, Payroll, Inventory, Projects, Procurement.
+    Valid Oracle Modules: Financials, HRMS, SCM, Payroll, Inventory, Projects, Procurement, Webform-Technical.
     Valid Priorities: Low, Medium, High, Critical.
     Valid Environments: Development, Patching, Testing, Production.
     Valid Incident Types: ${validIncidentTypes}.
