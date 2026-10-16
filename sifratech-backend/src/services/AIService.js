@@ -19,7 +19,7 @@ const analyzeTicketData = async (emailSubject, emailBody, extractedData) => {
     You are an enterprise helpdesk AI assistant for Sifratech.
     Analyze the following email and any pre-extracted template data. 
     Determine if the email represents a legitimate IT support request/issue.
-    CRITICAL INSTRUCTION: You MUST strictly audit the email content. Return "is_valid_ticket": false if the email is an advertisement, a marketing newsletter, a system alert, a bounce message, an 'out of office' reply, 'action required' system alerts, 'automatic reply', Microsoft Teams or SharePoint notifications, a personal email, general office chatter, or anything that is NOT a genuine, human-written request for helpdesk support.
+    CRITICAL INSTRUCTION: You MUST strictly audit the email content. Return "is_valid_ticket": false if the email is an advertisement, a marketing newsletter, a system alert, a security alert or sign-in code/OTP, a bounce message, an 'out of office' reply, 'action required' system alerts, 'automatic reply', Microsoft Teams or SharePoint notifications, a personal email, general office chatter, or anything that is NOT a genuine, human-written request for helpdesk support.
 
     Extract the information from the email and map it STRICTLY to the existing SifraTech ticket template fields. 
     If a field is not available in the email, use null. Do not hallucinate values.

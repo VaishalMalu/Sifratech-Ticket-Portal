@@ -74,7 +74,14 @@ const isAutoResponse = (subject, fromAddress) => {
         'delivered:',
         'quarantine',
         'mail delivery subsystem',
-        'postmaster'
+        'postmaster',
+        'security alert',
+        'sign in code',
+        'one-time sign in code',
+        'verification code',
+        'one-time password',
+        'security code',
+        'login alert'
     ];
     
     if (autoKeywords.some(keyword => lowerSubject.includes(keyword))) {
