@@ -88,9 +88,14 @@ const isAutoResponse = (subject, fromAddress) => {
         return true;
     }
     
-    // Check common automated sender addresses
-    const automatedSenders = ['postmaster@', 'mailer-daemon@', 'noreply@', 'no-reply@'];
+    // Check common automated sender addresses and non-support domains
+    const automatedSenders = ['postmaster@', 'mailer-daemon@', 'noreply@', 'no-reply@', 'donotreply@'];
     if (automatedSenders.some(sender => lowerFrom.startsWith(sender))) {
+        return true;
+    }
+
+    // Explicitly block GoDaddy automated emails and alerts
+    if (lowerFrom.includes('godaddy.com') || lowerSubject.includes('godaddy')) {
         return true;
     }
     
