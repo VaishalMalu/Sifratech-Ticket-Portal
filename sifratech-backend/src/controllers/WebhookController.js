@@ -61,6 +61,22 @@ const processUnreadEmails = async () => {
                 continue;
             }
 
+            // Verify email was explicitly addressed to support mailbox (asmsupport@sifratc.com)
+            // This prevents personal emails sent to Sanaa from turning into tickets!
+            const allRecipients = [
+                ...(email.toRecipients || []).map(r => r.emailAddress?.address?.toLowerCase()),
+                ...(email.ccRecipients || []).map(r => r.emailAddress?.address?.toLowerCase())
+            ].filter(Boolean);
+
+            const supportMailbox = (process.env.MS_GRAPH_MAILBOX || 'asmsupport@sifratc.com').toLowerCase();
+            const isAddressedToSupport = allRecipients.some(addr => addr === supportMailbox || addr.includes('asmsupport'));
+
+            if (!isAddressedToSupport && allRecipients.length > 0) {
+                console.log(`Ignoring personal/direct email sent to ${allRecipients.join(', ')} (not addressed to ${supportMailbox}): "${email.subject}"`);
+                await markEmailAsRead(email.id);
+                continue;
+            }
+
             // Handle Replies
             if (isReply(email.subject)) {
                 console.log(`Processing Reply: ${email.subject}`);

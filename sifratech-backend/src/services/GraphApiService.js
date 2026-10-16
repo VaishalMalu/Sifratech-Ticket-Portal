@@ -44,7 +44,7 @@ const fetchUnreadEmails = async () => {
         const client = getGraphClient();
         const messages = await client.api(`users/${process.env.MS_GRAPH_MAILBOX}/mailFolders('Inbox')/messages`)
             .filter('isRead eq false')
-            .select('id,conversationId,subject,bodyPreview,body,from,hasAttachments,receivedDateTime')
+            .select('id,conversationId,subject,bodyPreview,body,from,toRecipients,ccRecipients,hasAttachments,receivedDateTime')
             .top(50)
             .get();
         return messages.value;
@@ -85,7 +85,13 @@ const sendEmailReply = async (conversationId, messageId, toEmail, subject, bodyC
             message: {
                 toRecipients: [{ emailAddress: { address: toEmail } }],
                 subject: subject,
-                body: { contentType: 'HTML', content: bodyContent }
+                body: { contentType: 'HTML', content: bodyContent },
+                from: {
+                    emailAddress: {
+                        name: 'ASM Support',
+                        address: 'asmsupport@sifratc.com'
+                    }
+                }
             }
         };
         await client.api(`users/${process.env.MS_GRAPH_MAILBOX}/messages/${messageId}/reply`).post(reply);
@@ -103,7 +109,13 @@ const sendEmail = async (toEmail, subject, bodyContent, ccEmail = null) => {
             message: {
                 toRecipients: [{ emailAddress: { address: toEmail } }],
                 subject: subject,
-                body: { contentType: 'HTML', content: bodyContent }
+                body: { contentType: 'HTML', content: bodyContent },
+                from: {
+                    emailAddress: {
+                        name: 'ASM Support',
+                        address: 'asmsupport@sifratc.com'
+                    }
+                }
             },
             saveToSentItems: true
         };

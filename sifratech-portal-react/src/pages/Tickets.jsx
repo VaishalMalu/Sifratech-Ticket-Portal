@@ -13,7 +13,8 @@ export default function Tickets() {
   const [filterModule, setFilterModule] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
   const [filterAssignee, setFilterAssignee] = useState('');
-  const [filterDate, setFilterDate] = useState('');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
   const [sortOrder, setSortOrder] = useState('Newest First');
 
   const filteredTickets = tickets.filter(t => {
@@ -22,7 +23,16 @@ export default function Tickets() {
         !(t.number || t.id).toLowerCase().includes(search.toLowerCase()) && 
         !(t.email?.toLowerCase().includes(search.toLowerCase()))
        ) return false;
-    if (filterDate && t.createdAt && !t.createdAt.startsWith(filterDate)) return false;
+    
+    if (t.createdAt) {
+      // Extract YYYY-MM-DD from createdAt string or Date
+      const ticketDate = new Date(t.createdAt).toISOString().slice(0, 10);
+      if (filterStartDate && ticketDate < filterStartDate) return false;
+      if (filterEndDate && ticketDate > filterEndDate) return false;
+    } else if (filterStartDate || filterEndDate) {
+      return false;
+    }
+
     if (filterStat === 'Exclude Resolved' && t.status === 'Resolved') return false;
     else if (filterStat === 'Exclude Resolved & Closed' && (t.status === 'Resolved' || t.status === 'Closed')) return false;
     else if (filterStat && filterStat !== 'Exclude Resolved' && filterStat !== 'Exclude Resolved & Closed' && t.status !== filterStat) return false;
@@ -95,7 +105,34 @@ export default function Tickets() {
           <option value="Newest First">Newest First</option>
           <option value="Oldest First">Oldest First</option>
         </select>
-        <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FFFFFF', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: 'var(--r)', padding: '2px 8px' }}>
+          <span style={{ fontSize: '11px', color: '#6A7A8A', fontWeight: 600, textTransform: 'uppercase' }}>From</span>
+          <input 
+            type="date" 
+            value={filterStartDate} 
+            onChange={e => setFilterStartDate(e.target.value)} 
+            style={{ border: 'none', padding: '5px 2px', fontSize: '12px', outline: 'none', background: 'transparent' }} 
+            title="From Date"
+          />
+          <span style={{ fontSize: '11px', color: '#6A7A8A', fontWeight: 600, textTransform: 'uppercase', marginLeft: '4px' }}>To</span>
+          <input 
+            type="date" 
+            value={filterEndDate} 
+            onChange={e => setFilterEndDate(e.target.value)} 
+            style={{ border: 'none', padding: '5px 2px', fontSize: '12px', outline: 'none', background: 'transparent' }} 
+            title="To Date"
+          />
+          {(filterStartDate || filterEndDate) && (
+            <button 
+              type="button"
+              onClick={() => { setFilterStartDate(''); setFilterEndDate(''); }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', color: '#8898aa', fontSize: '13px', display: 'flex', alignItems: 'center' }}
+              title="Clear date range"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         <select value={filterStat} onChange={e => setFilterStat(e.target.value)}>
           <option value="">All Statuses</option>
           <option value="Exclude Resolved">Exclude Resolved</option>
