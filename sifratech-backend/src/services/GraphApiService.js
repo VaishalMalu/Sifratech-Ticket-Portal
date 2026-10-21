@@ -88,7 +88,7 @@ const sendEmailReply = async (conversationId, messageId, toEmail, subject, bodyC
                 body: { contentType: 'HTML', content: bodyContent },
                 from: {
                     emailAddress: {
-                        name: 'ASM Support',
+                        name: 'asmsupport',
                         address: 'asmsupport@sifratc.com'
                     }
                 }
@@ -112,7 +112,7 @@ const sendEmail = async (toEmail, subject, bodyContent, ccEmail = null) => {
                 body: { contentType: 'HTML', content: bodyContent },
                 from: {
                     emailAddress: {
-                        name: 'ASM Support',
+                        name: 'asmsupport',
                         address: 'asmsupport@sifratc.com'
                     }
                 }

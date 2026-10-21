@@ -63,6 +63,8 @@ app.post('/api/emails/assign', authMiddleware, async (req, res) => {
         const dateStr = new Date(assignmentDate).toLocaleString();
         const slaStr = new Date(slaDueDate).toLocaleString();
 
+        const cleanAssignedBy = (assignedBy && !assignedBy.toLowerCase().includes('sanaa')) ? assignedBy : 'asmsupport';
+
         const bodyContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e8ed; border-radius: 8px; overflow: hidden;">
                 <div style="background-color: #1A5FA8; padding: 20px; text-align: center;">
@@ -70,7 +72,7 @@ app.post('/api/emails/assign', authMiddleware, async (req, res) => {
                 </div>
                 <div style="padding: 24px; background-color: #f8fafc; border-bottom: 1px solid #e1e8ed;">
                     <p style="margin-top: 0; font-size: 16px; color: #334155;">Hello,</p>
-                    <p style="font-size: 15px; color: #334155; line-height: 1.6;">You have been assigned to a new support ticket by <strong>${assignedBy}</strong>. Please review the details below and proceed with the necessary actions.</p>
+                    <p style="font-size: 15px; color: #334155; line-height: 1.6;">You have been assigned to a new support ticket by <strong>${cleanAssignedBy}</strong>. Please review the details below and proceed with the necessary actions.</p>
                 </div>
                 <div style="padding: 24px; background-color: white;">
                     <table style="width: 100%; border-collapse: collapse;">
@@ -218,8 +220,8 @@ app.post('/api/emails/resolved', authMiddleware, async (req, res) => {
     </ul>
 
     <p style="margin-bottom: 0;">Regards,<br>
-    <strong>Sifratech Support Team</strong><br>
-    support@sifratech.com</p>
+    <strong>asmsupport</strong><br>
+    asmsupport@sifratc.com</p>
     
     <div style="margin-top: 32px; text-align: center;">
         <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #1A5FA8; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">View Ticket in Portal</a>

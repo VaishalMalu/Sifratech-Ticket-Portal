@@ -62,7 +62,7 @@ const processUnreadEmails = async () => {
             }
 
             // Verify email was explicitly addressed to support mailbox (asmsupport@sifratc.com)
-            // This prevents personal emails sent to Sanaa from turning into tickets!
+            // This prevents personal direct emails from turning into tickets!
             const allRecipients = [
                 ...(email.toRecipients || []).map(r => r.emailAddress?.address?.toLowerCase()),
                 ...(email.ccRecipients || []).map(r => r.emailAddress?.address?.toLowerCase())
