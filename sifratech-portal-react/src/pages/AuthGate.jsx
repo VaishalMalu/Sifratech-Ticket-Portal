@@ -34,16 +34,17 @@ export default function AuthGate() {
       setError('Please enter username and password.');
       return;
     }
+    setError('');
     
-    const success = await login(username, password);
-    if (success) {
+    const result = await login(username, password);
+    if (result === true || result?.success) {
       let from = '/dashboard';
       if (location.state && location.state.from) {
          from = location.state.from.pathname + (location.state.from.search || '');
       }
       navigate(from);
     } else {
-      setError('Invalid username or password.');
+      setError(result?.error || 'Invalid username or password.');
     }
   };
 

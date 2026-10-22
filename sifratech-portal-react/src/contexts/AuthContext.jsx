@@ -87,7 +87,7 @@ export function AuthProvider({ children }) {
       
       if (error) {
         console.error("Login failed:", error.message);
-        return false;
+        return { success: false, error: error.message };
       }
       
       if (data?.user) {
@@ -101,13 +101,13 @@ export function AuthProvider({ children }) {
           role: roleName,
           client: userData?.teams?.name || null
         });
-        return true;
+        return { success: true };
       }
     } catch (e) {
       console.error("Network error during login:", e);
-      return false;
+      return { success: false, error: e.message || 'Network error during login' };
     }
-    return false;
+    return { success: false, error: 'Authentication failed.' };
   };
 
   const logout = async () => {
