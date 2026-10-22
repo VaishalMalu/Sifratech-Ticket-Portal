@@ -63,7 +63,7 @@ app.post('/api/emails/assign', authMiddleware, async (req, res) => {
         const dateStr = new Date(assignmentDate).toLocaleString();
         const slaStr = new Date(slaDueDate).toLocaleString();
 
-        const cleanAssignedBy = (assignedBy && !assignedBy.toLowerCase().includes('sanaa')) ? assignedBy : 'asmsupport';
+        const cleanAssignedBy = assignedBy || 'asmsupport';
 
         const bodyContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e1e8ed; border-radius: 8px; overflow: hidden;">

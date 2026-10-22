@@ -593,7 +593,7 @@ export function DataProvider({ children }) {
                      ticketNumber: t.number || t.id,
                      title: t.summary,
                      portalUrl: `${window.location.origin}/tickets?id=${id}`,
-                     actionBy: (currentUser && currentUser.email && !currentUser.email.toLowerCase().includes('sanaa')) ? currentUser.email : 'asmsupport@sifratc.com'
+                     actionBy: currentUser?.email || 'asmsupport@sifratc.com'
                   })
                })
                .then(async res => {
@@ -854,7 +854,7 @@ export function DataProvider({ children }) {
           ticket_id: id,
           old_status: t ? t.status : 'Open',
           new_status: 'Assigned',
-          comments: `[${(currentUser && currentUser.label && !currentUser.label.toLowerCase().includes('sanaa')) ? currentUser.label : 'asmsupport'}] Manually assigned to ${assignedToName}`
+          comments: `[${currentUser?.label || 'asmsupport'}] Manually assigned to ${assignedToName}`
         }]);
         if (histError) console.error("Error inserting ticket_status_history:", histError);
 
@@ -872,7 +872,7 @@ export function DataProvider({ children }) {
               customerDetails: [t.client, t.raisedBy].filter(Boolean).join(' / '),
               module: t.module,
               status: 'Assigned',
-              assignedBy: (currentUser && currentUser.label && !currentUser.label.toLowerCase().includes('sanaa')) ? currentUser.label : 'asmsupport',
+              assignedBy: currentUser?.label || 'asmsupport',
               assignmentDate: new Date().toISOString(),
               slaDueDate: t.dueDate || new Date(Date.now() + 24*36e5).toISOString(),
               portalUrl: `${window.location.origin}/tickets?id=${id}`
