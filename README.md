@@ -110,3 +110,7 @@ The project is structured as a monorepo containing both the frontend and backend
 
 - **Frontend Deployment**: Can be statically built (`npm run build`) and hosted on Vercel, Netlify, or Azure Static Web Apps.
 - **Backend Deployment**: Cloud-native Node.js service compatible with Render, Heroku, or Azure App Service.
+
+## Documentation & Credentials
+
+- Full system account logins, roles, and credentials are documented in [CREDENTIALS.md](CREDENTIALS.md).
