@@ -78,9 +78,11 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     try {
+      const cleanUsername = (username || '').trim().toLowerCase();
+      const cleanPassword = (password || '').trim();
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
+        email: cleanUsername,
+        password: cleanPassword,
       });
       
       if (error) {
