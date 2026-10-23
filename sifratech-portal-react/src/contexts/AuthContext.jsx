@@ -1,16 +1,49 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState({
-    id: 'user1',
-    label: 'Account Manager',
-    role: 'Account Manager',
-    client: null
-  });
+  // FIX: Initialize as null, NOT a hardcoded fake user.
+  // The old code had { id: 'user1', label: 'Account Manager', ... } which caused
+  // ProtectedRoute to bypass login when fetchSession errored out.
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Helper to fetch user profile from public.users table
+  const fetchUserProfile = useCallback(async (session) => {
+    try {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*, roles(name), teams(name)')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error) {
+        console.warn("Failed to fetch user profile from public.users:", error.message);
+        // Still allow login even if profile fetch fails - use email as fallback
+      }
+      
+      const roleName = userData?.roles?.name || 'Customer';
+      return {
+        id: session.user.id,
+        label: userData?.full_name || session.user.email,
+        email: session.user.email,
+        role: roleName,
+        client: userData?.teams?.name || null
+      };
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+      // Fallback: return minimal user from session
+      return {
+        id: session.user.id,
+        label: session.user.email,
+        email: session.user.email,
+        role: 'Customer',
+        client: null
+      };
+    }
+  }, []);
 
   // Compute permissions dynamically
   const activeUser = React.useMemo(() => {
@@ -32,49 +65,67 @@ export function AuthProvider({ children }) {
   }, [currentUser]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session fetch error:", sessionError.message);
+          if (isMounted) setCurrentUser(null);
+          return;
+        }
+        
         if (session) {
-          const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
-          const roleName = userData?.roles?.name || 'Customer';
-          setCurrentUser({
-            id: session.user.id,
-            label: userData?.full_name || session.user.email,
-            email: session.user.email,
-            role: roleName,
-            client: userData?.teams?.name || null
-          });
+          const userProfile = await fetchUserProfile(session);
+          if (isMounted) setCurrentUser(userProfile);
         } else {
-          setCurrentUser(null);
+          if (isMounted) setCurrentUser(null);
         }
       } catch (err) {
         console.error("Auth init error:", err);
+        // FIX: On ANY error, explicitly set null so ProtectedRoute redirects to login
+        if (isMounted) setCurrentUser(null);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchSession();
 
+    // Safety timeout: if fetchSession takes too long (e.g. Render cold start),
+    // stop loading after 10s so user at least sees the login page
+    const loadingTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn("Auth loading timeout — forcing load complete");
+        setLoading(false);
+      }
+    }, 10000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+      
       if (event === 'SIGNED_OUT' || !session) {
         setCurrentUser(null);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', session.user.id).single();
-        const roleName = userData?.roles?.name || 'Customer';
-        setCurrentUser({
-          id: session.user.id,
-          label: userData?.full_name || session.user.email,
-          email: session.user.email,
-          role: roleName,
-          client: userData?.teams?.name || null
-        });
+        try {
+          const userProfile = await fetchUserProfile(session);
+          if (isMounted) setCurrentUser(userProfile);
+        } catch (err) {
+          console.error("Error in auth state change handler:", err);
+          // Don't null out user on TOKEN_REFRESHED errors — keep existing session
+          if (event === 'SIGNED_IN' && isMounted) setCurrentUser(null);
+        }
       }
     });
 
-    return () => subscription?.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      clearTimeout(loadingTimeout);
+      subscription?.unsubscribe();
+    };
+  }, [fetchUserProfile]);
 
   const login = async (username, password) => {
     try {
@@ -90,17 +141,9 @@ export function AuthProvider({ children }) {
         return { success: false, error: error.message };
       }
       
-      if (data?.user) {
-        const { data: userData } = await supabase.from('users').select('*, roles(name), teams(name)').eq('id', data.user.id).single();
-        const roleName = userData?.roles?.name || 'Customer';
-        
-        setCurrentUser({
-          id: data.user.id,
-          label: userData?.full_name || username,
-          email: username,
-          role: roleName,
-          client: userData?.teams?.name || null
-        });
+      if (data?.user && data?.session) {
+        const userProfile = await fetchUserProfile(data.session);
+        setCurrentUser(userProfile);
         return { success: true };
       }
     } catch (e) {
@@ -111,8 +154,14 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setCurrentUser(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Error during sign out:", err);
+    } finally {
+      // Always clear user state, even if signOut API call fails
+      setCurrentUser(null);
+    }
   };
 
   const switchRole = () => {
@@ -164,3 +213,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

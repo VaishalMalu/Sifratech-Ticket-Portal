@@ -57,7 +57,8 @@ This document provides a comprehensive list of all active user accounts, roles, 
 | **Dhayanithe N** | `dhayanithe.n@alt-s.in` | `Welcome@2026` | ALT-S |
 | **Muthukumar M** | `muthukumar.m@sifratc.com` | `Welcome@2026` | Sifratech |
 | **Ashfaq Khan** | `ashfaq.khan@sifratc.com` | `Welcome@2026` | Sifratech |
-| **Manager** | `manager@sifratc.com` | `Welcome@2026` | Sifratech |
+| **Manager** | `manager@sifratc.com` / `manager@sifratech.com` | `Welcome@2026` | Sifratech |
+| **Sathish Sanjay** | `sathish.sanjay@sifratech.com` / `sanjay@sifratech.com` | `Welcome@2026` | Sifratech (Admin / Lead) |
 | **Sanjay** | `sanjay@sifratc.com` | `Welcome@2026` | Sifratech |
 | **Anita** | `anita@sifratc.com` | `Welcome@2026` | Sifratech |
 | **Vikram** | `vikram@sifratc.com` | `Welcome@2026` | Sifratech |
