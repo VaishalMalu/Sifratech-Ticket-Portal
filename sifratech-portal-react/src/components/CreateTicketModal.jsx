@@ -172,12 +172,22 @@ export default function CreateTicketModal() {
             <div className="fl"><label>Assign to</label>
               <select value={assignee} onChange={e => setAssignee(e.target.value)}>
                 <option value="">— unassigned —</option>
-                {allSystemUsers.map(m => {
-                   let dName = m.full_name;
-                   if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
-                   if (dName?.toLowerCase() === 'ppmteam') dName = 'PPM Team';
-                   return <option key={m.id} value={m.full_name}>{dName}</option>;
-                })}
+                {(() => {
+                  const seen = new Set();
+                  return allSystemUsers.filter(m => {
+                    let dName = (m.full_name || '').trim();
+                    if (dName.toLowerCase() === 'scmteam') dName = 'SCM Team';
+                    if (dName.toLowerCase() === 'ppmteam') dName = 'PPM Team';
+                    if (!dName || seen.has(dName.toLowerCase())) return false;
+                    seen.add(dName.toLowerCase());
+                    return true;
+                  }).map(m => {
+                    let dName = m.full_name;
+                    if (dName?.toLowerCase() === 'scmteam') dName = 'SCM Team';
+                    if (dName?.toLowerCase() === 'ppmteam') dName = 'PPM Team';
+                    return <option key={m.id} value={m.full_name}>{dName}</option>;
+                  });
+                })()}
                 {!allSystemUsers.some(u => u.full_name?.toLowerCase() === 'ppm team' || u.full_name?.toLowerCase() === 'ppmteam') && (
                   <option value="PPM Team">PPM Team</option>
                 )}

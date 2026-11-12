@@ -130,7 +130,7 @@ export function DataProvider({ children }) {
 
       // Fetch Users to map UUIDs to names
       let userData = [];
-      const { data: directUsers, error: userError } = await supabase.from('users').select('id, full_name');
+      const { data: directUsers, error: userError } = await supabase.from('users').select('id, full_name, team_id, teams(name)');
       if (userError) {
          console.error("Error fetching users:", userError);
       }
@@ -153,7 +153,11 @@ export function DataProvider({ children }) {
 
       // Map Supabase schema to the React frontend schema
       const mappedTickets = data.map(t => {
-        const assignedUser = userData?.find(u => u.id === t.assigned_to);
+        const rawAssigned = (t.assigned_to || '').trim();
+        const assignedUser = userData?.find(u => 
+          u.id === rawAssigned || 
+          (rawAssigned && u.full_name?.trim().toLowerCase() === rawAssigned.toLowerCase())
+        );
         
         let modName = 'Unknown';
         if (t.oracle_modules && t.oracle_modules.name) {
@@ -175,8 +179,9 @@ export function DataProvider({ children }) {
         requestType: t.request_type,
         severity: t.severity,
         businessImpact: t.business_impact,
-        assignedTo: assignedUser ? assignedUser.full_name : 'Unassigned',
+        assignedTo: assignedUser ? assignedUser.full_name : (rawAssigned && !rawAssigned.includes('-') && rawAssigned !== 'Unassigned' ? rawAssigned : 'Unassigned'),
         assignedToId: t.assigned_to,
+        assignedTeam: assignedUser?.teams?.name || (t.oracle_modules?.name ? `${t.oracle_modules.name} Team` : 'Supply Chain Team'),
         project: t.company || 'ASM- Oracle Fusion support',
         environment: 'Production', // default
         createdAt: t.created_at || new Date().toISOString(),

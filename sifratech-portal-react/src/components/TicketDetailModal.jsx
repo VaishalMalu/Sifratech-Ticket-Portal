@@ -484,12 +484,27 @@ export default function TicketDetailModal() {
                     </>
                   );
                 })()}
-                <option value="SCM">SCM</option>
-                <option value="PPM">PPM</option>
-                <option value="Finance">Finance</option>
-                <option value="Technical">Technical</option>
-                <option value="Webform-Technical">Webform-Technical</option>
-                <option value="HCM">HCM</option>
+                <optgroup label="Team Members / Engineers">
+                  {(() => {
+                    const seen = new Set();
+                    return allSystemUsers.filter(u => {
+                      const name = (u.full_name || '').trim();
+                      if (!name || seen.has(name.toLowerCase())) return false;
+                      seen.add(name.toLowerCase());
+                      return true;
+                    }).map(u => (
+                      <option key={u.id} value={u.full_name}>{u.full_name}</option>
+                    ));
+                  })()}
+                </optgroup>
+                <optgroup label="Teams">
+                  <option value="SCM">SCM</option>
+                  <option value="PPM">PPM</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Technical">Technical</option>
+                  <option value="Webform-Technical">Webform-Technical</option>
+                  <option value="HCM">HCM</option>
+                </optgroup>
               </select>
               <button className="btn-s" onClick={handleAssign} disabled={!!updating || !assignSel || assignSel === t.assignedTo}>
                 {(() => {
