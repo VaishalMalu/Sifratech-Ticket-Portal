@@ -17,7 +17,7 @@ export default function Team() {
           <tbody>
             {allSystemUsers.map(m => {
               const mine = tickets.filter(t => t.assignedTo === m.full_name);
-              const op = mine.filter(t => t.status === 'Open').length;
+              const op = mine.filter(t => ['Open', 'New', 'Assigned'].includes(t.status)).length;
               const ip = mine.filter(t => t.status === 'In Progress').length;
               const rs = mine.filter(t => ['Resolved', 'Closed'].includes(t.status));
               const avg = rs.length ? Math.round(rs.reduce((a, t) => a + age(t.createdAt), 0) / rs.length) : 0;
