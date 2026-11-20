@@ -162,25 +162,27 @@ export default function Dashboard() {
         <div className="chart-card">
           <div className="chart-head"><span className="chart-title">Tickets by status</span><span className="chart-badge">Donut</span></div>
           <div className="donut-wrap">
-            <ResponsiveContainer width={120} height={120}>
+            <ResponsiveContainer width={115} height={115}>
               <PieChart>
-                <Pie data={statusData} cx="50%" cy="50%" innerRadius={40} outerRadius={52} dataKey="value" stroke="none">
+                <Pie data={statusData} cx="50%" cy="50%" innerRadius={36} outerRadius={48} dataKey="value" stroke="none">
                   {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="donut-legend" style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
-              <div className="legend-total">
-                <div style={{ fontSize: '20px', fontWeight: 600, color: '#1A2A3A' }}>{total}</div>
+            <div className="donut-legend" style={{ flex: 1, minWidth: 0 }}>
+              <div className="legend-total" style={{ marginBottom: '6px' }}>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#1A2A3A' }}>{total}</div>
                 <div style={{ fontSize: '9px', color: '#6B7A8D', textTransform: 'uppercase', letterSpacing: '1px' }}>Total</div>
               </div>
-              {statusData.map(d => (
-                <div key={d.name} className="legend-item">
-                  <div className="legend-dot" style={{ background: d.color }}></div>
-                  <span title={d.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '105px' }}>{d.name}</span>
-                  <span className="legend-val">{d.value}</span>
-                </div>
-              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', columnGap: '12px', rowGap: '5px' }}>
+                {statusData.map(d => (
+                  <div key={d.name} className="legend-item" style={{ fontSize: '10.5px' }}>
+                    <div className="legend-dot" style={{ background: d.color }}></div>
+                    <span title={d.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
+                    <span className="legend-val" style={{ marginLeft: 'auto', paddingLeft: '4px' }}>{d.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -188,25 +190,27 @@ export default function Dashboard() {
         <div className="chart-card">
           <div className="chart-head"><span className="chart-title">Priority breakdown</span><span className="chart-badge">Donut</span></div>
           <div className="donut-wrap">
-            <ResponsiveContainer width={120} height={120}>
+            <ResponsiveContainer width={115} height={115}>
               <PieChart>
-                <Pie data={priData} cx="50%" cy="50%" innerRadius={40} outerRadius={52} dataKey="value" stroke="none">
+                <Pie data={priData} cx="50%" cy="50%" innerRadius={36} outerRadius={48} dataKey="value" stroke="none">
                   {priData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="donut-legend" style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
-              <div className="legend-total">
-                <div style={{ fontSize: '20px', fontWeight: 600, color: '#1A2A3A' }}>{total}</div>
+            <div className="donut-legend" style={{ flex: 1, minWidth: 0 }}>
+              <div className="legend-total" style={{ marginBottom: '6px' }}>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#1A2A3A' }}>{total}</div>
                 <div style={{ fontSize: '9px', color: '#6B7A8D', textTransform: 'uppercase', letterSpacing: '1px' }}>Total</div>
               </div>
-              {priData.map(d => (
-                <div key={d.name} className="legend-item">
-                  <div className="legend-dot" style={{ background: d.color }}></div>
-                  <span title={d.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '105px' }}>{d.name}</span>
-                  <span className="legend-val">{d.value}</span>
-                </div>
-              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: priData.length > 5 ? 'repeat(2, minmax(0, 1fr))' : '1fr', columnGap: '12px', rowGap: '5px' }}>
+                {priData.map(d => (
+                  <div key={d.name} className="legend-item" style={{ fontSize: '10.5px' }}>
+                    <div className="legend-dot" style={{ background: d.color }}></div>
+                    <span title={d.name} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
+                    <span className="legend-val" style={{ marginLeft: 'auto', paddingLeft: '4px' }}>{d.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
